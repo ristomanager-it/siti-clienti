@@ -6,16 +6,14 @@
 <meta name="description" content="Scopri il menu della Trattoria dell'Aquila di Orte: cucina laziale, pesce fresco, carne e dolci.">
 <meta property="og:title" content="Menu — Trattoria dell'Aquila">
 <meta property="og:image" content="https://cuhcscpvhypoaplcmtjk.supabase.co/storage/v1/object/public/media-aziende/b331365f-17db-4dda-aa2f-77a09427fe42/1782497736066-p9srsc2ltfd.jpeg">
-<meta property="og:type" content="restaurant">
 <title>Menu — Trattoria dell'Aquila</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;600&display=swap');
 *{margin:0;padding:0;box-sizing:border-box;}
-:root{--brand:#794d01;--text:#1a1a1a;--bg:#faf8f5;--white:#fff;}
+:root{--brand:#794d01;--bg:#faf8f5;--white:#fff;--text:#1a1a1a;}
 body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);}
-h1,h2,h3,.serif{font-family:'Playfair Display',serif;}
 a{color:inherit;text-decoration:none;}
-img{max-width:100%;display:block;}
 
 /* NAV */
 nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(250,248,245,.95);backdrop-filter:blur(8px);border-bottom:1px solid rgba(121,77,1,.1);}
@@ -24,103 +22,72 @@ nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(250,248,245,
 .nav-logo img{height:40px;width:40px;border-radius:50%;object-fit:cover;}
 .nav-logo span{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--brand);}
 .nav-links{display:flex;gap:28px;align-items:center;}
-.nav-links a{font-size:14px;font-weight:400;color:#555;transition:color .2s;}
+.nav-links a{font-size:14px;color:#555;transition:color .2s;}
 .nav-links a:hover{color:var(--brand);}
+.nav-links a.active{color:var(--brand);font-weight:600;}
 .nav-cta{background:var(--brand);color:#fff!important;padding:10px 20px;border-radius:8px;font-weight:600!important;font-size:13px!important;}
 .nav-cta:hover{background:#5c3a01!important;}
 @media(max-width:640px){.nav-links a:not(.nav-cta){display:none;}}
 
 /* HERO */
-.hero{position:relative;height:100vh;min-height:500px;overflow:hidden;}
-.hero-bg{position:absolute;inset:0;background-image:url('https://cuhcscpvhypoaplcmtjk.supabase.co/storage/v1/object/public/media-aziende/b331365f-17db-4dda-aa2f-77a09427fe42/1782497736066-p9srsc2ltfd.jpeg');background-size:cover;background-position:center;}
-.hero-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.3) 0%,rgba(0,0,0,.55) 100%);}
-.hero-content{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;padding-top:80px;}
-.hero-content h1{font-size:clamp(32px,6vw,72px);color:#fff;line-height:1.15;margin-bottom:16px;text-shadow:0 2px 20px rgba(0,0,0,.4);}
-.hero-content p{font-size:clamp(15px,2vw,20px);color:rgba(255,255,255,.9);margin-bottom:32px;max-width:560px;font-weight:300;}
-.btn{display:inline-block;padding:14px 32px;border-radius:8px;font-weight:600;font-size:15px;transition:all .2s;cursor:pointer;}
-.btn-primary{background:var(--brand);color:#fff;}
-.btn-primary:hover{background:#5c3a01;transform:translateY(-1px);box-shadow:0 8px 24px rgba(121,77,1,.35);}
-.btn-outline{border:2px solid #fff;color:#fff;margin-left:12px;}
-.btn-outline:hover{background:#fff;color:var(--brand);}
-@media(max-width:480px){.btn-outline{display:none;}}
+.hero{position:relative;height:35vh;min-height:240px;overflow:hidden;}
+.hero img{width:100%;height:100%;object-fit:cover;}
+.hero-overlay{position:absolute;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;}
+.hero-overlay h1{font-family:'Playfair Display',serif;font-size:clamp(28px,5vw,56px);color:#fff;}
 
-/* SEZIONI */
-.section{padding:80px 20px;max-width:1100px;margin:0 auto;}
-.section-full{padding:80px 20px;}
-.section-label{font-size:12px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--brand);margin-bottom:12px;}
-.section-title{font-size:clamp(28px,4vw,48px);font-weight:700;margin-bottom:20px;line-height:1.2;}
-.section-sub{font-size:16px;color:#666;line-height:1.7;max-width:600px;}
+/* FILTRI */
+.filtri{position:sticky;top:64px;z-index:50;background:rgba(250,248,245,.97);backdrop-filter:blur(6px);border-bottom:1px solid rgba(121,77,1,.08);padding:12px 20px;overflow-x:auto;white-space:nowrap;}
+.filtri-inner{display:flex;gap:8px;max-width:1100px;margin:0 auto;}
+.filtro-btn{padding:7px 16px;border-radius:20px;border:1.5px solid #ddd;background:#fff;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .2s;color:#555;}
+.filtro-btn.active,.filtro-btn:hover{background:var(--brand);color:#fff;border-color:var(--brand);}
 
-/* HIGHLIGHTS */
-.hl-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:32px;margin-top:48px;}
-.hl-item{padding:32px;background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,.06);border-top:3px solid var(--brand);}
-.hl-icon{font-size:32px;margin-bottom:16px;}
-.hl-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;margin-bottom:10px;color:var(--text);}
-.hl-text{font-size:14px;color:#666;line-height:1.7;}
+/* MENU BODY */
+.menu-wrap{max-width:800px;margin:0 auto;padding:40px 20px 80px;}
+.menu-section{margin-bottom:48px;}
+.menu-section-title{font-family:'Playfair Display',serif;font-size:26px;color:var(--brand);border-bottom:2px solid var(--brand);padding-bottom:8px;margin-bottom:20px;}
+.menu-item{display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding:12px 0;border-bottom:1px solid #eee;}
+.menu-item:last-child{border:none;}
+.menu-item-left{flex:1;}
+.menu-item-name{font-size:15px;font-weight:600;color:var(--text);margin-bottom:3px;}
+.menu-item-desc{font-size:13px;color:#888;line-height:1.5;}
+.menu-item-price{font-size:15px;font-weight:700;color:var(--brand);white-space:nowrap;flex-shrink:0;}
+.menu-note{font-size:12px;color:#aaa;text-align:center;margin-top:40px;line-height:1.8;}
 
-/* CHI SIAMO */
-.chisiamo-wrap{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;}
-@media(max-width:768px){.chisiamo-wrap{grid-template-columns:1fr;gap:32px;}}
-.chisiamo-img{border-radius:16px;overflow:hidden;aspect-ratio:4/3;}
-.chisiamo-img img{width:100%;height:100%;object-fit:cover;}
-.chisiamo-text p{font-size:16px;color:#555;line-height:1.8;margin-bottom:16px;}
-.quote{border-left:3px solid var(--brand);padding-left:20px;margin:24px 0;font-family:'Playfair Display',serif;font-size:20px;font-style:italic;color:var(--brand);}
+/* LOADING / EMPTY */
+.loading{text-align:center;padding:60px 20px;color:#aaa;font-size:15px;}
+.empty{text-align:center;padding:40px 20px;color:#aaa;font-size:14px;}
 
-/* GALLERIA */
-.gallery-bg{background:#1a1a1a;padding:80px 20px;}
-.gallery-title{text-align:center;font-family:'Playfair Display',serif;font-size:clamp(28px,4vw,48px);color:#fff;margin-bottom:48px;}
-.gallery-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:1100px;margin:0 auto;}
-@media(max-width:640px){.gallery-grid{grid-template-columns:repeat(2,1fr);}}
-.gallery-item{aspect-ratio:1;overflow:hidden;border-radius:8px;}
-.gallery-item img{width:100%;height:100%;object-fit:cover;transition:transform .4s;}
-.gallery-item:hover img{transform:scale(1.05);}
-.gallery-item:first-child{grid-column:span 2;aspect-ratio:2/1;}
-
-/* ORARI & INFO */
-.info-bg{background:var(--brand);color:#fff;padding:80px 20px;}
-.info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:40px;max-width:1100px;margin:0 auto;}
-.info-block h3{font-family:'Playfair Display',serif;font-size:22px;margin-bottom:16px;opacity:.8;}
-.info-block p,.info-block a{font-size:15px;line-height:2;opacity:.9;display:block;color:#fff;}
-.orari-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.15);font-size:14px;}
-.orari-row:last-child{border:none;}
-.chiuso{opacity:.4;}
-
-/* PRENOTA */
-.prenota-bg{background:#faf8f5;padding:80px 20px;text-align:center;}
-.prenota-inner{max-width:600px;margin:0 auto;}
-.prenota-inner h2{font-family:'Playfair Display',serif;font-size:clamp(28px,4vw,48px);margin-bottom:16px;}
-.prenota-inner p{font-size:16px;color:#666;margin-bottom:32px;line-height:1.7;}
-
-/* TAG PILLS */
-.tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px;}
-.tag{padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;background:rgba(121,77,1,.1);color:var(--brand);}
+/* CTA */
+.cta-bar{background:var(--brand);padding:60px 20px;text-align:center;}
+.cta-bar h2{font-family:'Playfair Display',serif;font-size:clamp(24px,4vw,40px);color:#fff;margin-bottom:12px;}
+.cta-bar p{color:rgba(255,255,255,.8);font-size:15px;margin-bottom:24px;}
+.btn{display:inline-block;padding:13px 28px;border-radius:8px;font-weight:600;font-size:14px;}
+.btn-white{background:#fff;color:var(--brand);}
+.btn-white:hover{background:#f5f0e8;}
 
 /* FOOTER */
 footer{background:#111;color:#aaa;padding:40px 20px;text-align:center;}
 footer .f-logo{font-family:'Playfair Display',serif;font-size:22px;color:#fff;margin-bottom:8px;}
 footer p{font-size:13px;margin:4px 0;}
 footer a{color:#aaa;}
-
-/* TRACKING */
 </style>
 </head>
 <body>
 
 <script>
+// Tracking
 (function(){
   var SID=sessionStorage.getItem('rf_sid')||(crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2));
   sessionStorage.setItem('rf_sid',SID);
-  var AZ_ID='b331365f-17db-4dda-aa2f-77a09427fe42';
-  var SEDE_ID='4a936e52-a1e3-42fc-843c-e8d15dc86040';
-  var PAGINA=location.pathname.split('/').pop().replace('.html','')||'home';
   window._rfTrack=function(tipo,elemento,extra){
     var p=new URLSearchParams(location.search);
     fetch('https://cuhcscpvhypoaplcmtjk.supabase.co/functions/v1/track',{
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify(Object.assign({
-        azienda_id:AZ_ID,sede_id:SEDE_ID,
-        pagina:'sito-'+PAGINA,pagina_id:SEDE_ID,
-        tipo:tipo,elemento:elemento||null,
+        azienda_id:'b331365f-17db-4dda-aa2f-77a09427fe42',
+        sede_id:'4a936e52-a1e3-42fc-843c-e8d15dc86040',
+        pagina:'sito-menu',pagina_id:'4a936e52-a1e3-42fc-843c-e8d15dc86040',
+        tipo,elemento:elemento||null,
         referrer:document.referrer||null,
         utm_source:p.get('utm_source'),utm_medium:p.get('utm_medium'),utm_campaign:p.get('utm_campaign'),
         device:/Mobi/.test(navigator.userAgent)?'mobile':'desktop',
@@ -128,20 +95,7 @@ footer a{color:#aaa;}
       },extra||{}))
     }).catch(function(){});
   };
-  window._rfTrack('view','sito_pagina',{completato:false});
-  document.addEventListener('click',function(e){
-    var a=e.target.closest('a');
-    if(!a)return;
-    var href=a.href||'';
-    if(href.includes('prenotazione-online')||a.classList.contains('nav-cta')||a.classList.contains('btn-primary'))
-      window._rfTrack('click','cta_prenota',{valore:href.slice(0,80)});
-    else if(href.startsWith('tel:'))
-      window._rfTrack('click','click_telefono',{valore:href});
-    else if(href.includes('contatti'))
-      window._rfTrack('click','click_contatti',{});
-    else if(href.includes('menu'))
-      window._rfTrack('click','click_menu',{});
-  });
+  window._rfTrack('view','sito_menu',{});
 })();
 </script>
 
@@ -153,87 +107,178 @@ footer a{color:#aaa;}
     </div>
     <div class="nav-links">
       <a href="index.html">Home</a>
-<a href="chi-siamo.html">Chi siamo</a>
-<a href="menu.html"style="color:var(--brand);font-weight:600;">Menu</a>
-<a href="contatti.html">Contatti</a>
-
+      <a href="chi-siamo.html">Chi siamo</a>
+      <a href="menu.html" class="active">Menu</a>
+      <a href="contatti.html">Contatti</a>
       <a href="https://app.ristoflow-ai.com/prenotazione-online.html?form_id=ef3d693b-794e-4a24-9ee1-804c92808bfc" class="nav-cta">Prenota →</a>
     </div>
   </div>
 </nav>
-<style>
-.menu-section{margin-bottom:48px;}
-.menu-section h3{font-family:'Playfair Display',serif;font-size:24px;color:var(--brand);border-bottom:2px solid var(--brand);padding-bottom:8px;margin-bottom:20px;}
-.menu-item{display:flex;justify-content:space-between;align-items:baseline;padding:12px 0;border-bottom:1px solid #eee;}
-.menu-item:last-child{border:none;}
-.menu-item-name{font-size:15px;font-weight:600;}
-.menu-item-desc{font-size:13px;color:#888;margin-top:2px;}
-.menu-item-price{font-size:15px;font-weight:700;color:var(--brand);white-space:nowrap;margin-left:16px;}
-.menu-note{font-size:12px;color:#aaa;text-align:center;margin-top:32px;}
-</style>
-<div style="padding-top:64px;">
-  <div style="position:relative;height:35vh;min-height:240px;overflow:hidden;">
-    <img src="https://cuhcscpvhypoaplcmtjk.supabase.co/storage/v1/object/public/media-aziende/b331365f-17db-4dda-aa2f-77a09427fe42/1782497469789-7oiwezaau8e.jpeg" alt="Menu" style="width:100%;height:100%;object-fit:cover;">
-    <div style="position:absolute;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;">
-      <h1 style="font-family:'Playfair Display',serif;font-size:clamp(28px,5vw,56px);color:#fff;">Il Nostro Menu</h1>
-    </div>
+
+<div class="hero" style="padding-top:64px;">
+  <img src="https://cuhcscpvhypoaplcmtjk.supabase.co/storage/v1/object/public/media-aziende/b331365f-17db-4dda-aa2f-77a09427fe42/1782497469789-7oiwezaau8e.jpeg" alt="Menu">
+  <div class="hero-overlay">
+    <h1>Il Nostro Menu</h1>
   </div>
+</div>
 
-  <div class="section" style="max-width:800px;">
-    <div style="text-align:center;margin-bottom:48px;">
-      <p style="font-size:16px;color:#666;line-height:1.7;">Una selezione di piatti che celebrano la tradizione laziale, preparati ogni giorno con ingredienti freschi. Il menu cambia con le stagioni per offrirti sempre il meglio.</p>
-    </div>
-
-    <div class="menu-section">
-      <h3>🥗 Antipasti</h3>
-      <div class="menu-item"><div><div class="menu-item-name">Bruschette al pomodoro e basilico</div><div class="menu-item-desc">Pane casereccio, pomodoro fresco, olio EVO</div></div><div class="menu-item-price">€ 6</div></div>
-      <div class="menu-item"><div><div class="menu-item-name">Tagliere di salumi e formaggi locali</div><div class="menu-item-desc">Selezione di prodotti del territorio</div></div><div class="menu-item-price">€ 14</div></div>
-      <div class="menu-item"><div><div class="menu-item-name">Frittura di paranza</div><div class="menu-item-desc">Pesce fresco del giorno, frittura leggera</div></div><div class="menu-item-price">€ 16</div></div>
-      <div class="menu-item"><div><div class="menu-item-name">Supplì alla romana</div><div class="menu-item-desc">Riso, ragù, mozzarella filante</div></div><div class="menu-item-price">€ 8</div></div>
-    </div>
-
-    <div class="menu-section">
-      <h3>🍝 Primi Piatti</h3>
-      <div class="menu-item"><div><div class="menu-item-name">Carbonara al tartufo</div><div class="menu-item-desc">Guanciale, uovo, pecorino, tartufo nero</div></div><div class="menu-item-price">€ 16</div></div>
-      <div class="menu-item"><div><div class="menu-item-name">Bucatini all'Amatriciana</div><div class="menu-item-desc">Guanciale di Amatrice, pomodoro, pecorino</div></div><div class="menu-item-price">€ 13</div></div>
-      <div class="menu-item"><div><div class="menu-item-name">Rigatoni alla gricia</div><div class="menu-item-desc">Guanciale, pecorino romano, pepe nero</div></div><div class="menu-item-price">€ 12</div></div>
-      <div class="menu-item"><div><div class="menu-item-name">Tagliolini al ragù di cinghiale</div><div class="menu-item-desc">Pasta fresca, ragù lento di cinghiale locale</div></div><div class="menu-item-price">€ 15</div></div>
-      <div class="menu-item"><div><div class="menu-item-name">Risotto al pescato del giorno</div><div class="menu-item-desc">Riso Carnaroli, pesce fresco, bisque</div></div><div class="menu-item-price">€ 18</div></div>
-    </div>
-
-    <div class="menu-section">
-      <h3>🥩 Secondi Piatti</h3>
-      <div class="menu-item"><div><div class="menu-item-name">Abbacchio alla cacciatora</div><div class="menu-item-desc">Agnello locale, rosmarino, vino bianco, olive</div></div><div class="menu-item-price">€ 18</div></div>
-      <div class="menu-item"><div><div class="menu-item-name">Pesce del giorno alla griglia</div><div class="menu-item-desc">Chiedi al cameriere la disponibilità</div></div><div class="menu-item-price">€ 22</div></div>
-      <div class="menu-item"><div><div class="menu-item-name">Salsicce artigianali con fagioli</div><div class="menu-item-desc">Salsicce di suino locale, fagioli borlotti</div></div><div class="menu-item-price">€ 14</div></div>
-      <div class="menu-item"><div><div class="menu-item-name">Baccalà in umido alla romana</div><div class="menu-item-desc">Baccalà, pomodoro, pinoli, uvetta</div></div><div class="menu-item-price">€ 16</div></div>
-    </div>
-
-    <div class="menu-section">
-      <h3>🍮 Dolci</h3>
-      <div class="menu-item"><div><div class="menu-item-name">Tiramisù della casa</div><div class="menu-item-desc">Ricetta originale, mascarpone, caffè espresso</div></div><div class="menu-item-price">€ 7</div></div>
-      <div class="menu-item"><div><div class="menu-item-name">Panna cotta ai frutti di bosco</div><div class="menu-item-desc">Panna fresca, coulis di frutti rossi</div></div><div class="menu-item-price">€ 6</div></div>
-      <div class="menu-item"><div><div class="menu-item-name">Crostata di ricotta e visciole</div><div class="menu-item-desc">Pasta frolla, ricotta di pecora, visciole</div></div><div class="menu-item-price">€ 6</div></div>
-      <div class="menu-item"><div><div class="menu-item-name">Selezione di pasticceria</div><div class="menu-item-desc">Dolci artigianali del giorno</div></div><div class="menu-item-price">€ 8</div></div>
-    </div>
-
-    <div class="menu-note">I prezzi sono IVA inclusa · Il menu può variare in base alla disponibilità stagionale<br>Informate il personale di eventuali allergie o intolleranze alimentari</div>
+<div class="filtri">
+  <div class="filtri-inner" id="filtri-inner">
+    <button class="filtro-btn active" data-cat="tutti">Tutti</button>
   </div>
+</div>
 
-  <div class="prenota-bg">
-    <div class="prenota-inner">
-      <h2>Ti è venuta fame?</h2>
-      <p>Prenota il tuo tavolo e vieni a gustare i nostri piatti. Ti aspettiamo!</p>
-      <a href="https://app.ristoflow-ai.com/prenotazione-online.html?form_id=ef3d693b-794e-4a24-9ee1-804c92808bfc" class="btn btn-primary">Prenota ora</a>
-    </div>
+<div class="menu-wrap">
+  <div id="menu-body"><div class="loading">⏳ Caricamento menu...</div></div>
+  <div class="menu-note">
+    I prezzi sono IVA inclusa · Il menu può variare in base alla disponibilità stagionale<br>
+    Informate il personale di eventuali allergie o intolleranze alimentari
   </div>
+</div>
+
+<div class="cta-bar">
+  <h2>Hai voglia di venire?</h2>
+  <p>Prenota il tuo tavolo e vivi l'esperienza della Trattoria dell'Aquila.</p>
+  <a href="https://app.ristoflow-ai.com/prenotazione-online.html?form_id=ef3d693b-794e-4a24-9ee1-804c92808bfc" class="btn btn-white">Prenota ora →</a>
 </div>
 
 <footer>
   <div class="f-logo">Trattoria dell'Aquila</div>
   <p>Via Lazio 4/b, Orte</p>
   <p><a href="tel:0761402673">0761402673</a> · <a href="mailto:Trattoriadellaquila@gmail.com">Trattoriadellaquila@gmail.com</a></p>
-  <p style="margin-top:16px;font-size:12px;opacity:.5;">P.IVA · © Trattoria dell'Aquila 2026</p>
+  <p style="margin-top:16px;font-size:12px;opacity:.5;">© Trattoria dell'Aquila 2026</p>
 </footer>
+
+<script>
+const SUPA_URL = 'https://cuhcscpvhypoaplcmtjk.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN1aGNzY3B2aHlwb2FwbGNtdGprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM4MjY4MjgsImV4cCI6MjA3OTQwMjgyOH0.q9zAs0oh8F1-whtORHBIORF5jIn1NTS3LvSMWleP0a0';
+const db = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+const AZIENDA_ID = 'b331365f-17db-4dda-aa2f-77a09427fe42';
+const SEDE_ID    = '4a936e52-a1e3-42fc-843c-e8d15dc86040';
+
+// Categorie da mostrare nel sito (nell'ordine giusto)
+const CATS_SITO = [
+  'Antipasti',
+  'Primi Piatti',
+  'Secondi piatti',
+  'La Griglia',
+  'insalatone e piatti fredd',
+  'Contorni',
+  'Dolci',
+  'frutta',
+  'Vini rossi',
+  'Vini bianchi',
+  'Le Bollicine',
+  'Amari',
+  'Bevande',
+  'Caffetteria',
+];
+
+// Nomi più leggibili per il sito
+const CAT_LABELS = {
+  'insalatone e piatti fredd': 'Insalatone e Piatti Freddi',
+  'frutta': 'Frutta',
+  'Le Bollicine': 'Bollicine e Spumanti',
+  'Vini rossi': 'Vini Rossi',
+  'Vini bianchi': 'Vini Bianchi',
+  'Amari': 'Amari e Distillati',
+  'Bevande': 'Bevande',
+  'Caffetteria': 'Caffetteria',
+  'La Griglia': 'La Griglia',
+  'Secondi piatti': 'Secondi Piatti',
+  'Primi Piatti': 'Primi Piatti',
+  'Contorni': 'Contorni',
+  'Dolci': 'Dolci',
+  'Antipasti': 'Antipasti',
+};
+
+let _allData = {};
+let _catAttiva = 'tutti';
+
+async function caricaMenu() {
+  // Carica tutti i prodotti vendita della sede
+  const { data, error } = await db
+    .from('prodotti_vendita')
+    .select('id, nome, descrizione, prezzo_base, foto_url, categoria_vendita_id, ordine, categorie_vendita(nome)')
+    .eq('azienda_id', AZIENDA_ID)
+    .eq('sede_id', SEDE_ID)
+    .eq('attivo', true)
+    .eq('visibile', true)
+    .order('ordine');
+
+  if (error || !data?.length) {
+    document.getElementById('menu-body').innerHTML = '<div class="empty">Menu non disponibile al momento.</div>';
+    return;
+  }
+
+  // Raggruppa per categoria
+  const byCat = {};
+  data.forEach(p => {
+    const catNome = p.categorie_vendita?.nome || 'Altro';
+    if (!CATS_SITO.includes(catNome)) return; // mostra solo le categorie selezionate
+    if (!byCat[catNome]) byCat[catNome] = [];
+    byCat[catNome].push(p);
+  });
+  _allData = byCat;
+
+  // Costruisci filtri
+  const filtriInner = document.getElementById('filtri-inner');
+  CATS_SITO.forEach(cat => {
+    if (!byCat[cat]?.length) return;
+    const btn = document.createElement('button');
+    btn.className = 'filtro-btn';
+    btn.dataset.cat = cat;
+    btn.textContent = CAT_LABELS[cat] || cat;
+    btn.addEventListener('click', () => setFiltro(cat));
+    filtriInner.appendChild(btn);
+  });
+
+  renderMenu('tutti');
+}
+
+function setFiltro(cat) {
+  _catAttiva = cat;
+  document.querySelectorAll('.filtro-btn').forEach(b => b.classList.toggle('active', b.dataset.cat === cat));
+  window._rfTrack && window._rfTrack('click', 'filtro_menu', {valore: cat});
+  renderMenu(cat);
+}
+
+function renderMenu(filtro) {
+  const cats = filtro === 'tutti' ? CATS_SITO : [filtro];
+  let html = '';
+
+  cats.forEach(cat => {
+    const piatti = _allData[cat];
+    if (!piatti?.length) return;
+    html += `<div class="menu-section" id="cat-${cat.replace(/\s+/g,'-')}">`;
+    html += `<h2 class="menu-section-title">${CAT_LABELS[cat] || cat}</h2>`;
+    piatti.forEach(p => {
+      const prezzo = p.prezzo_base && parseFloat(p.prezzo_base) > 0
+        ? '€ ' + parseFloat(p.prezzo_base).toFixed(2).replace('.', ',')
+        : '';
+      html += `<div class="menu-item">
+        <div class="menu-item-left">
+          <div class="menu-item-name">${esc(p.nome)}</div>
+          ${p.descrizione ? `<div class="menu-item-desc">${esc(p.descrizione)}</div>` : ''}
+        </div>
+        ${prezzo ? `<div class="menu-item-price">${prezzo}</div>` : ''}
+      </div>`;
+    });
+    html += '</div>';
+  });
+
+  document.getElementById('menu-body').innerHTML = html || '<div class="empty">Nessun piatto trovato.</div>';
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// Filtro "Tutti" click
+document.querySelector('[data-cat="tutti"]').addEventListener('click', () => setFiltro('tutti'));
+
+caricaMenu();
+</script>
 </body>
 </html>
