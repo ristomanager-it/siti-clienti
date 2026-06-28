@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<meta name="description" content="Contatta la Trattoria dell'Aquila di Orte. Via Lazio 4/b, Orte. Tel: 0761402673">
+<meta property="og:title" content="Contatti — Trattoria dell'Aquila">
+<meta property="og:image" content="https://cuhcscpvhypoaplcmtjk.supabase.co/storage/v1/object/public/media-aziende/b331365f-17db-4dda-aa2f-77a09427fe42/1782497736066-p9srsc2ltfd.jpeg">
+<meta property="og:type" content="restaurant">
+<title>Contatti — Trattoria dell'Aquila</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;600&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{--brand:#794d01;--text:#1a1a1a;--bg:#faf8f5;--white:#fff;}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);}
+h1,h2,h3,.serif{font-family:'Playfair Display',serif;}
+a{color:inherit;text-decoration:none;}
+img{max-width:100%;display:block;}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(250,248,245,.95);backdrop-filter:blur(8px);border-bottom:1px solid rgba(121,77,1,.1);}
+.nav-inner{max-width:1100px;margin:0 auto;padding:0 20px;height:64px;display:flex;align-items:center;justify-content:space-between;}
+.nav-logo{display:flex;align-items:center;gap:10px;}
+.nav-logo img{height:40px;width:40px;border-radius:50%;object-fit:cover;}
+.nav-logo span{font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--brand);}
+.nav-links{display:flex;gap:28px;align-items:center;}
+.nav-links a{font-size:14px;font-weight:400;color:#555;transition:color .2s;}
+.nav-links a:hover{color:var(--brand);}
+.nav-cta{background:var(--brand);color:#fff!important;padding:10px 20px;border-radius:8px;font-weight:600!important;font-size:13px!important;}
+.nav-cta:hover{background:#5c3a01!important;}
+@media(max-width:640px){.nav-links a:not(.nav-cta){display:none;}}
+
+/* HERO */
+.hero{position:relative;height:100vh;min-height:500px;overflow:hidden;}
+.hero-bg{position:absolute;inset:0;background-image:url('https://cuhcscpvhypoaplcmtjk.supabase.co/storage/v1/object/public/media-aziende/b331365f-17db-4dda-aa2f-77a09427fe42/1782497736066-p9srsc2ltfd.jpeg');background-size:cover;background-position:center;}
+.hero-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(0,0,0,.3) 0%,rgba(0,0,0,.55) 100%);}
+.hero-content{position:relative;z-index:1;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:20px;padding-top:80px;}
+.hero-content h1{font-size:clamp(32px,6vw,72px);color:#fff;line-height:1.15;margin-bottom:16px;text-shadow:0 2px 20px rgba(0,0,0,.4);}
+.hero-content p{font-size:clamp(15px,2vw,20px);color:rgba(255,255,255,.9);margin-bottom:32px;max-width:560px;font-weight:300;}
+.btn{display:inline-block;padding:14px 32px;border-radius:8px;font-weight:600;font-size:15px;transition:all .2s;cursor:pointer;}
+.btn-primary{background:var(--brand);color:#fff;}
+.btn-primary:hover{background:#5c3a01;transform:translateY(-1px);box-shadow:0 8px 24px rgba(121,77,1,.35);}
+.btn-outline{border:2px solid #fff;color:#fff;margin-left:12px;}
+.btn-outline:hover{background:#fff;color:var(--brand);}
+@media(max-width:480px){.btn-outline{display:none;}}
+
+/* SEZIONI */
+.section{padding:80px 20px;max-width:1100px;margin:0 auto;}
+.section-full{padding:80px 20px;}
+.section-label{font-size:12px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--brand);margin-bottom:12px;}
+.section-title{font-size:clamp(28px,4vw,48px);font-weight:700;margin-bottom:20px;line-height:1.2;}
+.section-sub{font-size:16px;color:#666;line-height:1.7;max-width:600px;}
+
+/* HIGHLIGHTS */
+.hl-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:32px;margin-top:48px;}
+.hl-item{padding:32px;background:#fff;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,.06);border-top:3px solid var(--brand);}
+.hl-icon{font-size:32px;margin-bottom:16px;}
+.hl-title{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;margin-bottom:10px;color:var(--text);}
+.hl-text{font-size:14px;color:#666;line-height:1.7;}
+
+/* CHI SIAMO */
+.chisiamo-wrap{display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;}
+@media(max-width:768px){.chisiamo-wrap{grid-template-columns:1fr;gap:32px;}}
+.chisiamo-img{border-radius:16px;overflow:hidden;aspect-ratio:4/3;}
+.chisiamo-img img{width:100%;height:100%;object-fit:cover;}
+.chisiamo-text p{font-size:16px;color:#555;line-height:1.8;margin-bottom:16px;}
+.quote{border-left:3px solid var(--brand);padding-left:20px;margin:24px 0;font-family:'Playfair Display',serif;font-size:20px;font-style:italic;color:var(--brand);}
+
+/* GALLERIA */
+.gallery-bg{background:#1a1a1a;padding:80px 20px;}
+.gallery-title{text-align:center;font-family:'Playfair Display',serif;font-size:clamp(28px,4vw,48px);color:#fff;margin-bottom:48px;}
+.gallery-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;max-width:1100px;margin:0 auto;}
+@media(max-width:640px){.gallery-grid{grid-template-columns:repeat(2,1fr);}}
+.gallery-item{aspect-ratio:1;overflow:hidden;border-radius:8px;}
+.gallery-item img{width:100%;height:100%;object-fit:cover;transition:transform .4s;}
+.gallery-item:hover img{transform:scale(1.05);}
+.gallery-item:first-child{grid-column:span 2;aspect-ratio:2/1;}
+
+/* ORARI & INFO */
+.info-bg{background:var(--brand);color:#fff;padding:80px 20px;}
+.info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:40px;max-width:1100px;margin:0 auto;}
+.info-block h3{font-family:'Playfair Display',serif;font-size:22px;margin-bottom:16px;opacity:.8;}
+.info-block p,.info-block a{font-size:15px;line-height:2;opacity:.9;display:block;color:#fff;}
+.orari-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.15);font-size:14px;}
+.orari-row:last-child{border:none;}
+.chiuso{opacity:.4;}
+
+/* PRENOTA */
+.prenota-bg{background:#faf8f5;padding:80px 20px;text-align:center;}
+.prenota-inner{max-width:600px;margin:0 auto;}
+.prenota-inner h2{font-family:'Playfair Display',serif;font-size:clamp(28px,4vw,48px);margin-bottom:16px;}
+.prenota-inner p{font-size:16px;color:#666;margin-bottom:32px;line-height:1.7;}
+
+/* TAG PILLS */
+.tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:20px;}
+.tag{padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;background:rgba(121,77,1,.1);color:var(--brand);}
+
+/* FOOTER */
+footer{background:#111;color:#aaa;padding:40px 20px;text-align:center;}
+footer .f-logo{font-family:'Playfair Display',serif;font-size:22px;color:#fff;margin-bottom:8px;}
+footer p{font-size:13px;margin:4px 0;}
+footer a{color:#aaa;}
+
+/* TRACKING */
+</style>
+</head>
+<body>
+
+<script>
+(function(){
+  var SID=sessionStorage.getItem('rf_sid')||(crypto.randomUUID?crypto.randomUUID():Math.random().toString(36).slice(2));
+  sessionStorage.setItem('rf_sid',SID);
+  var AZ_ID='b331365f-17db-4dda-aa2f-77a09427fe42';
+  var SEDE_ID='4a936e52-a1e3-42fc-843c-e8d15dc86040';
+  var PAGINA=location.pathname.split('/').pop().replace('.html','')||'home';
+  window._rfTrack=function(tipo,elemento,extra){
+    var p=new URLSearchParams(location.search);
+    fetch('https://cuhcscpvhypoaplcmtjk.supabase.co/functions/v1/track',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(Object.assign({
+        azienda_id:AZ_ID,sede_id:SEDE_ID,
+        pagina:'sito-'+PAGINA,pagina_id:SEDE_ID,
+        tipo:tipo,elemento:elemento||null,
+        referrer:document.referrer||null,
+        utm_source:p.get('utm_source'),utm_medium:p.get('utm_medium'),utm_campaign:p.get('utm_campaign'),
+        device:/Mobi/.test(navigator.userAgent)?'mobile':'desktop',
+        session_id:SID
+      },extra||{}))
+    }).catch(function(){});
+  };
+  window._rfTrack('view','sito_pagina',{completato:false});
+  document.addEventListener('click',function(e){
+    var a=e.target.closest('a');
+    if(!a)return;
+    var href=a.href||'';
+    if(href.includes('prenotazione-online')||a.classList.contains('nav-cta')||a.classList.contains('btn-primary'))
+      window._rfTrack('click','cta_prenota',{valore:href.slice(0,80)});
+    else if(href.startsWith('tel:'))
+      window._rfTrack('click','click_telefono',{valore:href});
+    else if(href.includes('contatti'))
+      window._rfTrack('click','click_contatti',{});
+    else if(href.includes('menu'))
+      window._rfTrack('click','click_menu',{});
+  });
+})();
+</script>
+
+<nav>
+  <div class="nav-inner">
+    <div class="nav-logo">
+      <img src="https://cuhcscpvhypoaplcmtjk.supabase.co/storage/v1/object/public/loghi-aziende/undefined/1781733575688.jpg?t=1781733575943" alt="Trattoria dell'Aquila" onerror="this.style.display='none'">
+      <span>Trattoria dell'Aquila</span>
+    </div>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+<a href="chi-siamo.html">Chi siamo</a>
+<a href="menu.html">Menu</a>
+<a href="contatti.html"style="color:var(--brand);font-weight:600;">Contatti</a>
+
+      <a href="https://app.ristoflow-ai.com/prenotazione-online.html?form_id=ef3d693b-794e-4a24-9ee1-804c92808bfc" class="nav-cta">Prenota →</a>
+    </div>
+  </div>
+</nav>
+<div style="padding-top:64px;">
+  <div style="background:var(--brand);padding:60px 20px;text-align:center;">
+    <h1 style="font-family:'Playfair Display',serif;font-size:clamp(28px,5vw,56px);color:#fff;margin-bottom:8px;">Vieni a trovarci</h1>
+    <p style="color:rgba(255,255,255,.8);font-size:16px;">Via Lazio 4/b, Orte</p>
+  </div>
+
+  <div class="section" style="max-width:800px;">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-bottom:48px;">
+      <div>
+        <h3 style="font-family:'Playfair Display',serif;font-size:22px;margin-bottom:16px;color:var(--brand);">📞 Contatti</h3>
+        <p style="font-size:15px;margin-bottom:8px;"><strong>Telefono:</strong> <a href="tel:0761402673" style="color:var(--brand);">0761402673</a></p>
+        <p style="font-size:15px;margin-bottom:8px;"><strong>Email:</strong> <a href="mailto:Trattoriadellaquila@gmail.com" style="color:var(--brand);">Trattoriadellaquila@gmail.com</a></p>
+        <p style="font-size:15px;"><strong>Indirizzo:</strong> Via Lazio 4/b, Orte</p>
+        <a href="https://app.ristoflow-ai.com/prenotazione-online.html?form_id=ef3d693b-794e-4a24-9ee1-804c92808bfc" style="display:inline-block;margin-top:20px;background:var(--brand);color:#fff;padding:12px 24px;border-radius:8px;font-weight:700;font-size:14px;">Prenota un tavolo →</a>
+      </div>
+      <div>
+        <h3 style="font-family:'Playfair Display',serif;font-size:22px;margin-bottom:16px;color:var(--brand);">🕐 Orari</h3>
+        <div class="orari-row"><span>Lunedì</span><span>12:00–14:30 / 19:30–22:30</span></div><div class="orari-row"><span>Martedì</span><span>12:00–14:30 / 19:30–22:30</span></div><div class="orari-row"><span>Mercoledì</span><span>12:00–14:30 / 19:30–22:30</span></div><div class="orari-row"><span>Giovedì</span><span>12:00–14:30 / 19:30–22:30</span></div><div class="orari-row"><span>Venerdì</span><span>12:00–14:30 / 19:30–22:30</span></div><div class="orari-row"><span>Sabato</span><span>12:00–14:30 / 19:30–22:30</span></div><div class="orari-row chiuso"><span>Domenica</span><span>Chiuso</span></div>
+      </div>
+    </div>
+
+    <!-- MAPPA -->
+    <div style="border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.1);">
+      <iframe
+        src="https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZWTgaQzuU3aoo&q=Via+Lazio+4+Orte+VT"
+        width="100%" height="360" style="border:0;display:block;" allowfullscreen loading="lazy">
+      </iframe>
+    </div>
+
+    <div style="text-align:center;margin-top:40px;">
+      <a href="https://maps.google.com/?q=Via+Lazio+4+Orte" target="_blank" class="btn btn-primary">📍 Apri in Google Maps</a>
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="f-logo">Trattoria dell'Aquila</div>
+  <p>Via Lazio 4/b, Orte</p>
+  <p><a href="tel:0761402673">0761402673</a> · <a href="mailto:Trattoriadellaquila@gmail.com">Trattoriadellaquila@gmail.com</a></p>
+  <p style="margin-top:16px;font-size:12px;opacity:.5;">P.IVA · © Trattoria dell'Aquila 2026</p>
+</footer>
+</body>
+</html>
