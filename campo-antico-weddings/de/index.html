@@ -230,5 +230,28 @@ $("req").addEventListener("submit",function(ev){ev.preventDefault();var t=[[S.f_
 window.open("https://wa.me/"+WA+"?text="+encodeURIComponent(t),"_blank")});
 })();
 </script>
+<script>
+(function(){
+var ESCL=false;try{ESCL=localStorage.getItem('rf_escludi')==='1';}catch(e){}
+var SID='';try{SID=sessionStorage.getItem('rf_sid')||'';if(!SID){SID=Math.random().toString(36).slice(2)+Date.now().toString(36);sessionStorage.setItem('rf_sid',SID);}}catch(e){}
+var AZ='b331365f-17db-4dda-aa2f-77a09427fe42',LANG=document.documentElement.lang||'';
+var PAG='wedding-'+(location.pathname.split('/').filter(Boolean).pop()||'root');
+function t(tipo,el,val,ok){if(ESCL)return;var p=new URLSearchParams(location.search);
+fetch('https://cuhcscpvhypoaplcmtjk.supabase.co/functions/v1/track',{method:'POST',headers:{'Content-Type':'application/json'},keepalive:true,
+body:JSON.stringify({azienda_id:AZ,pagina:PAG,pagina_id:AZ,tipo:tipo,elemento:el||null,valore:val||LANG,referrer:document.referrer||null,
+utm_source:p.get('utm_source'),utm_medium:p.get('utm_medium'),utm_campaign:p.get('utm_campaign'),
+device:/Mobi/.test(navigator.userAgent)?'mobile':'desktop',session_id:SID,completato:!!ok})}).catch(function(){});}
+t('view','pagina');
+document.addEventListener('click',function(e){var a=e.target.closest('a,button,summary');if(!a)return;
+var h=a.getAttribute('href')||'';
+if(h.indexOf('wa.me')>=0)t('submit','whatsapp',a.id||a.textContent.trim().slice(0,40),true);
+else if(a.tagName==='SUMMARY')t('click','faq',a.textContent.trim().slice(0,80));
+else if(h.charAt(0)==='#')t('click','vai_'+h.slice(1));
+else if(a.closest('.langs'))t('click','lingua',a.textContent.trim());
+else if(h.indexOf('campo-antico-')>=0)t('click','altro_sito',h);},true);
+var f=document.getElementById('req');if(f)f.addEventListener('submit',function(){t('submit','richiesta_whatsapp',null,true);},true);
+var g=document.getElementById('g');if(g)g.addEventListener('change',function(){t('click','calcolatore',g.value);});
+})();
+</script>
 </body>
 </html>
