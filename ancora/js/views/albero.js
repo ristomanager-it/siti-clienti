@@ -23,6 +23,10 @@ export default async function ({ params }) {
       <b>${esc(cerchia.nome)}</b><span style="width:44px"></span></header>
     ${famiglie.length > 1 ? `<div class="storie" style="gap:6px;padding-bottom:8px">${famiglie.map((c) =>
       `<a class="chip ${c.id === cerchiaId ? "on" : ""}" style="flex-shrink:0;text-decoration:none" href="#/albero?c=${c.id}">${esc(c.nome)}</a>`).join("")}</div>` : ""}
+    <div class="riga pad" style="padding-top:0;gap:6px"><span class="tenue" id="conta" style="flex:1"></span>
+      <button class="chip" id="meno" style="margin:0" aria-label="Rimpicciolisci">−</button>
+      <button class="chip" id="adatta" style="margin:0">Tutto</button>
+      <button class="chip" id="piu" style="margin:0" aria-label="Ingrandisci">+</button></div>
     <div id="tela" style="overflow:auto;-webkit-overflow-scrolling:touch;padding-bottom:20px"></div>
     <p class="pad tenue">Tocca una persona per aggiungere genitori, figli o coniuge. L'albero lo completa tutta la famiglia.</p>
     <div id="foglio"></div>`;
@@ -39,6 +43,20 @@ export default async function ({ params }) {
   }
 
   disegna(nodi, legami ?? []);
+  // zoom: con 30, 50 persone l'albero è largo; si rimpicciolisce, si ingrandisce, si vede tutto
+  const svg = document.querySelector("#tela svg");
+  const larga = Number(svg.getAttribute("width")), alta = Number(svg.getAttribute("height"));
+  let zoom = Math.min(1, Math.max(0.45, (innerWidth - 8) / larga));
+  const applica = () => { svg.setAttribute("width", Math.round(larga * zoom)); svg.setAttribute("height", Math.round(alta * zoom)); };
+  applica();
+  document.getElementById("conta").textContent = `${nodi.length} persone`;
+  document.getElementById("meno").onclick = () => { zoom = Math.max(0.3, zoom - 0.15); applica(); };
+  document.getElementById("piu").onclick = () => { zoom = Math.min(1.6, zoom + 0.15); applica(); };
+  document.getElementById("adatta").onclick = () => { zoom = Math.min(1, (innerWidth - 8) / larga); applica(); };
+  // si apre centrato su di me
+  const io = nodi.find((n) => n.persona_id === state.io.id);
+  const g = io && document.querySelector(`[data-nodo="${io.id}"] rect`);
+  if (g) document.getElementById("tela").scrollLeft = Math.max(0, Number(g.getAttribute("x")) * zoom - innerWidth / 2 + 64 * zoom);
   document.querySelectorAll("[data-nodo]").forEach((g) => g.addEventListener("click", () =>
     scheda(nodi.find((n) => n.id === g.dataset.nodo), nodi, legami ?? [], cerchiaId)));
 }
@@ -140,9 +158,9 @@ function disegna(nodi, legami) {
     const yp = Math.max(...gs.map((g) => y(g))) + (gs.length > 1 ? H / 2 : H);
     const fs = [...figli];
     const yf = Math.min(...fs.map((f) => y(f)));
-    const ym = yf - (RIGA - H) / 2 + ((k++ % 3) - 1) * 9;
+    const ym = yf - (RIGA - H) / 2 + ((k % 4) - 1.5) * 12;   // ogni coppia di genitori la sua altezza
     const xs = fs.map((f) => pos.get(f) + W / 2);
-    const colore = ["#9AA7A1", "#B08B5A", "#6F8F86"][k % 3];
+    const colore = ["#5E7F77", "#C9832E", "#7A3B2E", "#0F5257"][k++ % 4];
     linee.push(`<path d="M${xp} ${yp}V${ym}" stroke="${colore}" stroke-width="2"/>`);
     linee.push(`<path d="M${Math.min(xp, ...xs)} ${ym}H${Math.max(xp, ...xs)}" stroke="${colore}" stroke-width="2"/>`);
     for (const f of fs) linee.push(`<path d="M${pos.get(f) + W / 2} ${ym}V${y(f)}" stroke="${colore}" stroke-width="2"/>`);
@@ -162,7 +180,7 @@ function disegna(nodi, legami) {
 
   const alto = MARGINE * 2 + (righe - 1) * RIGA + H;
   document.getElementById("tela").innerHTML =
-    `<svg width="${larghezza}" height="${alto}" viewBox="0 0 ${larghezza} ${alto}" style="display:block;min-width:100%">${linee.join("")}${schede}</svg>`;
+    `<svg width="${larghezza}" height="${alto}" viewBox="0 0 ${larghezza} ${alto}" style="display:block">${linee.join("")}${schede}</svg>`;
 }
 
 const taglia = (s, n) => (s.length > n ? s.slice(0, n - 1) + "…" : s);
