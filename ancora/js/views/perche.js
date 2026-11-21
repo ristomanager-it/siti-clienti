@@ -5,8 +5,8 @@ export default async function () {
   $app().innerHTML = `
     <header class="testa"><a class="icona" href="#/accesso" aria-label="Indietro"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></a><span class="logo" style="font-size:22px">Ancora</span><span style="width:44px"></span></header>
     <div class="pad">
-      <h1 style="margin:8px 0 6px">Le radici che restano.</h1>
-      <p class="tenue" style="font-size:15px;margin-top:0">Perché Ancora, come funziona, cosa trovi.</p>
+      <h1 style="margin:8px 0 6px">Riavvicina la tua famiglia.</h1>
+      <p class="tenue" style="font-size:15px;margin-top:0">Parlatevi, raccontatevi, scoprite da dove venite. Ancora: le radici che restano.</p>
     </div>
     <div class="lettera" style="font-size:18px">L'<b>ancora</b> tiene ferma la barca nel porto sicuro: le radici, la famiglia, la voce di chi ci ha cresciuti.
 <b>Ancora</b> vuol dire anche di più, un'altra volta, senza fine: "nonno, raccontamela ancora".
@@ -16,7 +16,7 @@ Ciò che ci tiene saldi resta con noi, ancora e ancora.</div>
       <p><b>Crediamo che nessuno debba perdere la voce di chi ama.</b> Le storie di una famiglia si perdono in silenzio: nessuno le scrive, e quando vogliamo sentirle è tardi.</p>
       <ol style="padding-left:20px">
         <li><b>Tenere ferme le radici.</b> I ricordi e la voce di chi ci ha cresciuti, al sicuro e privati, per sempre.</li>
-        <li><b>Avvicinare chi è lontano adesso.</b> Il nonno racconta, il nipote risponde con un vocale.</li>
+        <li><b>Riavvicinare chi è lontano adesso.</b> Il nonno racconta, il nipote risponde con un vocale, i cugini si scoprono. Si torna a parlarsi.</li>
         <li><b>Continuare dopo.</b> Chi verrà potrà ascoltare quella voce.</li>
       </ol>
     </div>
@@ -30,7 +30,10 @@ Ciò che ci tiene saldi resta con noi, ancora e ancora.</div>
     </ul></div>
     <h2>Cosa</h2>
     <div class="pad" style="padding-top:0"><ul style="padding-left:20px">
-      <li><b>Il tuo cloud dei ricordi:</b> scatta o carica foto, video e vocali. Al sicuro per sempre, privati finché non li condividi. 2 GB gratis, 25 GB con il piano.</li>
+      <li><b>La domanda della settimana</b> per tutta la famiglia: da dove viene il nostro cognome? Chi è partito, e per dove? Tutti rispondono, e ci si scopre.</li>
+      <li><b>L'albero genealogico</b> che la famiglia completa insieme, anche con chi non c'è più.</li>
+      <li><b>La domanda della settimana</b> per tutta la famiglia: da dove viene il nostro cognome? Chi è partito, e per dove? Tutti rispondono, e ci si scopre.</li>
+      <li><b>L'albero genealogico</b> che la famiglia completa insieme, anche con chi non c'è più.</li>
       <li><b>Il tuo cloud dei ricordi:</b> foto, video e vocali scattati o caricati dal telefono, privati finché non li condividi.</li>
       <li><b>Domande su WhatsApp</b> per chi racconta.</li>
       <li><b>Album di famiglia</b> con foto, vocali, cuori e risposte a voce.</li>

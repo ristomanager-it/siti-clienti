@@ -27,13 +27,22 @@ const ROTTE = {
   "ricette": () => import("./views/ricette.js"),
   "libro": () => import("./views/libro.js"),
   "archivio": () => import("./views/archivio.js"),
-  "cloud": () => import("./views/cloud.js"),
+  "settimana": () => import("./views/settimana.js"),
 };
 const PUBBLICHE = new Set(["accesso", "regala", "perche", "prova", "rispondi", "ascolta", "biglietto"]);
 
 export const $app = () => document.getElementById("app");
 export const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 export const iniziali = (n) => (n ?? "?").split(" ").map((p) => p[0]).join("").slice(0, 2).toUpperCase();
+/** Settimana ISO, es. "2026-W47": la domanda della settimana è la stessa per tutta la famiglia. */
+export function settimana(d = new Date()) {
+  const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const g = t.getUTCDay() || 7;
+  t.setUTCDate(t.getUTCDate() + 4 - g);
+  const inizio = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+  const n = Math.ceil(((t - inizio) / 864e5 + 1) / 7);
+  return { codice: `${t.getUTCFullYear()}-W${String(n).padStart(2, "0")}`, numero: n };
+}
 export const quando = (d) => new Date(d).toLocaleDateString("it-IT", { day: "numeric", month: "long" });
 
 export async function urlMedia(path) {

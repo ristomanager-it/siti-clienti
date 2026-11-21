@@ -11,9 +11,14 @@ export default async function ({ params }) {
     const { data } = await sb.from("ricordi").select("id, titolo, cerchia_id, persone:autore_id(nome, soprannome)").eq("id", params.risposta).maybeSingle();
     rispostaA = data;
   }
+  let domandaSett = null;
+  if (params.settimana && params.q) {
+    const { data } = await sb.from("domande_famiglia").select("testo").eq("id", params.q).maybeSingle();
+    domandaSett = data?.testo ?? null;
+  }
   const cerchie = state.cerchie;
-  let scelta = rispostaA?.cerchia_id ?? cerchie.find((c) => c.tipo === "famiglia")?.id ?? "solo_io";
-  const invito = domanda?.testo
+  let scelta = (params.settimana && params.c) || rispostaA?.cerchia_id || cerchie.find((c) => c.tipo === "famiglia")?.id || "solo_io";
+  const invito = domandaSett ?? domanda?.testo
     ?? (rispostaA ? `Rispondi a ${rispostaA.persone?.soprannome ?? rispostaA.persone?.nome}` : null)
     ?? (params.ricetta ? "La ricetta di famiglia: racconta come si fa, e chi te l'ha insegnata."
       : params.foto ? "Chi c'è in questa foto? Dove eravate?" : "Racconta una cosa che vuoi ricordare.");
@@ -94,7 +99,8 @@ export default async function ({ params }) {
     const { data: r, error } = await sb.from("ricordi").insert({
       autore_id: state.io.id,
       tipo: ricetta ? "ricetta" : rispostaA ? "risposta" : (files.length && !blob ? "foto" : "racconto"),
-      titolo: ricetta ? ricetta.nome : domanda?.testo ?? null, testo: testo || null,
+      titolo: ricetta ? ricetta.nome : domandaSett ?? domanda?.testo ?? null, testo: testo || null,
+      domanda_settimana: domandaSett ? params.settimana : null,
       dettagli: ricetta ? { porzioni: ricetta.porzioni, ingredienti: ricetta.ingredienti, procedimento: ricetta.procedimento } : null,
       visibilita: scelta === "solo_io" ? "solo_io" : "cerchia",
       cerchia_id: scelta === "solo_io" ? null : scelta,

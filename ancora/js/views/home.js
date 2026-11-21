@@ -1,5 +1,5 @@
 // Il feed della famiglia: storie della settimana in alto, poi i ricordi con foto grande e voce.
-import { sb, state, $app, esc, quando, nomeDi, avatar, pulsanteVoce, urlMediaMolti, ICONE } from "../app.js";
+import { sb, state, $app, esc, quando, nomeDi, avatar, pulsanteVoce, urlMediaMolti, ICONE, settimana } from "../app.js";
 
 export default async function ({ params }) {
   // arrivo dal link di invito: entra nella cerchia/famiglia e ricarica i dati
@@ -28,6 +28,31 @@ export default async function ({ params }) {
   const storie = [...new Map(lista.filter((r) => new Date(r.creato_il).getTime() > settimana && r.autore_id !== state.io.id)
     .map((r) => [r.autore_id, r])).values()];
 
+  // la domanda della settimana: per la famiglia scelta, o la prima famiglia
+  const fam = state.cerchie.find((c) => c.id === filtro && c.tipo === "famiglia") ?? state.cerchie.find((c) => c.tipo === "famiglia");
+  let cardSettimana = "";
+  if (fam) {
+    const sett = settimana();
+    const { data: domande } = await sb.from("domande_famiglia").select("id, testo, tema").order("id");
+    if (domande?.length) {
+      const seme = [...fam.id].reduce((a, c) => a + c.charCodeAt(0), 0);
+      const d = domande[(sett.numero + seme) % domande.length];
+      const { data: risposte } = await sb.from("ricordi").select("id, autore_id, persone:autore_id(id, nome, soprannome)")
+        .eq("cerchia_id", fam.id).eq("domanda_settimana", sett.codice);
+      const io = (risposte ?? []).some((r) => r.autore_id === state.io.id);
+      cardSettimana = `<div class="lettera" style="margin-bottom:22px;font-size:18px">
+        <span style="display:block;font-family:Manrope,sans-serif;font-size:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:#8A5A17">La domanda della settimana · ${esc(fam.nome)}</span>
+        <b style="display:block;font-size:22px;line-height:1.25;margin:6px 0 10px">${esc(d.testo)}</b>
+        <div style="display:flex;align-items:center;gap:6px;font-family:Manrope,sans-serif;font-size:13px">
+          ${(risposte ?? []).slice(0, 6).map((r) => avatar(r.persone, 26)).join("")}
+          <span>${risposte?.length ? `${risposte.length} ${risposte.length === 1 ? "ha risposto" : "hanno risposto"}` : "Nessuno ha ancora risposto: comincia tu"}</span></div>
+        <div class="riga" style="gap:8px;margin-top:12px;font-family:Manrope,sans-serif">
+          ${io ? "" : `<a class="btn ambra" style="flex:1;min-height:46px" href="#/racconta?settimana=${sett.codice}&c=${fam.id}&q=${d.id}">Rispondi a voce</a>`}
+          ${risposte?.length ? `<a class="btn chiaro" style="flex:1;min-height:46px" href="#/settimana?c=${fam.id}&s=${sett.codice}&q=${d.id}">Ascolta le risposte</a>` : ""}
+        </div></div>`;
+    }
+  }
+
   $app().innerHTML = `
     <header class="testa"><span class="logo">Ancora</span><span style="flex:1"></span>
       <a class="icona" href="#/agenda" aria-label="Agenda: vacanze, compiti, esami">${ICONE.agenda}</a>
@@ -35,6 +60,7 @@ export default async function ({ params }) {
       <a class="icona" href="#/cerchie" aria-label="Cerchie e inviti"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></a></header>
     ${state.cerchie.length > 1 ? `<div class="storie" style="gap:6px;padding-bottom:8px" aria-label="Scegli la famiglia">${[["", "Tutti"], ...ordinaCerchie(state.cerchie).map((c) => [c.id, c.nome]), ["diretti", "Messaggi per me"]]
       .map(([id, n]) => `<a class="chip ${(filtro ?? "") === id ? "on" : ""}" style="flex-shrink:0;text-decoration:none" href="#/${id ? `?c=${id}` : ""}">${esc(n)}</a>`).join("")}</div>` : ""}
+    ${cardSettimana}
     ${storie.length ? `<div class="storie" aria-label="Racconti della settimana">${storie.map((r) => {
       const fotoR = (r.ricordi_media ?? []).find((m) => m.tipo === "foto");
       const sfondo = fotoR ? url[fotoR.path] : (r.persone?.foto_path ? url[r.persone.foto_path] : null);
