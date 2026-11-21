@@ -38,7 +38,7 @@ export default async function ({ params }) {
       </form></details>
     <div class="pad"><a class="btn ambra" href="#/prova">Prova gratis: fai una domanda al nonno</a>
       <a class="btn chiaro" style="margin-top:10px" href="#/regala">Regala Ancora</a>
-      <p style="text-align:center"><a href="#/perche">Perché Ancora</a></p></div>`;
+      <p style="text-align:center"><a href="#/scopri">Scopri Ancora</a> · <a href="#/perche">Perché Ancora</a></p></div>`;
 
   document.getElementById("fe").onsubmit = async (e) => {
     e.preventDefault();

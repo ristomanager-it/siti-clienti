@@ -42,8 +42,6 @@ Ciò che ci tiene saldi resta con noi, ancora e ancora.</div>
     <div class="pad" style="padding-top:0"><ul style="padding-left:20px">
       <li><b>La domanda della settimana</b> per tutta la famiglia: da dove viene il nostro cognome? Chi è partito, e per dove? Tutti rispondono, e ci si scopre.</li>
       <li><b>L'albero genealogico</b> che la famiglia completa insieme, anche con chi non c'è più.</li>
-      <li><b>La domanda della settimana</b> per tutta la famiglia: da dove viene il nostro cognome? Chi è partito, e per dove? Tutti rispondono, e ci si scopre.</li>
-      <li><b>L'albero genealogico</b> che la famiglia completa insieme, anche con chi non c'è più.</li>
       <li><b>Il tuo cloud dei ricordi:</b> foto, video e vocali scattati o caricati dal telefono, privati finché non li condividi.</li>
       <li><b>Domande su WhatsApp</b> per chi racconta.</li>
       <li><b>Album di famiglia</b> con foto, vocali, cuori e risposte a voce.</li>

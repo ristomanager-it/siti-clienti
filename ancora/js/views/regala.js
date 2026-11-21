@@ -20,10 +20,17 @@ export default async function ({ params }) {
       <a class="btn chiaro" style="margin-top:10px" href="#/accesso">Entra in Ancora</a></div>`;
     return;
   }
-  let tipo = TIPI[0];
-  const natale = `${new Date().getFullYear()}-12-25`;
   $app().innerHTML = `
     <header class="testa"><span><span class="logo" style="font-size:22px">Regala Ancora</span><div class="tenue" style="font-size:12px;font-weight:700">Il cloud dei tuoi ricordi</div></span><span></span></header>
+    <div id="modulo-regalo"></div>`;
+  montaModulo(document.getElementById("modulo-regalo"), params);
+}
+
+// Il modulo d'acquisto: usato qui e nella pagina di vendita (#/scopri)
+export function montaModulo(el, params = {}) {
+  let tipo = TIPI[0];
+  const natale = `${new Date().getFullYear()}-12-25`;
+  el.innerHTML = `
     <form id="f" class="pad">
       <span class="chip on" style="background:#B3402F;margin:0 0 10px">Promo Natale</span>
       <h1>Un anno di ricordi, per chi vuoi tu</h1>

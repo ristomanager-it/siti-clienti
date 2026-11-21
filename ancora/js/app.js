@@ -22,6 +22,7 @@ const ROTTE = {
   "piano": () => import("./views/piano.js"),
   "prova": () => import("./views/prova.js"),
   "omaggio": () => import("./views/omaggio.js"),
+  "scopri": () => import("./views/scopri.js"),
   "rispondi": () => import("./views/prova.js"),
   "ascolta": () => import("./views/prova.js"),
   "biglietto": () => import("./views/biglietto.js"),
@@ -31,7 +32,7 @@ const ROTTE = {
   "settimana": () => import("./views/settimana.js"),
   "servizi": () => import("./views/servizi.js"),
 };
-const PUBBLICHE = new Set(["omaggio", "accesso", "regala", "perche", "prova", "rispondi", "ascolta", "biglietto"]);
+const PUBBLICHE = new Set(["scopri", "omaggio", "accesso", "regala", "perche", "prova", "rispondi", "ascolta", "biglietto"]);
 
 export const $app = () => document.getElementById("app");
 export const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -170,7 +171,7 @@ async function render() {
   const id = rotta.split("/")[1];
 
   if (!PUBBLICHE.has(nome) && !state.io && !(await caricaIo())) {
-    location.hash = "#/accesso"; return;
+    location.hash = nome === "" ? "#/scopri" : "#/accesso"; return;   // chi arriva dal link principale vede la pagina di vendita
   }
   const barra = document.getElementById("barra");
   barra.hidden = PUBBLICHE.has(nome) || state.io?.modalita === "semplice";

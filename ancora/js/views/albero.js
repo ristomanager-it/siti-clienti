@@ -6,32 +6,43 @@ const W = 128, H = 70, GAP = 22, COPPIA = 10, RIGA = 140, MARGINE = 24;
 
 export default async function ({ params }) {
   const famiglie = state.cerchie.filter((c) => c.tipo === "famiglia");
-  const cerchiaId = params.c ?? famiglie[0]?.id;
-  const cerchia = state.cerchie.find((c) => c.id === cerchiaId);
+  const uniti = params.c === "tutti" && famiglie.length > 1;
+  const cerchiaId = uniti ? null : (params.c ?? famiglie[0]?.id);
+  const cerchia = uniti ? { nome: "Tutti gli alberi" } : state.cerchie.find((c) => c.id === cerchiaId);
   if (!cerchia) {
     $app().innerHTML = `<header class="testa"><span class="logo" style="font-size:22px">Albero</span><span></span></header>
       <div class="pad"><p>Per fare l'albero serve una famiglia.</p><a class="btn" href="#/cerchie">Crea la tua famiglia</a></div>`;
     return;
   }
-  const [{ data: nodi }, { data: legami }] = await Promise.all([
-    sb.from("albero_nodi").select("*").eq("cerchia_id", cerchiaId).order("creato_il"),
-    sb.from("albero_legami").select("*").eq("cerchia_id", cerchiaId),
+  const ids = famiglie.map((c) => c.id);
+  const [{ data: tuttiN }, { data: tuttiL }] = await Promise.all([
+    sb.from("albero_nodi").select("*").in("cerchia_id", ids).order("creato_il"),
+    sb.from("albero_legami").select("*").in("cerchia_id", ids),
   ]);
+  const gruppo = stessaPersona(tuttiN ?? []);          // id nodo → id del "capofila" (stessa persona)
+  const altrove = (n) => (tuttiN ?? []).filter((x) => x.cerchia_id !== n.cerchia_id && gruppo.get(x.id) === gruppo.get(n.id));
+  const { nodi, legami } = uniti
+    ? unisci(tuttiN ?? [], tuttiL ?? [], gruppo)
+    : { nodi: (tuttiN ?? []).filter((n) => n.cerchia_id === cerchiaId), legami: (tuttiL ?? []).filter((l) => l.cerchia_id === cerchiaId) };
+  const nomeAlbero = (id) => famiglie.find((c) => c.id === id)?.nome ?? "";
 
   $app().innerHTML = `
     <header class="testa"><a class="icona" href="#/cerchie" aria-label="Indietro">${ICONE.indietro}</a>
       <b>${esc(cerchia.nome)}</b><span style="width:44px"></span></header>
     ${famiglie.length > 1 ? `<div class="storie" style="gap:6px;padding-bottom:8px">${famiglie.map((c) =>
-      `<a class="chip ${c.id === cerchiaId ? "on" : ""}" style="flex-shrink:0;text-decoration:none" href="#/albero?c=${c.id}">${esc(c.nome)}</a>`).join("")}</div>` : ""}
+      `<a class="chip ${c.id === cerchiaId ? "on" : ""}" style="flex-shrink:0;text-decoration:none" href="#/albero?c=${c.id}">${esc(c.nome)}</a>`).join("")}
+      <a class="chip ${uniti ? "on" : ""}" style="flex-shrink:0;text-decoration:none" href="#/albero?c=tutti">🔗 Tutti uniti</a></div>` : ""}
     <div class="riga pad" style="padding-top:0;gap:6px"><span class="tenue" id="conta" style="flex:1"></span>
       <button class="chip" id="meno" style="margin:0" aria-label="Rimpicciolisci">−</button>
       <button class="chip" id="adatta" style="margin:0">Tutto</button>
       <button class="chip" id="piu" style="margin:0" aria-label="Ingrandisci">+</button></div>
     <div id="tela" style="overflow:auto;-webkit-overflow-scrolling:touch;padding-bottom:20px"></div>
-    <p class="pad tenue">Tocca una persona per aggiungere genitori, figli o coniuge. L'albero lo completa tutta la famiglia.</p>
+    <p class="pad tenue">${uniti
+      ? "Qui vedi tutti i tuoi alberi uniti: la tua famiglia, quella dei tuoi genitori, quella dei suoceri. Si uniscono dove c'è la stessa persona (🔗). Per aggiungere parenti, apri il singolo albero."
+      : "Tocca una persona per aggiungere genitori, figli o coniuge. L'albero lo completa tutta la famiglia. Se una persona è anche in un altro albero (per esempio tua moglie in quello dei suoceri), collegala: così gli alberi si uniscono."}</p>
     <div id="foglio"></div>`;
 
-  if (!nodi?.length) {
+  if (!nodi?.length && !uniti) {
     document.getElementById("tela").innerHTML = `<div class="pad"><div class="lettera" style="margin:0;font-size:19px">Ogni albero comincia da una persona. Comincia da te: poi aggiungi i tuoi genitori, i nonni, i figli.</div>
       <button class="btn ambra" id="inizia" style="margin-top:14px">Inizia da me</button></div>`;
     document.getElementById("inizia").onclick = async () => {
@@ -42,23 +53,74 @@ export default async function ({ params }) {
     return;
   }
 
-  disegna(nodi, legami ?? []);
+  disegna(nodi, legami ?? [], (n) => uniti ? (n.alberi?.length > 1) : altrove(n).length > 0);
   // zoom: con 30, 50 persone l'albero è largo; si rimpicciolisce, si ingrandisce, si vede tutto
   const svg = document.querySelector("#tela svg");
   const larga = Number(svg.getAttribute("width")), alta = Number(svg.getAttribute("height"));
   let zoom = Math.min(1, Math.max(0.45, (innerWidth - 8) / larga));
   const applica = () => { svg.setAttribute("width", Math.round(larga * zoom)); svg.setAttribute("height", Math.round(alta * zoom)); };
   applica();
-  document.getElementById("conta").textContent = `${nodi.length} persone`;
+  document.getElementById("conta").textContent = `${nodi.length} persone${uniti ? ` · ${famiglie.length} alberi` : ""}`;
   document.getElementById("meno").onclick = () => { zoom = Math.max(0.3, zoom - 0.15); applica(); };
   document.getElementById("piu").onclick = () => { zoom = Math.min(1.6, zoom + 0.15); applica(); };
   document.getElementById("adatta").onclick = () => { zoom = Math.min(1, (innerWidth - 8) / larga); applica(); };
   // si apre centrato su di me
-  const io = nodi.find((n) => n.persona_id === state.io.id);
+  const io = nodi.find((n) => n.persona_id === state.io.id || n.persone?.includes(state.io.id));
   const g = io && document.querySelector(`[data-nodo="${io.id}"] rect`);
   if (g) document.getElementById("tela").scrollLeft = Math.max(0, Number(g.getAttribute("x")) * zoom - innerWidth / 2 + 64 * zoom);
   document.querySelectorAll("[data-nodo]").forEach((g) => g.addEventListener("click", () =>
-    scheda(nodi.find((n) => n.id === g.dataset.nodo), nodi, legami ?? [], cerchiaId)));
+    uniti ? schedaUnita(nodi.find((n) => n.id === g.dataset.nodo), nomeAlbero)
+          : scheda(nodi.find((n) => n.id === g.dataset.nodo), nodi, legami ?? [], cerchiaId, { tuttiN: tuttiN ?? [], altrove, nomeAlbero })));
+}
+
+// --- la stessa persona in più alberi: stesso account, collegata a mano, oppure stesso nome, cognome e anno ---
+function stessaPersona(nodi) {
+  const padre = new Map(nodi.map((n) => [n.id, n.id]));
+  const trova = (x) => { while (padre.get(x) !== x) { padre.set(x, padre.get(padre.get(x))); x = padre.get(x); } return x; };
+  const unisciDue = (a, b) => { if (padre.has(a) && padre.has(b)) padre.set(trova(a), trova(b)); };
+  const per = new Map();
+  for (const n of nodi) {
+    const anno = n.anno_nascita ?? n.nascita?.slice(0, 4);
+    const chiavi = [n.persona_id && `p:${n.persona_id}`,
+      n.cognome && anno && `n:${n.nome.trim().toLowerCase()}|${n.cognome.trim().toLowerCase()}|${anno}`].filter(Boolean);
+    for (const k of chiavi) { if (per.has(k)) unisciDue(n.id, per.get(k)); else per.set(k, n.id); }
+    if (n.collegato_a) unisciDue(n.id, n.collegato_a);
+  }
+  return new Map(nodi.map((n) => [n.id, trova(n.id)]));
+}
+
+function unisci(tuttiN, tuttiL, gruppo) {
+  const capo = new Map();
+  for (const n of tuttiN) {
+    const k = gruppo.get(n.id);
+    const c = capo.get(k);
+    if (!c) { capo.set(k, { ...n, id: k, alberi: [n.cerchia_id], persone: [n.persona_id].filter(Boolean) }); continue; }
+    c.alberi.push(n.cerchia_id);
+    if (n.persona_id) c.persone.push(n.persona_id);
+    for (const campo of ["cognome", "soprannome", "anno_nascita", "nascita", "anno_morte", "morte", "luogo"]) c[campo] ??= n[campo];
+  }
+  const visti = new Set(), legami = [];
+  for (const l of tuttiL) {
+    let da = gruppo.get(l.da), a = gruppo.get(l.a);
+    if (!da || !a || da === a) continue;
+    if (l.tipo === "coppia" && da > a) [da, a] = [a, da];
+    const k = `${da}|${a}|${l.tipo}`;
+    if (!visti.has(k)) { visti.add(k); legami.push({ ...l, da, a }); }
+  }
+  return { nodi: [...capo.values()], legami };
+}
+
+function schedaUnita(n, nomeAlbero) {
+  const f = document.getElementById("foglio");
+  f.innerHTML = `<div style="position:fixed;inset:0;background:rgba(18,48,44,.45);z-index:20" id="velo"></div>
+    <div class="card" style="position:fixed;left:0;right:0;bottom:0;margin:0;border-radius:24px 24px 0 0;z-index:21;padding-bottom:calc(20px + env(safe-area-inset-bottom))">
+      <div class="riga"><b style="flex:1;font-size:20px;font-family:Fraunces,serif">${esc(n.nome)} ${esc(n.cognome ?? "")}</b><button class="chip" id="chiudi">Chiudi</button></div>
+      <p class="tenue">${n.alberi.length > 1 ? "È in questi alberi:" : "È nell'albero:"}</p>
+      ${[...new Set(n.alberi)].map((c) => `<a class="btn chiaro" style="margin-top:8px" href="#/albero?c=${c}">${esc(nomeAlbero(c))}</a>`).join("")}
+    </div>`;
+  const chiudi = () => { f.innerHTML = ""; };
+  document.getElementById("velo").onclick = chiudi;
+  document.getElementById("chiudi").onclick = chiudi;
 }
 
 // --- impaginazione: generazioni, coppie, ordine per vicinanza ai genitori ---
@@ -133,7 +195,7 @@ const anni = (n) => {
   return a || b ? `${a}${b ? ` – ${b}` : ""}` : "";
 };
 
-function disegna(nodi, legami) {
+function disegna(nodi, legami, collegato = () => false) {
   const { gen, pos, righe, larghezza, gl, cl } = impagina(nodi, legami);
   const y = (id) => MARGINE + gen.get(id) * RIGA;
   const linee = [];
@@ -175,6 +237,7 @@ function disegna(nodi, legami) {
       <text x="${x + W / 2}" y="${yy + 28}" text-anchor="middle" font-family="Manrope, sans-serif" font-weight="800" font-size="14" fill="#12302C">${esc(taglia(n.soprannome ?? n.nome, 15))}</text>
       <text x="${x + W / 2}" y="${yy + 45}" text-anchor="middle" font-family="Manrope, sans-serif" font-size="12" fill="#5D635F">${esc(taglia(n.cognome ?? "", 16))}</text>
       <text x="${x + W / 2}" y="${yy + 61}" text-anchor="middle" font-family="Manrope, sans-serif" font-size="11" fill="#5D635F">${esc(anni(n))}${memoria ? " ✝" : ""}</text>
+      ${collegato(n) ? `<circle cx="${x + W - 6}" cy="${yy + 6}" r="11" fill="#0F5257"/><text x="${x + W - 6}" y="${yy + 10}" text-anchor="middle" font-size="11">🔗</text>` : ""}
     </g>`;
   }).join("");
 
@@ -186,7 +249,7 @@ function disegna(nodi, legami) {
 const taglia = (s, n) => (s.length > n ? s.slice(0, n - 1) + "…" : s);
 
 // --- scheda di una persona: modifica e aggiunta di parenti ---
-function scheda(n, nodi, legami, cerchiaId) {
+function scheda(n, nodi, legami, cerchiaId, { tuttiN, altrove, nomeAlbero }) {
   const f = document.getElementById("foglio");
   const nomeDi = (id) => { const x = nodi.find((k) => k.id === id); return x ? `${x.nome} ${x.cognome ?? ""}`.trim() : ""; };
   const gen = legami.filter((l) => l.tipo === "genitore" && l.a === n.id).map((l) => nomeDi(l.da));
@@ -220,6 +283,20 @@ function scheda(n, nodi, legami, cerchiaId) {
           <div style="flex:1"><label for="n-mo">Anno di morte</label><input id="n-mo" inputmode="numeric" placeholder="se non c'è più"></div></div>
         <button class="btn ambra" style="margin-top:12px" id="n-ok">Aggiungi</button>
       </form>
+      ${(() => {
+        const gia = altrove(n);
+        const altri = tuttiN.filter((x) => x.cerchia_id !== cerchiaId && !gia.includes(x))
+          .sort((a, b) => somiglia(b, n) - somiglia(a, n) || a.nome.localeCompare(b.nome));
+        if (!gia.length && !altri.length) return "";
+        return `<label>Altri alberi</label>
+          ${gia.map((x) => `<div class="riga" style="margin:6px 0">🔗 <span style="flex:1">È anche in <b>${esc(nomeAlbero(x.cerchia_id))}</b></span>
+            <a class="chip" href="#/albero?c=${x.cerchia_id}">Apri</a></div>`).join("")}
+          ${altri.length ? `<div class="riga" style="gap:6px;margin-top:6px"><select id="colleg" style="flex:1" aria-label="Stessa persona in un altro albero">
+              <option value="">${gia.length ? "Collega anche a…" : `${esc(n.nome)} è anche in un altro albero?`}</option>
+              ${altri.map((x) => `<option value="${x.id}">${esc(x.nome)} ${esc(x.cognome ?? "")} · ${esc(nomeAlbero(x.cerchia_id))}</option>`).join("")}</select>
+            <button class="chip" id="colleg-ok" style="margin:0">Collega</button></div>
+            <p class="tenue" style="margin-top:4px">Es. tua moglie nel tuo albero e nell'albero dei suoceri: collegandola, i due alberi si uniscono.</p>` : ""}`;
+      })()}
       ${n.persona_id ? "" : `<button class="chip" id="elimina" style="margin-top:16px">Togli dall'albero</button>`}
     </div>`;
 
@@ -282,9 +359,21 @@ function scheda(n, nodi, legami, cerchiaId) {
     location.reload();
   };
 
+  document.getElementById("colleg-ok")?.addEventListener("click", async () => {
+    const v = document.getElementById("colleg").value; if (!v) return;
+    const { error } = await sb.from("albero_nodi").update({ collegato_a: v }).eq("id", n.id);
+    if (error) { alert("Non collegato: " + error.message); return; }
+    location.reload();
+  });
+
   document.getElementById("elimina")?.addEventListener("click", async () => {
     if (!confirm(`Togliere ${n.nome} dall'albero? Si tolgono anche i suoi legami.`)) return;
     await sb.from("albero_nodi").delete().eq("id", n.id);
     location.reload();
   });
 }
+
+// più somiglia (stesso nome, cognome, anno), più in alto nella lista
+const somiglia = (a, b) => (a.nome?.toLowerCase() === b.nome?.toLowerCase() ? 2 : 0)
+  + (a.cognome && a.cognome?.toLowerCase() === b.cognome?.toLowerCase() ? 2 : 0)
+  + ((a.anno_nascita ?? a.nascita?.slice(0, 4)) == (b.anno_nascita ?? b.nascita?.slice(0, 4)) && (a.anno_nascita || a.nascita) ? 1 : 0);
