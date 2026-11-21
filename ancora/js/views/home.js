@@ -9,10 +9,14 @@ export default async function ({ params }) {
   }
   if (state.io.modalita === "semplice") return semplice();
 
-  const { data: ricordi } = await sb.from("ricordi")
-    .select("id, tipo, titolo, testo, creato_il, autore_id, persone:autore_id(id, nome, soprannome, foto_path), ricordi_media(path, tipo, durata_sec, ordine), reazioni(persona_id, tipo)")
-    .neq("visibilita", "solo_io")
-    .order("creato_il", { ascending: false }).limit(30);
+  // filtro per famiglia/cerchia: chi sta in più famiglie (la sua, quella della moglie, gli amici) sceglie quale guardare
+  const filtro = params?.c ?? null;
+  let q = sb.from("ricordi")
+    .select("id, tipo, titolo, testo, creato_il, autore_id, cerchia_id, persone:autore_id(id, nome, soprannome, foto_path), ricordi_media(path, tipo, durata_sec, ordine), reazioni(persona_id, tipo)")
+    .neq("visibilita", "solo_io");
+  if (filtro === "diretti") q = q.in("visibilita", ["diretto", "segreto"]);
+  else if (filtro) q = q.eq("cerchia_id", filtro);
+  const { data: ricordi } = await q.order("creato_il", { ascending: false }).limit(30);
   const lista = ricordi ?? [];
 
   const paths = lista.flatMap((r) => (r.ricordi_media ?? []).map((m) => m.path))
@@ -27,6 +31,8 @@ export default async function ({ params }) {
   $app().innerHTML = `
     <header class="testa"><span class="logo">Ancora</span>
       <a class="icona" href="#/cerchie" aria-label="Cerchie e inviti"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></a></header>
+    ${state.cerchie.length > 1 ? `<div class="storie" style="gap:6px;padding-bottom:8px" aria-label="Scegli la famiglia">${[["", "Tutti"], ...ordinaCerchie(state.cerchie).map((c) => [c.id, c.nome]), ["diretti", "Messaggi per me"]]
+      .map(([id, n]) => `<a class="chip ${(filtro ?? "") === id ? "on" : ""}" style="flex-shrink:0;text-decoration:none" href="#/${id ? `?c=${id}` : ""}">${esc(n)}</a>`).join("")}</div>` : ""}
     ${storie.length ? `<div class="storie" aria-label="Racconti della settimana">${storie.map((r) => {
       const fotoR = (r.ricordi_media ?? []).find((m) => m.tipo === "foto");
       const sfondo = fotoR ? url[fotoR.path] : (r.persone?.foto_path ? url[r.persone.foto_path] : null);
@@ -46,6 +52,12 @@ export default async function ({ params }) {
     const n = document.getElementById(`n-${id}`);
     n.textContent = `${Number(n.dataset.n) + (b.classList.contains("on") ? 1 : 0) - (n.dataset.mio === "1" ? 1 : 0)} cuori`;
   });
+}
+
+// prima le famiglie, poi gli amici e i gruppi
+function ordinaCerchie(c) {
+  const peso = { famiglia: 0, casa: 1, coppia: 2, amici: 3, gruppo: 4 };
+  return [...c].sort((a, b) => (peso[a.tipo] ?? 9) - (peso[b.tipo] ?? 9));
 }
 
 function post(r, url, i) {
