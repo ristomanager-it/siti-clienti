@@ -151,5 +151,5 @@ async function miaDomanda(altra = false) {
       : `<div class="riga" style="gap:8px"><a class="btn ambra" style="flex:1;min-height:46px" href="#/racconta?domanda=${d.id}">Rispondi a voce</a>
          <button class="chip" id="altra" style="margin:0">Cambia</button></div>`}
   </div>`;
-  document.getElementById("altra").onclick = () => miaDomanda(true);
+  el.querySelector("#altra").onclick = () => miaDomanda(true);
 }
