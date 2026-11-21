@@ -4,12 +4,12 @@ import { SUPABASE_URL } from "../config.js";
 
 // tipo → chi racconta, chi riceve, testi del modulo
 const TIPI = [
-  { id: "genitori", t: "Ai miei genitori", s: "raccontano loro, la famiglia ascolta", chi: "A chi lo regali", ph: "Papà Franco", tel: "Il suo WhatsApp" },
-  { id: "famiglia", t: "Alla mia famiglia", s: "lo attivo io e invito figli e nipoti", chi: "Il primo da invitare", ph: "Marco", tel: "Il suo WhatsApp" },
-  { id: "figli", t: "Ai miei figli", s: "per far conoscere chi siamo", chi: "Il figlio da invitare per primo", ph: "Sofia", tel: "Il suo WhatsApp" },
-  { id: "fratelli", t: "Ai miei fratelli", s: "i ricordi di casa, insieme", chi: "Tuo fratello o tua sorella", ph: "Luca", tel: "Il suo WhatsApp" },
-  { id: "amici", t: "Ai miei amici", s: "una cerchia solo per noi", chi: "Il primo amico da invitare", ph: "Paolo", tel: "Il suo WhatsApp" },
-  { id: "me_stesso", t: "A me stesso", s: "comincio a raccontare io", chi: null, ph: null, tel: null },
+  { id: "genitori", chi_tutti: "", t: "Ai miei genitori", s: "raccontano loro, la famiglia ascolta", chi: "A chi lo regali", ph: "Papà Franco", tel: "Il suo WhatsApp" },
+  { id: "famiglia", chi_tutti: "Chi invitare: figli, nipoti, fratelli, cugini", t: "Alla mia famiglia", s: "lo attivo io e invito figli e nipoti", chi: "Il primo da invitare", ph: "Marco", tel: "Il suo WhatsApp" },
+  { id: "figli", chi_tutti: "I tuoi figli", t: "Ai miei figli", s: "per far conoscere chi siamo", chi: "Il figlio da invitare per primo", ph: "Sofia", tel: "Il suo WhatsApp" },
+  { id: "fratelli", chi_tutti: "I tuoi fratelli e sorelle", t: "Ai miei fratelli", s: "i ricordi di casa, insieme", chi: "Tuo fratello o tua sorella", ph: "Luca", tel: "Il suo WhatsApp" },
+  { id: "amici", chi_tutti: "I tuoi amici", t: "Ai miei amici", s: "una cerchia solo per noi", chi: "Il primo amico da invitare", ph: "Paolo", tel: "Il suo WhatsApp" },
+  { id: "me_stesso", chi_tutti: "", t: "A me stesso", s: "comincio a raccontare io", chi: null, ph: null, tel: null },
 ];
 
 export default async function ({ params }) {
@@ -34,12 +34,19 @@ export function montaModulo(el, params = {}) {
     <form id="f" class="pad">
       <span class="chip on" style="background:#B3402F;margin:0 0 10px">Promo Natale</span>
       <h1>Un anno di ricordi, per chi vuoi tu</h1>
-      <p class="tenue" style="font-size:15px">Domande ogni settimana su WhatsApp, racconti a voce, foto e il libro digitale. Per tutta la famiglia, fino a 6 persone.</p>
+      <p class="tenue" style="font-size:15px">Domande ogni settimana su WhatsApp, racconti a voce, foto e il libro digitale. Per tutta la famiglia.</p>
       <label>Chi lo riceve?</label>
       <div class="scelta" id="tipi">${TIPI.map((x, i) => `<button type="button" class="${i === 0 ? "on" : ""}" data-t="${x.id}">${x.t}<small>${x.s}</small></button>`).join("")}</div>
-      <div id="dest">
-        <label for="dn" id="ldn">${tipo.chi}</label><input id="dn" placeholder="${tipo.ph}">
-        <label for="dt" id="ldt">${tipo.tel}</label><input id="dt" type="tel" inputmode="tel" placeholder="+39 333 123 4567">
+      <div id="narr">
+        <label>Chi racconta <span class="tenue" style="font-weight:600">· riceve le domande su WhatsApp</span></label>
+        <div id="lista-narr"></div>
+        <button type="button" class="chip" id="piu-narr">+ Aggiungi chi racconta (es. la mamma)</button>
+      </div>
+      <div id="inv">
+        <label id="l-inv">Chi invitare</label>
+        <p class="tenue" style="margin:0 0 6px" id="t-inv">Scrivi tutti: ricevono il loro invito su WhatsApp il giorno del regalo.</p>
+        <div id="lista-inv"></div>
+        <button type="button" class="chip" id="piu-inv">+ Aggiungi un'altra persona</button>
       </div>
       <label for="mg">Un messaggio sul biglietto (se vuoi)</label><textarea id="mg" rows="2" maxlength="240" placeholder="Papà, raccontaci tutto. Ti vogliamo bene."></textarea>
       <label for="dd">Quando parte il primo messaggio</label><input id="dd" type="date" value="${natale}" required>
@@ -66,34 +73,54 @@ export function montaModulo(el, params = {}) {
       <p id="esito" role="status"></p>
     </form>`;
 
-  // arrivo dalla prova gratis: il nome di chi ha risposto è già scritto
-  if (params.per) document.getElementById("dn").value = params.per;
+  // righe nome + WhatsApp, quante ne servono
+  const riga = (lista, ph, valore = "") => {
+    const d = document.createElement("div");
+    d.className = "riga persona"; d.style.cssText = "gap:6px;margin-bottom:6px";
+    d.innerHTML = `<input placeholder="${ph}" aria-label="Nome" style="flex:1" data-nome value="${esc(valore)}">
+      <input type="tel" inputmode="tel" placeholder="WhatsApp" aria-label="WhatsApp" style="flex:1.2" data-tel>
+      <button type="button" class="chip" style="margin:0" aria-label="Togli">✕</button>`;
+    d.querySelector("button").onclick = () => d.remove();
+    document.getElementById(lista).appendChild(d);
+    return d;
+  };
+  document.getElementById("piu-narr").onclick = () => { if (document.querySelectorAll("#lista-narr .persona").length < 4) riga("lista-narr", "Mamma Lucia").querySelector("input").focus(); };
+  document.getElementById("piu-inv").onclick = () => riga("lista-inv", "Nome").querySelector("input").focus();
+  riga("lista-narr", "Papà Franco", params.per ?? "");   // arrivo dalla prova gratis: il nome è già scritto
 
   const aggiorna = () => {
-    const d = document.getElementById("dest");
-    d.hidden = !tipo.chi;
-    document.getElementById("dn").required = document.getElementById("dt").required = !!tipo.chi;
-    if (tipo.chi) {
-      document.getElementById("ldn").textContent = tipo.chi;
-      document.getElementById("dn").placeholder = tipo.ph;
-    }
-    document.getElementById("nota").textContent = tipo.id === "genitori" ? "Se non accetta, ti rimborsiamo." : "Potrai invitare gli altri dall'app.";
+    document.getElementById("narr").hidden = tipo.id !== "genitori";
+    document.getElementById("inv").hidden = tipo.id === "me_stesso";
+    document.getElementById("l-inv").textContent = tipo.id === "genitori" ? "Chi altro invitare (figli, nipoti, fratelli)" : tipo.chi_tutti;
+    if (tipo.id !== "genitori" && tipo.id !== "me_stesso" && !document.querySelector("#lista-inv .persona")) riga("lista-inv", tipo.ph);
+    document.getElementById("nota").textContent = tipo.id === "genitori" ? "Se non accetta, ti rimborsiamo." : "Potrai invitare altri anche dopo, dall'app.";
   };
   document.querySelectorAll("#tipi button").forEach((b) => b.onclick = () => {
     tipo = TIPI.find((x) => x.id === b.dataset.t);
     document.querySelectorAll("#tipi button").forEach((x) => x.classList.toggle("on", x === b));
     aggiorna();
   });
+  aggiorna();
 
   const norm = (t) => { t = t.replace(/[\s.-]/g, ""); return t && !t.startsWith("+") ? "+39" + t : t; };
   document.getElementById("f").onsubmit = async (e) => {
     e.preventDefault();
     const v = (id) => document.getElementById(id).value.trim();
+    const persone = (sel, narratore) => [...document.querySelectorAll(`${sel} .persona`)]
+      .map((d) => ({ nome: d.querySelector("[data-nome]").value.trim(), telefono: norm(d.querySelector("[data-tel]").value.trim()), narratore }))
+      .filter((p) => p.nome || p.telefono);
+    const invitati = [...(tipo.id === "genitori" ? persone("#lista-narr", true) : []), ...(tipo.id === "me_stesso" ? [] : persone("#lista-inv", false))];
+    const esito = document.getElementById("esito");
+    const incompleto = invitati.find((p) => !p.nome || !/^\+\d{8,15}$/.test(p.telefono));
+    if (incompleto) { esito.innerHTML = `<span class="errore">Controlla nome e WhatsApp di ${esc(incompleto.nome || "tutti")}.</span>`; return; }
+    if (tipo.id === "genitori" && !invitati.some((p) => p.narratore)) { esito.innerHTML = `<span class="errore">Scrivi chi racconta.</span>`; return; }
+    if (tipo.id !== "genitori" && tipo.id !== "me_stesso" && !invitati.length) { esito.innerHTML = `<span class="errore">Scrivi almeno una persona da invitare.</span>`; return; }
+    const primo = invitati.find((p) => p.narratore) ?? invitati[0];
     const res = await fetch(`${SUPABASE_URL}/functions/v1/crea-checkout`, {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        tipo: "regalo", destinatario_tipo: tipo.id,
-        destinatario_nome: tipo.chi ? v("dn") : v("an"), destinatario_telefono: tipo.chi ? norm(v("dt")) : norm(v("at")),
+        tipo: "regalo", destinatario_tipo: tipo.id, invitati,
+        destinatario_nome: primo?.nome ?? v("an"), destinatario_telefono: primo?.telefono ?? norm(v("at")),
         data_invio: v("dd"), messaggio: v("mg") || null, acquirente_nome: v("an"), acquirente_email: v("ae"), acquirente_telefono: norm(v("at")),
       }),
     });
