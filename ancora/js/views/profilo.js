@@ -1,5 +1,5 @@
 // Profilo di una persona: numeri, "Chiedi", il suo libro che cresce, l'album a griglia.
-import { sb, state, $app, esc, nomeDi, avatar, urlMediaMolti, ICONE } from "../app.js";
+import { sb, state, $app, esc, nomeDi, avatar, urlMediaMolti, ICONE, attivaNotifiche, notificheAttive } from "../app.js";
 
 const STORIE_PER_VOLUME = 25;
 
@@ -57,10 +57,15 @@ export default async function ({ id }) {
   if (io) {
     const spenti = new Set(state.io.moduli_spenti ?? []);
     $app().insertAdjacentHTML("beforeend", `<h2>Le mie impostazioni</h2><div class="card">
+      <div class="riga" style="margin-bottom:12px"><b style="flex:1">Notifiche</b><button class="chip" id="notif" style="margin:0">…</button></div>
       <p class="tenue" style="margin-top:0">Cosa vuoi vedere e condividere nell'agenda. Se spegni una voce, non la vedi tu e nessuno vede la tua.</p>
       ${[["vacanze", "Vacanze"], ["compiti", "Compiti"], ["esami", "Esami"]].map(([k, t]) =>
         `<label class="riga" style="margin:10px 0;font-weight:700;color:var(--testo)"><input type="checkbox" data-mio-modulo="${k}" ${spenti.has(k) ? "" : "checked"} style="width:22px;height:22px"> ${t}</label>`).join("")}
     </div>`);
+    const bN = document.getElementById("notif");
+    const aggiornaN = async () => { const on = await notificheAttive(); bN.textContent = on ? "✓ Attive" : "Attiva"; bN.classList.toggle("on", on); };
+    aggiornaN();
+    bN.onclick = async () => { if (!(await notificheAttive())) { await attivaNotifiche(); aggiornaN(); } };
     document.querySelectorAll("[data-mio-modulo]").forEach((c) => c.onchange = async () => {
       const s = new Set(state.io.moduli_spenti ?? []);
       c.checked ? s.delete(c.dataset.mioModulo) : s.add(c.dataset.mioModulo);

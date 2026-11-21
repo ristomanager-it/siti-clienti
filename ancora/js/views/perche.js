@@ -5,12 +5,22 @@ export default async function () {
   $app().innerHTML = `
     <header class="testa"><a class="icona" href="#/accesso" aria-label="Indietro"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg></a><span class="logo" style="font-size:22px">Ancora</span><span style="width:44px"></span></header>
     <div class="pad">
-      <h1 style="margin:8px 0 6px">Riavvicina la tua famiglia.</h1>
-      <p class="tenue" style="font-size:15px;margin-top:0">Parlatevi, raccontatevi, scoprite da dove venite. Ancora: le radici che restano.</p>
+      <h1 style="margin:8px 0 6px">Le radici che restano.</h1>
+      <p class="tenue" style="font-size:15px;margin-top:0">Ognuno ci trova il suo motivo. Ecco i nostri.</p>
     </div>
     <div class="lettera" style="font-size:18px">L'<b>ancora</b> tiene ferma la barca nel porto sicuro: le radici, la famiglia, la voce di chi ci ha cresciuti.
 <b>Ancora</b> vuol dire anche di più, un'altra volta, senza fine: "nonno, raccontamela ancora".
 Ciò che ci tiene saldi resta con noi, ancora e ancora.</div>
+    <h2>Ognuno il suo motivo</h2>
+    <div class="pad" style="padding-top:0"><ul style="padding-left:20px;line-height:1.6">
+      <li><b>La voce dei nonni, per sempre.</b> Le loro storie, con il loro tono e il loro dialetto.</li>
+      <li><b>Scoprire da dove vieni.</b> Il cognome, il paese, chi è partito: la domanda della settimana e l'albero.</li>
+      <li><b>Il cloud privato dei ricordi.</b> Foto, video e vocali al sicuro, senza pubblicità e senza estranei.</li>
+      <li><b>Le ricette di casa,</b> con la voce di chi le fa.</li>
+      <li><b>Sentirsi vicini quando si è lontani:</b> chi vive all'estero, i nipoti fuori sede, i nonni soli.</li>
+      <li><b>Ritrovarsi,</b> se in famiglia ci si è persi di vista.</li>
+      <li><b>Un regalo che dura tutta la vita</b>, e un libro da sfogliare.</li>
+    </ul></div>
     <h2>Perché</h2>
     <div class="pad" style="padding-top:0">
       <p><b>Crediamo che nessuno debba perdere la voce di chi ama.</b> Le storie di una famiglia si perdono in silenzio: nessuno le scrive, e quando vogliamo sentirle è tardi.</p>

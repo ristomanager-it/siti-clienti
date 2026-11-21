@@ -93,8 +93,72 @@ async function caricaIo() {
   const { data: fm } = await sb.from("famiglia_membri").select("famiglia_id, ruolo, narratore, famiglie(nome)").eq("persona_id", io.id).maybeSingle();
   const { data: cerchie } = await sb.from("cerchie").select("id, nome, tipo, proprietario_id, moduli").order("creata_il");
   state.io = io; state.famiglia = fm; state.cerchie = cerchie ?? [];
+  state.accessoPrima = io.ultimo_accesso_app;   // per il "bentornato" (prima di aggiornarlo)
   sb.from("persone").update({ ultimo_accesso_app: new Date().toISOString() }).eq("id", io.id).then(() => {});
   return io;
+}
+
+// --- finestra in primo piano (bentornato, notifiche) ---
+export function popup({ titolo, testo, azioni = [] }) {
+  const d = document.createElement("div");
+  d.innerHTML = `<div style="position:fixed;inset:0;background:rgba(18,48,44,.5);z-index:30;display:flex;align-items:flex-end;justify-content:center">
+    <div class="card" style="margin:0;width:100%;max-width:560px;border-radius:26px 26px 0 0;padding:22px 20px calc(22px + env(safe-area-inset-bottom))">
+      <b style="font-family:Fraunces,serif;font-size:24px;display:block;line-height:1.2;color:var(--notte)">${esc(titolo)}</b>
+      <p style="font-size:16px;margin:10px 0 16px">${testo}</p>
+      ${azioni.map((a, i) => `<button class="btn ${i === 0 ? "ambra" : "chiaro"}" data-i="${i}" style="margin-top:8px">${esc(a.t)}</button>`).join("")}
+    </div></div>`;
+  document.body.appendChild(d);
+  d.querySelectorAll("[data-i]").forEach((b) => b.onclick = async () => { d.remove(); await azioni[b.dataset.i].fn?.(); });
+}
+
+// --- notifiche push: gratis, all'ora giusta, mai troppe ---
+const base64 = (s) => Uint8Array.from(atob((s + "=".repeat((4 - (s.length % 4)) % 4)).replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0));
+export const iPhoneNonInstallata = () => /iphone|ipad/i.test(navigator.userAgent) && !navigator.standalone;
+export async function notificheAttive() {
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) return false;
+  const reg = await navigator.serviceWorker.getRegistration();
+  return !!(await reg?.pushManager.getSubscription());
+}
+export async function attivaNotifiche() {
+  if (iPhoneNonInstallata()) {
+    popup({ titolo: "Prima aggiungi Ancora alla Home", testo: "Su iPhone le notifiche arrivano solo all'app sulla schermata Home: tocca <b>Condividi</b> → <b>Aggiungi alla schermata Home</b>, apri Ancora da lì e attivale.", azioni: [{ t: "Ho capito" }] });
+    return false;
+  }
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) { alert("Questo telefono non riceve notifiche dal browser."); return false; }
+  if ((await Notification.requestPermission()) !== "granted") return false;
+  const reg = await navigator.serviceWorker.ready;
+  const { publicKey } = await (await fetch(`${SUPABASE_URL}/functions/v1/notifiche`)).json();
+  const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: base64(publicKey) });
+  const j = sub.toJSON();
+  await sb.from("push_iscrizioni").upsert({ persona_id: state.io.id, endpoint: j.endpoint, p256dh: j.keys.p256dh, auth: j.keys.auth }, { onConflict: "endpoint" });
+  return true;
+}
+
+// bentornato: se mancavi da qualche giorno, cosa è successo in famiglia (una volta per sessione)
+async function bentornato() {
+  if (sessionStorage.getItem("ancora_bentornato")) return;
+  sessionStorage.setItem("ancora_bentornato", "1");
+  const prima = state.accessoPrima ? new Date(state.accessoPrima) : null;
+  const giorni = prima ? Math.floor((Date.now() - prima) / 864e5) : 0;
+  if (giorni >= 4) {
+    const { count } = await sb.from("ricordi").select("id", { count: "exact", head: true })
+      .neq("autore_id", state.io.id).neq("visibilita", "solo_io").gte("creato_il", prima.toISOString());
+    popup({
+      titolo: `Bentornato, ${state.io.soprannome ?? state.io.nome}!`,
+      testo: count ? `In questi ${giorni} giorni la famiglia ha condiviso <b>${count} ${count === 1 ? "ricordo" : "ricordi"}</b>.` : `È da ${giorni} giorni che non passavi. C'è una domanda che ti aspetta.`,
+      azioni: [{ t: count ? "Guarda le novità" : "Racconta qualcosa", fn: () => { location.hash = count ? "#/" : "#/racconta"; } }, { t: "Più tardi" }],
+    });
+    return;
+  }
+  // una volta sola: proponi le notifiche, con il perché
+  if (!localStorage.getItem("ancora_chiesto_notifiche") && !(await notificheAttive())) {
+    localStorage.setItem("ancora_chiesto_notifiche", "1");
+    popup({
+      titolo: "Vuoi sapere quando qualcuno racconta?",
+      testo: "Ti avvisiamo quando la famiglia condivide un ricordo e quando arriva la domanda della settimana. Poche notifiche, mai di notte.",
+      azioni: [{ t: "Sì, avvisami", fn: attivaNotifiche }, { t: "Non ora" }],
+    });
+  }
 }
 
 async function render() {
@@ -113,7 +177,7 @@ async function render() {
   const carica = ROTTE[nome] ?? ROTTE[""];
   const vista = await carica();
   $app().innerHTML = "";
-  try { await vista.default({ id, params }); }
+  try { await vista.default({ id, params }); if (!PUBBLICHE.has(nome) && nome === "") setTimeout(bentornato, 1200); }
   catch (e) { console.error(e); $app().innerHTML = `<p class="errore">Qualcosa non ha funzionato. Riprova tra poco.</p>`; }
   window.scrollTo(0, 0);
 }

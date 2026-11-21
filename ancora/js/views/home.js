@@ -35,8 +35,7 @@ export default async function ({ params }) {
     const sett = settimana();
     const { data: domande } = await sb.from("domande_famiglia").select("id, testo, tema").order("id");
     if (domande?.length) {
-      const seme = [...fam.id].reduce((a, c) => a + c.charCodeAt(0), 0);
-      const d = domande[(sett.numero + seme) % domande.length];
+      const d = domande[sett.numero % domande.length];   // la stessa per tutti, come nella notifica
       const { data: risposte } = await sb.from("ricordi").select("id, autore_id, persone:autore_id(id, nome, soprannome)")
         .eq("cerchia_id", fam.id).eq("domanda_settimana", sett.codice);
       const io = (risposte ?? []).some((r) => r.autore_id === state.io.id);
