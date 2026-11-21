@@ -4,6 +4,7 @@ import { SUPABASE_URL } from "../config.js";
 
 // tanti ganci, uno per ogni famiglia: girano da soli
 const GANCI = [
+  "Ancora. Le radici che restano.",
   "La voce dei nonni, per sempre.",
   "Scopri da dove vieni: le origini della tua famiglia.",
   "Il cloud dei tuoi ricordi: storie, voci, foto, video, ricette, il diario.",
@@ -18,9 +19,9 @@ const GANCI = [
 export default async function ({ params }) {
   const invito = params?.invito ?? null;
   $app().innerHTML = `
-    <div class="pad" style="padding-top:64px"><span class="logo" style="font-size:44px">Ancora</span>
+    <div class="pad" style="padding-top:64px"><span class="logo" style="font-size:44px">Ancora</span><div class="tenue" style="font-weight:700;letter-spacing:.02em;margin:-4px 0 18px">Il cloud dei tuoi ricordi</div>
     <p id="gancio" style="font-family:Fraunces,serif;font-size:25px;line-height:1.25;color:var(--notte);min-height:94px;margin-bottom:4px;transition:opacity .5s">${GANCI[0]}</p>
-    <p class="tenue" style="font-size:15px;margin-top:0">Ancora. Le radici che restano.</p></div>
+    </div>
     <form id="f" class="card">
       <label for="tel">Il tuo numero di telefono</label>
       <input id="tel" type="tel" inputmode="tel" placeholder="+39 333 123 4567" required autocomplete="tel">

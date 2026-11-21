@@ -1,7 +1,7 @@
 {
   "name": "Ancora",
   "short_name": "Ancora",
-  "description": "I ricordi della tua famiglia, con la voce di chi li racconta.",
+  "description": "Il cloud dei tuoi ricordi. Non solo foto e video: le voci e le storie della tua famiglia.",
   "lang": "it",
   "start_url": "./#/",
   "display": "standalone",
