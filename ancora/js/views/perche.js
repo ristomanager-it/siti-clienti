@@ -36,5 +36,6 @@ Ciò che ci tiene saldi resta con noi, ancora e ancora.</div>
       <li><b>Diario</b> privato con promemoria e "accadeva oggi".</li>
       <li><b>Il libro</b> delle storie: digitale incluso, stampato su richiesta.</li>
     </ul></div>
-    <div class="pad"><a class="btn ambra" href="#/regala">Regala Ancora · 129 €</a></div>`;
+    <div class="pad"><a class="btn ambra" href="#/prova">Prova gratis con una domanda</a>
+      <a class="btn chiaro" style="margin-top:10px" href="#/regala">Regala Ancora · 129 €</a></div>`;
 }

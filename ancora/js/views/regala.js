@@ -43,6 +43,9 @@ export default async function ({ params }) {
       <p id="esito" role="status"></p>
     </form>`;
 
+  // arrivo dalla prova gratis: il nome di chi ha risposto è già scritto
+  if (params.per) document.getElementById("dn").value = params.per;
+
   const aggiorna = () => {
     const d = document.getElementById("dest");
     d.hidden = !tipo.chi;

@@ -20,8 +20,11 @@ const ROTTE = {
   "albero": () => import("./views/albero.js"),
   "agenda": () => import("./views/agenda.js"),
   "piano": () => import("./views/piano.js"),
+  "prova": () => import("./views/prova.js"),
+  "rispondi": () => import("./views/prova.js"),
+  "ascolta": () => import("./views/prova.js"),
 };
-const PUBBLICHE = new Set(["accesso", "regala", "perche"]);
+const PUBBLICHE = new Set(["accesso", "regala", "perche", "prova", "rispondi", "ascolta"]);
 
 export const $app = () => document.getElementById("app");
 export const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));

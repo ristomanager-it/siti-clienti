@@ -21,7 +21,8 @@ export default async function ({ params }) {
         <button class="btn" style="margin-top:12px">Entra</button>
         <p id="esitoe" role="status"></p>
       </form></details>
-    <div class="pad"><a class="btn chiaro" href="#/regala">Regala Ancora</a>
+    <div class="pad"><a class="btn ambra" href="#/prova">Prova gratis: fai una domanda al nonno</a>
+      <a class="btn chiaro" style="margin-top:10px" href="#/regala">Regala Ancora</a>
       <p style="text-align:center"><a href="#/perche">Perché Ancora</a></p></div>`;
 
   document.getElementById("fe").onsubmit = async (e) => {
