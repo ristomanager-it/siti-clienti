@@ -37,7 +37,8 @@ export default async function ({ id }) {
     </div>
     <div class="pad"><h1 style="font-size:24px">${esc(p.nome)}${anno}</h1>
       ${p.bio ? `<p class="tenue" style="margin:4px 0 12px;font-size:15px">${esc(p.bio)}</p>` : ""}
-      ${io ? `<a class="btn chiaro" href="#/racconta" style="margin-top:10px">Racconta qualcosa</a>`
+      ${io ? `<a class="btn chiaro" href="#/racconta" style="margin-top:10px">Racconta qualcosa</a>
+             <a class="btn chiaro" href="#/piano" style="margin-top:8px">Il piano di famiglia</a>`
         : `<form id="chiedi" style="margin-top:10px">
             <label class="visually-hidden" for="q">Cosa vuoi chiedergli</label>
             <input id="q" placeholder="Cosa vuoi chiedere a ${esc(nomeDi(p))}?" required>
