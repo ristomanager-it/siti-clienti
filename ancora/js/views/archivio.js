@@ -38,7 +38,9 @@ export default async function ({ params }) {
         <a class="btn chiaro" style="flex:1;min-height:56px" href="#/racconta">Vocale</a>
       </div>
       <div id="coda"></div>
-      <div class="tenue" style="margin-top:10px">${peso(spazio?.byte ?? 0)} usati · ${spazio?.foto ?? 0} foto · ${spazio?.video ?? 0} video · ${spazio?.audio ?? 0} audio</div>
+      <div style="margin-top:12px"><div class="tenue">${peso(spazio?.byte ?? 0)} su ${spazio?.quota_gb ?? 2} GB · ${spazio?.foto ?? 0} foto · ${spazio?.video ?? 0} video · ${spazio?.audio ?? 0} audio</div>
+        <div class="barra-prog" style="background:#EFEAE0"><i style="width:${Math.min(100, Math.round((spazio?.byte ?? 0) / ((spazio?.quota_gb ?? 2) * 1e9) * 100))}%"></i></div>
+        ${(spazio?.byte ?? 0) > (spazio?.quota_gb ?? 2) * 0.8e9 ? `<p class="tenue" style="margin:6px 0 0">Stai finendo lo spazio. ${spazio?.piano ? `<a href="#/servizi">Aggiungi 100 GB</a>` : `<a href="#/piano">Con il Piano Famiglia hai 50 GB</a>`}</p>` : ""}</div>
     </div>
     <div class="storie" style="gap:6px;padding-bottom:8px">${FILTRI.map(([k, t]) =>
       `<a class="chip ${filtro === k ? "on" : ""}" style="flex-shrink:0;text-decoration:none" href="#/archivio${k ? `?f=${k}` : ""}">${t}</a>`).join("")}</div>
@@ -62,6 +64,10 @@ export default async function ({ params }) {
     for (const f of lista) {
       coda.innerHTML = `<div class="card" style="margin:10px 0 0">Carico ${fatti + 1} di ${lista.length}: ${esc(f.name || "file")}…
         <div class="barra-prog" style="background:#EFEAE0"><i style="width:${Math.round(fatti / lista.length * 100)}%"></i></div></div>`;
+      if ((spazio?.byte ?? 0) + f.size > (spazio?.quota_gb ?? 2) * 1e9) {
+        alert(`Spazio finito (${spazio?.quota_gb ?? 2} GB). ${spazio?.piano ? "Aggiungi 100 GB da Servizi." : "Con il Piano Famiglia hai 50 GB."}`);
+        break;
+      }
       if (f.size > MAX_MB * 1024 * 1024) {
         alert(`"${f.name}" pesa ${peso(f.size)}: il massimo per un file è ${MAX_MB} MB. Per i video lunghi, taglialo prima sul telefono.`);
         continue;

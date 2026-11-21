@@ -25,6 +25,7 @@ export default async function ({ params }) {
   $app().innerHTML = `
     <header class="testa"><span class="logo" style="font-size:22px">Regala Ancora</span><span></span></header>
     <form id="f" class="pad">
+      <span class="chip on" style="background:#B3402F;margin:0 0 10px">Promo Natale</span>
       <h1>Un anno di ricordi, per chi vuoi tu</h1>
       <p class="tenue" style="font-size:15px">Domande ogni settimana su WhatsApp, racconti a voce, foto e il libro digitale. Per tutta la famiglia, fino a 6 persone.</p>
       <label>Chi lo riceve?</label>
@@ -39,7 +40,7 @@ export default async function ({ params }) {
       <label for="ae">La tua email</label><input id="ae" type="email" required>
       <label for="at">Il tuo WhatsApp</label><input id="at" type="tel" inputmode="tel" placeholder="+39 …" required>
       <div style="display:flex;align-items:baseline;justify-content:space-between;margin:18px 0 8px">
-        <span class="tenue">12 mesi, tutta la famiglia</span><span style="font-family:Fraunces,serif;font-size:34px;font-weight:700">129 €</span></div>
+        <span class="tenue">12 mesi, tutta la famiglia<br>poi, se volete, 99 € l'anno</span><span style="font-family:Fraunces,serif;font-size:34px;font-weight:700">129 €</span></div>
       <button class="btn ambra">Regala</button>
       <p class="tenue" style="text-align:center" id="nota">Se non accetta, ti rimborsiamo.</p>
       <p id="esito" role="status"></p>

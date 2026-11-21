@@ -101,12 +101,12 @@ function disegna() {
   $("#radice").innerHTML = `
     <header><span class="logo">Ancora<small>gestione</small></span><span class="sp"></span>
       <button class="esci" id="esci">Esci</button></header>
-    <main><nav>${[["panoramica", "Panoramica"], ["famiglie", "Famiglie"], ["regali", "Regali"], ["privacy", "Privacy"], ["manifesto", "Manifesto"]]
+    <main><nav>${[["panoramica", "Panoramica"], ["famiglie", "Famiglie"], ["regali", "Regali"], ["ordini", "Ordini libri"], ["privacy", "Privacy"], ["manifesto", "Manifesto"]]
       .map(([k, t]) => `<button data-v="${k}" class="${k === vista ? "on" : ""}">${t}</button>`).join("")}</nav>
       <div id="corpo"><p class="tenue">Caricamento…</p></div></main>`;
   $("#esci").onclick = async () => { await sb.auth.signOut(); accesso(); };
   document.querySelectorAll("nav button").forEach((b) => b.onclick = () => { vista = b.dataset.v; disegna(); });
-  ({ panoramica, famiglie, regali, privacy, manifesto })[vista]().catch((e) => {
+  ({ panoramica, famiglie, regali, ordini, privacy, manifesto })[vista]().catch((e) => {
     $("#corpo").innerHTML = `<p class="errore">Errore: ${esc(e.message)}</p>`;
   });
 }
@@ -203,6 +203,59 @@ async function privacy() {
     (lista.map((a) => `<div class="card"><div class="riga"><b>${esc(a.persona ?? "—")}</b><span class="badge">${esc(a.motivo.replaceAll("_", " "))}</span>
       <span class="sp"></span><span class="tenue">${data(a.creato_il)}</span></div>${a.nota ? `<div class="tenue">${esc(a.nota)}</div>` : ""}</div>`).join("")
       || `<p class="tenue">Nessun accesso ai contenuti. Bene così.</p>`);
+}
+
+// --- ordini dei libri stampati: indirizzo, stato, impaginazione per la stampa ---
+const STATI = { pagato: "da fare", in_lavorazione: "in lavorazione", spedito: "spedito", annullato: "annullato" };
+async function ordini() {
+  const lista = await rpc("admin_ordini");
+  $("#corpo").innerHTML = `<div class="nota">Chi ordina il libro autorizza l'impaginazione: quando lo apri per la stampa, l'accesso resta registrato in Privacy.</div>` +
+    (lista.map((o) => {
+      const ind = o.indirizzo?.address ?? {};
+      return `<div class="card">
+        <div class="riga"><span class="nome">Le storie di ${esc(o.narratore ?? "—")}</span><span class="badge ${o.stato === "spedito" ? "accettato" : o.stato === "pagato" ? "in_attesa_pagamento" : ""}">${esc(STATI[o.stato] ?? o.stato)}</span>
+          <span class="sp"></span><span class="tenue">${o.servizio === "libro_bn" ? "bianco e nero" : "colori"} · ${euro(o.importo_cent)}</span></div>
+        <div class="tenue">ordinato da ${esc(o.cliente ?? "—")} ${o.email ? `· ${esc(o.email)}` : ""} · ${data(o.creato_il)}</div>
+        <div style="margin-top:8px;font-size:14px">${esc(o.indirizzo?.name ?? "")}<br>${esc([ind.line1, ind.line2].filter(Boolean).join(", "))}<br>${esc([ind.postal_code, ind.city, ind.state].filter(Boolean).join(" "))}</div>
+        <div class="riga" style="margin-top:10px;gap:6px">
+          <button class="btn" data-stampa="${o.id}">Apri per la stampa</button>
+          ${o.stato === "pagato" ? `<button class="btn chiaro" data-stato="${o.id}" data-v="in_lavorazione">In lavorazione</button>` : ""}
+          ${o.stato !== "spedito" ? `<button class="btn chiaro" data-stato="${o.id}" data-v="spedito">Spedito</button>` : ""}
+        </div></div>`;
+    }).join("") || `<p class="tenue">Ancora nessun libro ordinato.</p>`);
+  document.querySelectorAll("[data-stato]").forEach((b) => b.onclick = async () => { await rpc("admin_ordine_stato", { p_id: b.dataset.stato, p_stato: b.dataset.v }); disegna(); });
+  document.querySelectorAll("[data-stampa]").forEach((b) => b.onclick = () => stampa(b.dataset.stampa));
+}
+
+async function stampa(id) {
+  const { data: { session } } = await sb.auth.getSession();
+  const res = await fetch(`https://efhxgrszckfxxhecjtrl.supabase.co/functions/v1/libro-stampa?acquisto=${id}`, { headers: { Authorization: `Bearer ${session.access_token}` } });
+  const j = await res.json();
+  if (!res.ok) { alert(j.errore ?? "Errore"); return; }
+  const { default: qrcode } = await import("https://esm.sh/qrcode-generator@1.4.4");
+  const qr = (t) => { const q = qrcode(0, "M"); q.addData(t); q.make(); return q.createSvgTag({ cellSize: 3, margin: 0, scalable: true }); };
+  const base = "https://ristomanager-it.github.io/siti-clienti/ancora/#/ricordo/";
+  const nome = j.persona.soprannome ?? j.persona.nome;
+  const colori = j.servizio === "libro_colori";
+  const w = window.open("", "_blank");
+  w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Le storie di ${esc(nome)}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Manrope:wght@400;700&display=swap" rel="stylesheet">
+    <style>@page{size:A5;margin:0}body{margin:0;font-family:Manrope,sans-serif;color:#1D2422}
+      .p{width:148mm;height:210mm;padding:16mm 14mm;box-sizing:border-box;display:flex;flex-direction:column;page-break-after:always}
+      .c{background:${colori ? "linear-gradient(170deg,#7FA37E,#4D7356)" : "#fff"};color:${colori ? "#FBF3E2" : "#1D2422"};justify-content:center;text-align:center;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+      h1{font-family:Fraunces,serif;font-size:40px;margin:0 0 6mm}h2{font-family:Fraunces,serif;font-size:21px;margin:0 0 2mm}
+      .q{font-size:11px;color:#5D635F;text-transform:uppercase;letter-spacing:.6px;margin-bottom:5mm}.t{font-family:Fraunces,serif;font-size:14.5px;line-height:1.65;white-space:pre-line}
+      .i{width:100%;aspect-ratio:4/3;background:#eee center/cover;margin-bottom:5mm;${colori ? "" : "filter:grayscale(1);"}}.f{margin-top:auto;display:flex;gap:4mm;align-items:center;font-size:11px;color:#5D635F}.f svg{width:20mm;height:20mm}
+    </style></head><body>
+    <section class="p c"><p style="letter-spacing:2px;font-size:12px">ANCORA</p><h1>Le storie di ${esc(nome)}</h1><p>${j.persona.data_nascita ? `nato nel ${j.persona.data_nascita.slice(0, 4)} · ` : ""}raccolte con la sua voce</p><p style="font-family:Fraunces,serif;margin-top:20mm">Le radici che restano.</p></section>
+    ${j.storie.map((r) => { const ric = r.tipo === "ricetta" ? r.dettagli ?? {} : null; return `<section class="p"><h2>${esc(r.titolo ?? (ric ? "Una ricetta" : "Un ricordo"))}</h2>
+      <div class="q">${new Date(r.creato_il).toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" })}</div>
+      ${r.foto ? `<div class="i" style="background-image:url('${r.foto}')"></div>` : ""}
+      ${ric ? `<div class="t"><b>Ingredienti</b>\n${(ric.ingredienti ?? []).map((x) => "· " + esc(x)).join("\n")}${ric.procedimento ? `\n\n<b>Come si fa</b>\n${esc(ric.procedimento)}` : ""}</div>` : ""}
+      ${r.testo ? `<div class="t">${esc(r.testo)}</div>` : ""}
+      <div class="f">${qr(base + r.id)}<div>${r.voce ? "Inquadra e ascolta la sua voce" : "Inquadra per aprire il ricordo"}<br>su Ancora</div></div></section>`; }).join("")}
+    <script>document.fonts.ready.then(() => setTimeout(() => print(), 600));<\/script></body></html>`);
+  w.document.close();
 }
 
 async function manifesto() {

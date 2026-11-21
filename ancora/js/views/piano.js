@@ -54,7 +54,7 @@ export default async function ({ params }) {
       ${paga ? `<button class="chip ${m.narratore ? "on" : ""}" data-narr="${m.id}" data-v="${m.narratore ? 0 : 1}">${m.narratore ? "✓ Racconta" : "Racconta"}</button>`
         : m.narratore ? `<span class="chip on">Racconta</span>` : ""}
     </div>`).join("")}
-    <p class="pad tenue" style="margin-top:0">"Racconta" = riceve le domande. ${narratori} su ${limite} narratori${paga ? ". Ogni narratore in più costa 1,99 € al mese." : "."}</p>
+    <p class="pad tenue" style="margin-top:0">"Racconta" = riceve le domande. ${narratori} su ${limite} narratori.${paga ? ` Ti serve un narratore in più? <a href="#/servizi">Servizi</a>.` : ""}</p>
     ${paga && membri.length < 6 ? `<div class="pad"><button class="btn chiaro" id="invita">Invita nel piano</button></div>` : ""}
 
     ${p.io_narratore ? `<h2>Le mie domande</h2><div class="card">

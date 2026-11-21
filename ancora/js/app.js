@@ -28,6 +28,7 @@ const ROTTE = {
   "libro": () => import("./views/libro.js"),
   "archivio": () => import("./views/archivio.js"),
   "settimana": () => import("./views/settimana.js"),
+  "servizi": () => import("./views/servizi.js"),
 };
 const PUBBLICHE = new Set(["accesso", "regala", "perche", "prova", "rispondi", "ascolta", "biglietto"]);
 

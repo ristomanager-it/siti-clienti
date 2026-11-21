@@ -39,7 +39,8 @@ export default async function ({ id }) {
       ${p.bio ? `<p class="tenue" style="margin:4px 0 12px;font-size:15px">${esc(p.bio)}</p>` : ""}
       ${io ? `<a class="btn chiaro" href="#/racconta" style="margin-top:10px">Racconta qualcosa</a>
              <div class="riga" style="margin-top:8px;gap:8px"><a class="btn chiaro" href="#/piano" style="flex:1">Il piano</a>
-               <a class="btn chiaro" href="#/ricette" style="flex:1">Ricettario</a></div>`
+               <a class="btn chiaro" href="#/ricette" style="flex:1">Ricettario</a>
+               <a class="btn chiaro" href="#/servizi" style="flex:1">Servizi</a></div>`
         : `<form id="chiedi" style="margin-top:10px">
             <label class="visually-hidden" for="q">Cosa vuoi chiedergli</label>
             <input id="q" placeholder="Cosa vuoi chiedere a ${esc(nomeDi(p))}?" required>
