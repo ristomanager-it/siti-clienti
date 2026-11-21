@@ -17,6 +17,7 @@ const ROTTE = {
   "regala": () => import("./views/regala.js"),
   "accesso": () => import("./views/accesso.js"),
   "perche": () => import("./views/perche.js"),
+  "albero": () => import("./views/albero.js"),
 };
 const PUBBLICHE = new Set(["accesso", "regala", "perche"]);
 

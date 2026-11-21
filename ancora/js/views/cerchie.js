@@ -41,6 +41,7 @@ export default async function () {
         : `<div style="display:flex;gap:4px;margin-top:10px;flex-wrap:wrap">${lista.slice(0, 8).map((m) => avatar(m.persone, 28)).join("")}</div>`}
       <div class="riga" style="margin-top:12px;gap:8px">
         <a class="btn chiaro" style="flex:1;min-height:44px" href="#/?c=${c.id}">Apri</a>
+        ${c.tipo === "famiglia" ? `<a class="btn chiaro" style="flex:1;min-height:44px" href="#/albero?c=${c.id}">Albero</a>` : ""}
         ${mia ? `<button class="btn chiaro invita" data-c="${c.id}" style="flex:1;min-height:44px">Invita</button>
                  <button class="chip" data-rinomina="${c.id}">Rinomina</button>`
               : `<button class="chip" data-esci="${c.id}">Esci</button>`}
