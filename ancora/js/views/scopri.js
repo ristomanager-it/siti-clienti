@@ -3,6 +3,7 @@
 // Foto: Unsplash (licenza Unsplash, uso libero).
 import { $app } from "../app.js";
 import { montaModulo } from "./regala.js";
+import { testataPubblica, collegaMenu, piePubblico, collegaPie } from "./info.js";
 
 // palette di Natale: rosso, oro, panna + verde salvia e verde notte del brand
 const C = { rosso: "#8E2B22", rossoVivo: "#B3402F", oro: "#C9832E", panna: "#FBF3E2", salvia: "#4D7356", notte: "#12302C" };
@@ -57,15 +58,13 @@ const DOMANDE = [
 
 const titolo = (t, colore = C.notte) => `<h2 style="font-family:Fraunces,serif;font-size:30px;line-height:1.1;text-transform:none;letter-spacing:0;color:${colore};margin:0 0 12px;padding:0">${t}</h2>`;
 const etichetta = (t, colore = C.rossoVivo) => `<div style="font-weight:800;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:${colore};margin-bottom:8px">${t}</div>`;
-const sezione = (html, sfondo = "transparent", colore = "inherit") => `<section style="background:${sfondo};color:${colore};padding:36px 20px">${html}</section>`;
+const sezione = (html, sfondo = "transparent", colore = "inherit", id = "") => `<section ${id ? `id="${id}"` : ""} style="background:${sfondo};color:${colore};padding:36px 20px;scroll-margin-top:70px">${html}</section>`;
 const foto = (src, alt, alta = 300, posizione = "center") =>
   `<div role="img" aria-label="${alt}" style="height:${alta}px;background:url('img/${src}') ${posizione}/cover"></div>`;
 
-export default async function () {
+export default async function ({ params } = {}) {
   $app().innerHTML = `
-    <header class="testa" style="position:absolute;left:0;right:0;z-index:2;background:transparent;border:0">
-      <span class="logo" style="font-size:26px;color:${C.panna}">Ancora</span><span style="flex:1"></span>
-      <a class="chip" href="#/accesso" style="margin:0;text-decoration:none;background:rgba(251,243,226,.92)">Entra</a></header>
+    ${testataPubblica({ trasparente: true })}
 
     <section style="position:relative;min-height:640px;display:flex;align-items:flex-end;color:${C.panna};
       background:linear-gradient(180deg,rgba(18,48,44,.15) 0%,rgba(18,10,8,.25) 40%,rgba(60,14,10,.92) 100%),url('img/nonna-nipote.jpg') 42% center/cover">
@@ -82,7 +81,7 @@ export default async function () {
       ${titolo("Ogni famiglia ha una storia. Raccontatela insieme.", C.panna)}
       <p style="font-size:17px;line-height:1.55;margin:0 0 14px;color:#F1E4CF">Le storie di casa vivono nei pranzi della domenica, nelle foto sparse su dieci telefoni, nelle ricette che nessuno ha mai scritto. Ancora le mette insieme, in un posto solo, vostro.</p>
       <p style="font-family:Fraunces,serif;font-size:20px;line-height:1.45;margin:0;color:${C.panna}">L'<b>ancora</b> tiene ferma la barca nel porto sicuro: le radici, la famiglia. <b>Ancora</b> vuol dire anche di più, un'altra volta: «raccontamela ancora».</p>`,
-      C.notte)}
+      C.notte, "", "perche")}
 
     ${sezione(`${etichetta("Ognuno il suo motivo")}
       ${MOTIVI.map(([t, d]) => `<div style="padding:14px 0;border-bottom:1px solid #EAD9BF">
@@ -90,7 +89,7 @@ export default async function () {
         <div class="tenue" style="margin-top:2px">${d}</div></div>`).join("")}`, C.panna)}
 
     ${sezione(`${etichetta("Come funziona")}
-      <span id="come"></span>${titolo("Una domanda. Una risposta a voce. Un ricordo in più.")}
+      <span id="come" style="display:block;scroll-margin-top:80px"></span>${titolo("Una domanda. Una risposta a voce. Un ricordo in più.")}
       ${[["Regali Ancora", "A Natale o quando vuoi. Scrivi i nomi e i numeri di tutti: chi racconta e chi invitare."],
          ["Arriva la domanda", "Ogni settimana una domanda nuova: «Com'era la casa dove sei cresciuto?». Si risponde a voce, con calma."],
          ["La famiglia ascolta", "La voce finisce nell'album di famiglia. Figli e nipoti ascoltano, commentano, chiedono ancora."]]
@@ -107,7 +106,7 @@ export default async function () {
 
     ${sezione(`${etichetta("Cosa c'è dentro")}
       ${titolo("Tutto quello che una famiglia vuole tenere.")}
-      ${COSA.map(([t, d]) => `<div style="padding:11px 0;border-bottom:1px solid var(--bordo)"><b>${t}</b> <span class="tenue">· ${d}</span></div>`).join("")}`)}
+      ${COSA.map(([t, d]) => `<div style="padding:11px 0;border-bottom:1px solid var(--bordo)"><b>${t}</b> <span class="tenue">· ${d}</span></div>`).join("")}`, "transparent", "inherit", "cosa")}
 
     ${sezione(`${etichetta("Più di una chat di gruppo")}
       ${titolo("La chat serve per «a che ora arrivate?». La storia della famiglia merita di più.")}
@@ -123,7 +122,7 @@ export default async function () {
         <b style="font-family:Fraunces,serif;font-size:26px;line-height:1.15">Una famiglia, tante famiglie.</b>
         <p style="margin:6px 0 0;color:#E8DCC8;line-height:1.45">La tua, quella dei tuoi genitori, quella dei suoceri. E gli amici di sempre. Stai in tutte, e gli alberi si uniscono dove c'è la stessa persona.</p></div></div>
 
-    ${sezione(`${etichetta("Prezzi")}
+    ${sezione(`${etichetta("Pacchetti")}
       <div style="border-radius:22px;padding:20px;background:${C.rosso};color:${C.panna};margin-bottom:12px">
         <div class="riga"><b style="flex:1;font-size:19px">Regalo di Natale</b><b style="font-family:Fraunces,serif;font-size:36px">129 €</b></div>
         <div style="color:#F1DCCB;margin-top:4px;line-height:1.45">12 mesi di Piano Famiglia per tutta la famiglia, il biglietto da mettere sotto l'albero, parte il giorno che scegli.</div></div>
@@ -133,24 +132,25 @@ export default async function () {
       <div style="padding:4px 4px 0;line-height:1.7">
         <b>Servizi in più, quando servono</b><br>
         <span class="tenue">Libro stampato 49 € in bianco e nero, 69 € a colori · Un narratore in più 1,99 € al mese · Spazio +100 GB 2,99 € al mese</span></div>
-      <p style="margin:14px 0 0;color:${C.salvia};font-weight:700">Gratis per sempre: entrare in famiglia, i ricordi già salvati, l'albero.</p>`)}
+      <p style="margin:14px 0 0;color:${C.salvia};font-weight:700">Gratis per sempre: entrare in famiglia, i ricordi già salvati, l'albero.</p>`, "transparent", "inherit", "pacchetti")}
 
-    <section id="acquista" style="background:${C.panna};padding-top:30px">
+    <section id="acquista" style="background:${C.panna};padding-top:30px;scroll-margin-top:60px">
       <div style="padding:0 20px">${etichetta("Regala Ancora")}</div>
       <div id="modulo-regalo"></div>
     </section>
 
     ${sezione(`${etichetta("Domande")}
       ${DOMANDE.map(([q, r]) => `<details style="border-bottom:1px solid var(--bordo);padding:14px 0"><summary style="font-weight:800;cursor:pointer">${q}</summary>
-        <p style="margin:8px 0 0;line-height:1.5">${r}</p></details>`).join("")}`)}
+        <p style="margin:8px 0 0;line-height:1.5">${r}</p></details>`).join("")}
+      <p style="margin-top:16px">Altre domande? <a href="#/contatti">Scrivici</a>.</p>`, "transparent", "inherit", "faq")}
 
-    <footer style="background:${C.notte};color:${C.panna};padding:34px 20px 44px;text-align:center">
-      <p style="font-family:Fraunces,serif;font-size:26px;margin:0 0 12px">Le radici che restano.</p>
-      <p style="margin:0 0 18px"><a href="#/accesso" style="color:${C.panna}">Entra</a> · <a href="#/omaggio" style="color:${C.panna}">Ho un codice omaggio</a></p>
-      <p style="font-size:11px;color:#9FB3AC;margin:0">Foto: Unsplash</p>
-    </footer>`;
+    ${piePubblico()}`;
 
   montaModulo(document.getElementById("modulo-regalo"));
+  collegaMenu(); collegaPie();
+  // dal menu: #/scopri?s=faq porta direttamente alla sezione
+  if (params?.s) setTimeout(() => document.getElementById(params.s)?.scrollIntoView({ behavior: "smooth" }), 120);
+  else scrollTo(0, 0);
   document.getElementById("vai-come").onclick = (e) => { e.preventDefault(); document.getElementById("come").scrollIntoView({ behavior: "smooth" }); };
   // il bottone in alto scorre al modulo senza cambiare pagina
   document.getElementById("vai").onclick = (e) => {

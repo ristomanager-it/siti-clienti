@@ -101,12 +101,12 @@ function disegna() {
   $("#radice").innerHTML = `
     <header><span class="logo">Ancora<small>gestione</small></span><span class="sp"></span>
       <button class="esci" id="esci">Esci</button></header>
-    <main><nav>${[["panoramica", "Panoramica"], ["famiglie", "Famiglie"], ["regali", "Regali"], ["ordini", "Ordini libri"], ["omaggi", "Omaggi"], ["privacy", "Privacy"], ["manifesto", "Manifesto"]]
+    <main><nav>${[["panoramica", "Panoramica"], ["famiglie", "Famiglie"], ["regali", "Regali"], ["ordini", "Ordini libri"], ["omaggi", "Omaggi"], ["messaggi", "Messaggi"], ["marketing", "Marketing"], ["privacy", "Privacy"], ["manifesto", "Manifesto"]]
       .map(([k, t]) => `<button data-v="${k}" class="${k === vista ? "on" : ""}">${t}</button>`).join("")}</nav>
       <div id="corpo"><p class="tenue">Caricamento…</p></div></main>`;
   $("#esci").onclick = async () => { await sb.auth.signOut(); accesso(); };
   document.querySelectorAll("nav button").forEach((b) => b.onclick = () => { vista = b.dataset.v; disegna(); });
-  ({ panoramica, famiglie, regali, ordini, omaggi, privacy, manifesto })[vista]().catch((e) => {
+  ({ panoramica, famiglie, regali, ordini, omaggi, messaggi, marketing, privacy, manifesto })[vista]().catch((e) => {
     $("#corpo").innerHTML = `<p class="errore">Errore: ${esc(e.message)}</p>`;
   });
 }
@@ -241,6 +241,39 @@ async function omaggi() {
         <div class="tenue">${esc(o.nota ?? "")} · creato ${data(o.creato_il)}</div></div>`).join(""));
   $("#crea").onclick = async () => { await rpc("admin_crea_omaggi", { p_quanti: Number($("#quanti").value), p_nota: $("#nota").value || null }); disegna(); };
   document.querySelectorAll("[data-copia]").forEach((b) => b.onclick = async () => { await navigator.clipboard.writeText(b.dataset.copia); b.textContent = "Copiato ✓"; });
+}
+
+async function messaggi() {
+  const lista = await rpc("admin_contatti");
+  $("#corpo").innerHTML = lista.map((m) => `<div class="card" style="${m.letto ? "opacity:.6" : ""}">
+      <div class="riga"><b>${esc(m.nome)}</b><span class="sp"></span><span class="tenue">${data(m.creato_il)}</span></div>
+      <div class="tenue"><a href="mailto:${esc(m.email)}">${esc(m.email)}</a>${m.telefono ? ` · <a href="tel:${esc(m.telefono)}">${esc(m.telefono)}</a>` : ""}${m.utm?.sorgente ? ` · da ${esc(m.utm.sorgente)}` : ""}</div>
+      <p style="white-space:pre-wrap;margin:8px 0">${esc(m.messaggio)}</p>
+      ${m.letto ? "" : `<button class="btn chiaro" data-letto="${m.id}">Segna come letto</button>`}</div>`).join("") || `<p class="tenue">Nessun messaggio.</p>`;
+  document.querySelectorAll("[data-letto]").forEach((b) => b.onclick = async () => { await rpc("admin_contatto_letto", { p_id: b.dataset.letto }); disegna(); });
+}
+
+async function marketing() {
+  const righe = await rpc("admin_marketing", { p_giorni: 30 });
+  const base = "https://ristomanager-it.github.io/siti-clienti/ancora/";
+  $("#corpo").innerHTML = `<div class="nota">Ultimi 30 giorni. Le visite si contano solo per chi accetta i cookie statistici; le vendite sempre.</div>
+    <div class="card"><table style="width:100%;border-collapse:collapse;font-size:14px">
+      <tr style="text-align:left"><th>Sorgente</th><th>Campagna</th><th style="text-align:right">Visite</th><th style="text-align:right">Regali</th><th style="text-align:right">Incasso</th></tr>
+      ${righe.map((r) => `<tr style="border-top:1px solid var(--bordo)"><td>${esc(r.sorgente)}</td><td>${esc(r.campagna)}</td>
+        <td style="text-align:right">${r.visite}</td><td style="text-align:right">${r.regali}</td><td style="text-align:right">${euro(r.incasso_cent)}</td></tr>`).join("")
+        || `<tr><td colspan="5" class="tenue">Ancora nessun dato.</td></tr>`}</table></div>
+    <div class="card"><b>Crea un link tracciato</b>
+      <div class="riga" style="gap:6px;margin-top:8px;flex-wrap:wrap">
+        <input id="u-s" placeholder="sorgente (facebook, instagram, volantino)" style="flex:1;min-width:160px">
+        <input id="u-m" placeholder="mezzo (social, ads, qr)" style="flex:1;min-width:120px">
+        <input id="u-c" placeholder="campagna (natale26)" style="flex:1;min-width:120px"></div>
+      <p id="u-link" style="word-break:break-all;font-family:monospace;font-size:13px;margin:10px 0"></p>
+      <button class="btn chiaro" id="u-copia">Copia link</button></div>`;
+  const link = () => { const q = new URLSearchParams(); [["s","source"],["m","medium"],["c","campaign"]].forEach(([k, n]) => { const v = $("#u-" + k).value.trim(); if (v) q.set("utm_" + n, v.toLowerCase().replace(/\s+/g, "-")); });
+    return `${base}${q.toString() ? "?" + q : ""}#/scopri`; };
+  ["s", "m", "c"].forEach((k) => $("#u-" + k).oninput = () => { $("#u-link").textContent = link(); });
+  $("#u-link").textContent = link();
+  $("#u-copia").onclick = async () => { await navigator.clipboard.writeText(link()); $("#u-copia").textContent = "Copiato ✓"; };
 }
 
 async function stampa(id) {

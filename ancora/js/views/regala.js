@@ -1,5 +1,5 @@
 // Regala Ancora: si sceglie prima CHI lo riceve, poi i dati. Stesso prodotto, più acquirenti.
-import { $app, esc } from "../app.js";
+import { $app, esc, utm } from "../app.js";
 import { SUPABASE_URL } from "../config.js";
 
 // tipo → chi racconta, chi riceve, testi del modulo
@@ -68,6 +68,8 @@ export function montaModulo(el, params = {}) {
         </ul>
         <p style="margin:10px 0 0;font-size:13px;color:#5A3E12">Dopo 12 mesi si continua solo se volete, a 99 € l'anno. I ricordi restano gratis per sempre. Il libro stampato si ordina a parte, da 49 €.</p>
       </div>
+      <label style="display:flex;gap:10px;align-items:flex-start;font-weight:600;margin:0 0 12px"><input type="checkbox" id="termini" required style="width:22px;height:22px;flex-shrink:0">
+        <span>Ho letto e accetto le <a href="#/condizioni" target="_blank">condizioni di vendita</a> e l'<a href="#/privacy" target="_blank">informativa privacy</a>.</span></label>
       <button class="btn ambra">Regala</button>
       <p class="tenue" style="text-align:center" id="nota">Se non accetta, ti rimborsiamo.</p>
       <p id="esito" role="status"></p>
@@ -119,7 +121,7 @@ export function montaModulo(el, params = {}) {
     const res = await fetch(`${SUPABASE_URL}/functions/v1/crea-checkout`, {
       method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        tipo: "regalo", destinatario_tipo: tipo.id, invitati,
+        tipo: "regalo", destinatario_tipo: tipo.id, invitati, utm: utm(), termini: document.getElementById("termini").checked,
         destinatario_nome: primo?.nome ?? v("an"), destinatario_telefono: primo?.telefono ?? norm(v("at")),
         data_invio: v("dd"), messaggio: v("mg") || null, acquirente_nome: v("an"), acquirente_email: v("ae"), acquirente_telefono: norm(v("at")),
       }),

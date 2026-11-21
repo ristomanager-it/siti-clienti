@@ -23,6 +23,11 @@ const ROTTE = {
   "prova": () => import("./views/prova.js"),
   "omaggio": () => import("./views/omaggio.js"),
   "scopri": () => import("./views/scopri.js"),
+  "chisiamo": () => import("./views/info.js").then((m) => ({ default: m.chisiamo })),
+  "contatti": () => import("./views/info.js").then((m) => ({ default: m.contatti })),
+  "privacy": () => import("./views/info.js").then((m) => ({ default: m.privacy })),
+  "cookie": () => import("./views/info.js").then((m) => ({ default: m.cookie })),
+  "condizioni": () => import("./views/info.js").then((m) => ({ default: m.condizioni })),
   "rispondi": () => import("./views/prova.js"),
   "ascolta": () => import("./views/prova.js"),
   "biglietto": () => import("./views/biglietto.js"),
@@ -32,7 +37,7 @@ const ROTTE = {
   "settimana": () => import("./views/settimana.js"),
   "servizi": () => import("./views/servizi.js"),
 };
-const PUBBLICHE = new Set(["scopri", "omaggio", "accesso", "regala", "perche", "prova", "rispondi", "ascolta", "biglietto"]);
+const PUBBLICHE = new Set(["chisiamo", "contatti", "privacy", "cookie", "condizioni", "scopri", "omaggio", "accesso", "regala", "perche", "prova", "rispondi", "ascolta", "biglietto"]);
 
 export const $app = () => document.getElementById("app");
 export const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -228,3 +233,62 @@ export const testata = ({ nome, foto, copertina, persona, modifica, chiave, alta
     </label>
     <div style="flex:1;padding-bottom:6px" data-testata-dx></div>
   </div>`;
+
+// --- Consenso cookie e tracciabilità delle campagne (UTM) ---
+// Necessari: sempre. Statistiche (UTM per 30 giorni + conteggio visite anonimo): solo con consenso.
+const CHIAVE_CONSENSO = "ancora_consenso", CHIAVE_UTM = "ancora_utm";
+const leggi = (k) => { try { return JSON.parse(localStorage.getItem(k) ?? "null"); } catch { return null; } };
+const scrivi = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, JSON.stringify(v)); } catch { /* niente */ } };
+let utmSessione = null;   // senza consenso resta solo in memoria per questa visita (non salvato)
+
+function utmDaUrl() {
+  const q = new URLSearchParams(location.search);
+  const h = new URLSearchParams(location.hash.split("?")[1] ?? "");
+  const p = (k) => q.get("utm_" + k) ?? h.get("utm_" + k);
+  const u = { sorgente: p("source"), mezzo: p("medium"), campagna: p("campaign"), contenuto: p("content"), termine: p("term") };
+  return Object.values(u).some(Boolean) ? u : null;
+}
+
+/** La campagna da cui è arrivata la persona (prima visita degli ultimi 30 giorni), o null. */
+export function utm() {
+  if (leggi(CHIAVE_CONSENSO)?.statistiche) {
+    const s = leggi(CHIAVE_UTM);
+    if (s && Date.now() - s.t < 30 * 86400_000) return s.u;
+  }
+  return utmSessione;
+}
+
+function registraVisita() {
+  const nuovo = utmDaUrl();
+  if (nuovo) utmSessione = nuovo;
+  if (!leggi(CHIAVE_CONSENSO)?.statistiche) return;
+  if (nuovo && !leggi(CHIAVE_UTM)) scrivi(CHIAVE_UTM, { u: nuovo, t: Date.now() });   // vale il primo contatto
+  try { if (sessionStorage.getItem("ancora_visita")) return; sessionStorage.setItem("ancora_visita", "1"); } catch { return; }
+  const u = nuovo ?? {};
+  sb.from("visite").insert({ sorgente: u.sorgente ?? null, mezzo: u.mezzo ?? null, campagna: u.campagna ?? null,
+    contenuto: u.contenuto ?? null, termine: u.termine ?? null, pagina: (location.hash.split("?")[0] || "#/").slice(0, 60),
+    referrer: document.referrer ? new URL(document.referrer).hostname : null }).then(() => {});
+}
+
+/** Banner del consenso: compare alla prima visita, o quando si riaprono le preferenze. */
+export function consensoCookie(forza = false) {
+  if (!forza && leggi(CHIAVE_CONSENSO)) { registraVisita(); return; }
+  document.getElementById("banner-cookie")?.remove();
+  const d = document.createElement("div");
+  d.id = "banner-cookie";
+  d.setAttribute("role", "dialog"); d.setAttribute("aria-label", "Preferenze cookie");
+  d.style.cssText = "position:fixed;left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom));max-width:540px;margin:0 auto;z-index:50;background:#12302C;color:#FBF3E2;border-radius:20px;padding:16px 16px 14px;box-shadow:0 8px 30px rgba(0,0,0,.3)";
+  d.innerHTML = `<b style="font-size:16px">Un biscotto, solo se vuoi 🍪</b>
+    <p style="margin:6px 0 12px;font-size:14px;line-height:1.45;color:#E2DACB">Usiamo solo ciò che serve a far funzionare Ancora. Se accetti, ricordiamo anche da quale campagna sei arrivato, per capire cosa funziona. Niente pubblicità. <a href="#/cookie" style="color:#F4D39B">Dettagli</a></p>
+    <div style="display:flex;gap:8px"><button id="ck-no" class="btn chiaro" style="flex:1;min-height:44px;margin:0">Solo necessari</button>
+      <button id="ck-si" class="btn" style="flex:1;min-height:44px;margin:0;background:#C9832E;color:#12302C">Accetta</button></div>`;
+  document.body.appendChild(d);
+  const scegli = (si) => {
+    scrivi(CHIAVE_CONSENSO, { statistiche: si, il: new Date().toISOString() });
+    if (!si) scrivi(CHIAVE_UTM, null);
+    d.remove(); registraVisita();
+  };
+  d.querySelector("#ck-no").onclick = () => scegli(false);
+  d.querySelector("#ck-si").onclick = () => scegli(true);
+}
+consensoCookie();

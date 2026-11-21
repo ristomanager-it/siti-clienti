@@ -25,6 +25,8 @@ export default async function ({ id, params }) {
         <label for="em">Email</label><input id="em" type="email" autocomplete="username" required>
         <label for="pw">Scegli una password</label><input id="pw" type="password" autocomplete="new-password" minlength="8" required>
         <p class="tenue">Almeno 8 caratteri. Ti servono per entrare da telefono e computer.</p>
+        <label style="display:flex;gap:10px;align-items:flex-start;font-weight:600;margin:8px 0 12px"><input type="checkbox" id="termini" required style="width:22px;height:22px;flex-shrink:0">
+          <span>Accetto le <a href="#/condizioni" target="_blank">condizioni</a> e l'<a href="#/privacy" target="_blank">informativa privacy</a>.</span></label>
         <button class="btn">Attiva e entra</button>
         <p style="text-align:center"><a href="#/accesso">Ho già un account: entro e poi attivo</a></p>`}
       <p id="esito" role="status"></p>
@@ -43,7 +45,7 @@ export default async function ({ id, params }) {
     }
     const email = document.getElementById("em").value.trim(), password = document.getElementById("pw").value;
     const r = await fetch(API, { method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ codice: cod, nome: document.getElementById("nome").value, email, password }) }).then((x) => x.json()).catch(() => ({}));
+      body: JSON.stringify({ codice: cod, nome: document.getElementById("nome").value, email, password, termini: document.getElementById("termini").checked }) }).then((x) => x.json()).catch(() => ({}));
     if (!r.ok) {
       esito.innerHTML = `<span class="errore">${esc(r.errore ?? "Non attivato.")}</span>${r.gia_registrato ? ` <a href="#/accesso">Entra</a>` : ""}`;
       btn.disabled = false; return;
