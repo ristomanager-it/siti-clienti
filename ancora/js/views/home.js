@@ -65,6 +65,7 @@ export default async function ({ params }) {
     ${scelta ? testata({ nome: scelta.nome, persona: { id: scelta.id, nome: scelta.nome }, foto: url[scelta.foto_path], copertina: url[scelta.copertina_path], alta: 130, tondo: 72 })
       .replace(`<div style="flex:1;padding-bottom:6px" data-testata-dx></div>`, `<div style="flex:1;padding-bottom:6px"><b style="font-size:19px">${esc(scelta.nome)}</b>${scelta.proprietario_id === state.io.id ? `<div><a class="tenue" href="#/cerchie">Cambia foto e copertina</a></div>` : ""}</div>`) : ""}
     ${cardSettimana}
+    <div id="mia-domanda"></div>
     ${storie.length ? `<div class="storie" aria-label="Racconti della settimana">${storie.map((r) => {
       const fotoR = (r.ricordi_media ?? []).find((m) => m.tipo === "foto");
       const sfondo = fotoR ? url[fotoR.path] : (r.persone?.foto_path ? url[r.persone.foto_path] : null);
@@ -72,6 +73,7 @@ export default async function ({ params }) {
         <small>${esc(nomeDi(r.persone).replace(/^Nonn[oa] /, ""))}</small></a>`;
     }).join("")}</div>` : ""}
     ${lista.map((r, i) => post(r, url, i)).join("") || `<div class="pad"><h1>Ancora vuoto</h1><p class="tenue">Invita la famiglia dalle cerchie, o racconta tu per primo.</p></div>`}`;
+  miaDomanda();
 
   document.querySelectorAll("[data-cuore]").forEach((b) => b.onclick = async () => {
     const id = b.dataset.cuore;
@@ -131,4 +133,21 @@ function semplice() {
     <a class="btn grande ambra" href="#/racconta">Racconta<span style="font-size:15px;font-weight:600">tieni premuto e parla</span></a>
     <a class="btn grande chiaro" href="#/racconta?foto=1">Foto</a>
     <a class="btn grande chiaro" href="#/racconti">La famiglia</a></div>`;
+}
+
+// "La tua domanda": a tutti, non solo ai nonni. Prima quelle che ti fa la famiglia, poi la libreria.
+async function miaDomanda(altra = false) {
+  const el = document.getElementById("mia-domanda");
+  if (!el) return;
+  const { data: d } = await sb.rpc("mia_domanda", { p_altra: altra });
+  if (!d) { el.innerHTML = ""; return; }
+  el.innerHTML = `<div class="card" style="margin-bottom:18px;border-left:4px solid var(--ambra)">
+    <span style="font-size:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:#8A5A17">${d.chiesta_da ? `${esc(d.chiesta_da)} ti chiede` : "La tua domanda"}</span>
+    <b style="display:block;font-family:Fraunces,serif;font-size:20px;line-height:1.25;margin:6px 0 12px">${esc(d.testo)}</b>
+    ${d.fatta
+      ? `<div class="riga" style="gap:8px"><span class="tenue" style="flex:1">✓ Hai risposto. La prossima arriva la settimana prossima.</span><button class="chip" id="altra" style="margin:0">Un'altra</button></div>`
+      : `<div class="riga" style="gap:8px"><a class="btn ambra" style="flex:1;min-height:46px" href="#/racconta?domanda=${d.id}">Rispondi a voce</a>
+         <button class="chip" id="altra" style="margin:0">Cambia</button></div>`}
+  </div>`;
+  document.getElementById("altra").onclick = () => miaDomanda(true);
 }

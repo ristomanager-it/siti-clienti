@@ -26,7 +26,7 @@ const COME = [
 ];
 
 const COSA = [
-  ["Una domanda a settimana", "per chi racconta: si risponde a voce, quando si vuole"],
+  ["Una domanda a settimana, per tutti", "ognuno la sua, dai nonni ai nipoti; e la famiglia può fartene di sue"],
   ["La domanda della settimana", "per tutta la famiglia: ognuno risponde, ci si scopre"],
   ["Il cloud dei ricordi", "50 GB per foto, video, vocali, documenti: non solo foto e video"],
   ["Gli alberi di famiglia", "la tua, dei tuoi genitori, dei suoceri: uniti"],
@@ -48,6 +48,7 @@ const CONTRO = [
 ];
 
 const DOMANDE = [
+  ["Le domande arrivano solo ai nonni?", "No, a tutti: ognuno ha la sua domanda della settimana, dai nonni ai ragazzi. E chiunque può farne una a un familiare dal suo profilo."],
   ["È facile per i nonni?", "Sì: si usa come le app di messaggi che conoscono già. Di solito sono i nipoti a fargliela vedere la prima volta. E chi proprio non vuole l'app può rispondere anche da un messaggio sul telefono."],
   ["Chi può entrare?", "Tutta la famiglia, senza pagare: figli, nipoti, cugini, anche chi vive all'estero. Nel regalo scrivi i nomi e i numeri di tutti, e ognuno riceve il suo invito."],
   ["Posso stare in più famiglie?", "Sì: la tua, quella dei tuoi genitori, quella di tua moglie o di tuo marito, gli amici. Gli alberi si collegano tra loro."],
@@ -91,8 +92,8 @@ export default async function ({ params } = {}) {
     ${sezione(`${etichetta("Come funziona")}
       <span id="come" style="display:block;scroll-margin-top:80px"></span>${titolo("Una domanda. Una risposta a voce. Un ricordo in più.")}
       ${[["Regali Ancora", "A Natale o quando vuoi. Scrivi i nomi e i numeri di tutti: chi racconta e chi invitare."],
-         ["Arriva la domanda", "Ogni settimana una domanda nuova: «Com'era la casa dove sei cresciuto?». Si risponde a voce, con calma."],
-         ["La famiglia ascolta", "La voce finisce nell'album di famiglia. Figli e nipoti ascoltano, commentano, chiedono ancora."]]
+         ["Arriva la domanda", "Ogni settimana, a ognuno, una domanda nuova: «Qual è il tuo primo ricordo?». E una per tutta la famiglia. Si risponde a voce, con calma."],
+         ["La famiglia si scopre", "Le risposte finiscono nell'album di famiglia. Si ascolta, si commenta, si chiede ancora: anche i nonni scoprono i nipoti."]]
         .map(([t, d], i) => `<div style="display:flex;gap:16px;padding:12px 0">
           <b style="font-family:Fraunces,serif;font-size:40px;line-height:.9;color:${C.oro};width:30px">${i + 1}</b>
           <div><b style="font-size:18px">${t}</b><div class="tenue" style="margin-top:3px;line-height:1.45">${d}</div></div></div>`).join("")}

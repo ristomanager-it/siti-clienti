@@ -38,7 +38,7 @@ export function montaModulo(el, params = {}) {
       <label>Chi lo riceve?</label>
       <div class="scelta" id="tipi">${TIPI.map((x, i) => `<button type="button" class="${i === 0 ? "on" : ""}" data-t="${x.id}">${x.t}<small>${x.s}</small></button>`).join("")}</div>
       <div id="narr">
-        <label>Chi racconta <span class="tenue" style="font-weight:600">· riceve una domanda a settimana</span></label>
+        <label>Chi racconta <span class="tenue" style="font-weight:600">· i festeggiati</span></label>
         <div id="lista-narr"></div>
         <button type="button" class="chip" id="piu-narr">+ Aggiungi chi racconta (es. la mamma)</button>
       </div>
@@ -59,7 +59,7 @@ export function montaModulo(el, params = {}) {
         <b style="font-family:Fraunces,serif;font-size:19px;color:#4A3410">Cosa c'è nel regalo di Natale</b>
         <ul style="margin:10px 0 0;padding-left:20px;line-height:1.55;color:#4A3410">
           <li><b>12 mesi di Piano Famiglia</b> per tutta la famiglia, fino a 6 persone</li>
-          <li><b>Una domanda a settimana</b> per chi racconta (fino a 4 persone): si risponde a voce</li>
+          <li><b>Una domanda a settimana per tutti</b>, ognuno la sua, più la domanda di famiglia: si risponde a voce</li>
           <li><b>Il cloud dei ricordi</b>: 50 GB per foto, video, vocali, storie e ricette</li>
           <li><b>La domanda della settimana</b> per tutti, l'<b>albero genealogico</b>, il <b>ricettario</b>, l'<b>agenda</b> e il <b>diario</b></li>
           <li><b>Il libro digitale</b> delle storie, con il QR per ascoltare la voce</li>
