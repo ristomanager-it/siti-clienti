@@ -65,6 +65,9 @@ const foto = (src, alt, alta = 300, posizione = "center") =>
 
 export default async function ({ params } = {}) {
   $app().innerHTML = `
+    <a href="#acquista" class="vai-acquista" style="display:block;background:${C.rosso};color:${C.panna};text-align:center;font-weight:800;font-size:14px;padding:10px 14px;text-decoration:none;letter-spacing:.02em">
+      🎄 Promo Natale: 12 mesi per tutta la famiglia a 129 € · <u>Regala ora</u></a>
+    <div style="position:relative">
     ${testataPubblica({ trasparente: true })}
 
     <section style="position:relative;min-height:640px;display:flex;align-items:flex-end;color:${C.panna};
@@ -73,9 +76,50 @@ export default async function ({ params } = {}) {
         <span style="display:inline-block;background:${C.oro};color:${C.notte};font-weight:800;font-size:13px;padding:6px 12px;border-radius:999px;margin-bottom:14px">Natale 2026 · il regalo che resta</span>
         <h1 style="font-family:Fraunces,serif;font-size:44px;line-height:1.02;margin:0 0 12px;color:${C.panna}">Il cloud dei tuoi ricordi.</h1>
         <p style="font-size:18px;line-height:1.45;margin:0 0 20px;color:#F3E6D2">Non solo foto e video: le voci, le storie, le ricette e l'albero della tua famiglia. Al sicuro, solo per voi.</p>
-        <a class="btn" href="#acquista" id="vai" style="background:${C.oro};color:${C.notte}">Regala Ancora · 129 €</a>
+        <a class="btn vai-acquista" href="#acquista" style="background:${C.oro};color:${C.notte}">Regala Ancora · 129 €</a>
         <a class="btn" href="#come" id="vai-come" style="margin-top:10px;background:transparent;color:${C.panna};border:2px solid rgba(251,243,226,.6)">Scopri come funziona</a>
       </div>
+    </section>
+    </div>
+
+    <div style="background:${C.panna};padding:14px 16px;display:flex;gap:8px;overflow-x:auto;font-size:13px;font-weight:700;color:${C.notte}">
+      ${["🔒 Privato, niente pubblicità", "🇮🇹 Fatto in Italia", "↩︎ Rimborso se non accetta", "✓ I ricordi restano vostri"]
+        .map((t) => `<span style="flex-shrink:0;background:#fff;border:1px solid #EAD9BF;border-radius:999px;padding:7px 12px">${t}</span>`).join("")}
+    </div>
+
+    <section style="background:linear-gradient(180deg,${C.panna},#F3E3C8);padding:30px 20px 34px;overflow:hidden">
+      ${etichetta("Ecco Ancora")}
+      ${titolo("Sul telefono di tutti. E a fine anno, il libro.")}
+      <div style="position:relative;height:440px;margin-top:10px">
+        <!-- il libro aperto, dietro -->
+        <div style="position:absolute;right:-6px;top:60px;width:230px;height:300px;transform:rotate(6deg);background:#FFFDF8;border-radius:6px 14px 14px 6px;box-shadow:0 18px 40px rgba(60,30,10,.25);padding:22px 20px;border-left:10px solid ${C.rosso}">
+          <div style="font-family:Fraunces,serif;font-size:12px;color:${C.oro};letter-spacing:.1em;text-transform:uppercase">Le storie di casa</div>
+          <div style="font-family:Fraunces,serif;font-size:19px;line-height:1.2;margin:8px 0 10px;color:${C.notte}">La casa dove sono cresciuta</div>
+          <div style="font-size:11px;line-height:1.55;color:#5D635F">Avevamo un cortile con il fico, e la domenica arrivavano tutti i cugini. La nonna faceva le tagliatelle sul tavolo di marmo…</div>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:16px">
+            <div style="width:46px;height:46px;background:repeating-conic-gradient(${C.notte} 0 25%,#fff 0 50%) 0 0/9px 9px;border:3px solid #fff;outline:1px solid #ddd"></div>
+            <span style="font-size:10px;color:#5D635F;line-height:1.3">Inquadra e<br>ascolta la sua voce</span></div>
+        </div>
+        <!-- il telefono, davanti -->
+        <div style="position:absolute;left:0;top:0;width:205px;height:420px;border-radius:34px;background:#111;padding:9px;box-shadow:0 20px 44px rgba(18,48,44,.35)">
+          <div style="width:100%;height:100%;border-radius:26px;background:#FBF8F2;overflow:hidden;font-size:11px">
+            <div style="padding:14px 12px 8px;display:flex;align-items:center"><span class="logo" style="font-size:17px;flex:1">Ancora</span>
+              <span style="width:22px;height:22px;border-radius:11px;background:${C.salvia}"></span></div>
+            <div style="margin:0 8px 8px;background:${C.notte};color:${C.panna};border-radius:16px;padding:11px">
+              <div style="font-size:8.5px;font-weight:800;letter-spacing:.08em;color:#F4D39B;text-transform:uppercase">Giulia ti chiede</div>
+              <div style="font-family:Fraunces,serif;font-size:14px;line-height:1.2;margin:4px 0 9px">Nonna, com'era il tuo primo Natale da sposata?</div>
+              <div style="background:${C.oro};color:${C.notte};font-weight:800;text-align:center;border-radius:999px;padding:7px">🎙 Rispondi a voce</div></div>
+            <div style="margin:0 8px 8px;background:#fff;border:1px solid #EFE6D8;border-radius:16px;overflow:hidden">
+              <div style="height:86px;background:url('img/panettone.jpg') center/cover"></div>
+              <div style="padding:8px 10px"><b>Nonna Lucia</b> · la ricetta del panettone
+                <div style="display:flex;align-items:center;gap:6px;margin-top:6px"><span style="width:20px;height:20px;border-radius:10px;background:${C.oro};display:grid;place-items:center;color:#fff;font-size:9px">▶</span>
+                  <span style="flex:1;height:3px;background:#EAD9BF;border-radius:2px"><i style="display:block;width:40%;height:3px;background:${C.oro}"></i></span><span style="color:#5D635F">2:14</span></div></div></div>
+            <div style="margin:0 8px;background:#fff;border:1px solid #EFE6D8;border-radius:16px;padding:9px 10px;display:flex;gap:6px;align-items:center">
+              <span style="font-size:15px">🌳</span><span><b>L'albero</b> · 31 persone, 3 famiglie</span></div>
+          </div>
+        </div>
+      </div>
+      <p class="tenue" style="margin:6px 0 0;text-align:center">L'app è vera; i nomi sono di esempio.</p>
     </section>
 
     ${sezione(`${etichetta("Perché", C.oro)}
@@ -145,7 +189,11 @@ export default async function ({ params } = {}) {
         <p style="margin:8px 0 0;line-height:1.5">${r}</p></details>`).join("")}
       <p style="margin-top:16px">Altre domande? <a href="#/contatti">Scrivici</a>.</p>`, "transparent", "inherit", "faq")}
 
-    ${piePubblico()}`;
+    ${piePubblico()}
+    <div id="barra-acquisto" style="position:fixed;left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom));max-width:540px;margin:0 auto;z-index:20;
+      display:none;align-items:center;gap:10px;background:${C.notte};color:${C.panna};border-radius:999px;padding:8px 8px 8px 18px;box-shadow:0 10px 30px rgba(0,0,0,.3)">
+      <span style="flex:1;font-weight:700;font-size:14px;line-height:1.2">Regalo di Natale<br><span style="color:#F4D39B">129 € · 12 mesi</span></span>
+      <a href="#acquista" class="vai-acquista btn" style="width:auto;margin:0;min-height:44px;padding:0 20px;background:${C.oro};color:${C.notte}">Regala</a></div>`;
 
   montaModulo(document.getElementById("modulo-regalo"));
   collegaMenu(); collegaPie();
@@ -154,8 +202,17 @@ export default async function ({ params } = {}) {
   else scrollTo(0, 0);
   document.getElementById("vai-come").onclick = (e) => { e.preventDefault(); document.getElementById("come").scrollIntoView({ behavior: "smooth" }); };
   // il bottone in alto scorre al modulo senza cambiare pagina
-  document.getElementById("vai").onclick = (e) => {
+  document.querySelectorAll(".vai-acquista").forEach((a) => a.onclick = (e) => {
     e.preventDefault();
     document.getElementById("acquista").scrollIntoView({ behavior: "smooth" });
+  });
+  // la barra "Regala" in basso: compare dopo la copertina, sparisce sul modulo e se c'è il banner cookie
+  const barra = document.getElementById("barra-acquisto"), modulo = document.getElementById("acquista");
+  const aggiornaBarra = () => {
+    if (!document.body.contains(barra)) { removeEventListener("scroll", aggiornaBarra); return; }
+    const r = modulo.getBoundingClientRect();
+    const sulModulo = r.top < innerHeight && r.bottom > 0;
+    barra.style.display = scrollY > 560 && !sulModulo && !document.getElementById("banner-cookie") ? "flex" : "none";
   };
+  addEventListener("scroll", aggiornaBarra, { passive: true });
 }
