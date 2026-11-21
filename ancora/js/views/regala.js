@@ -15,7 +15,7 @@ const TIPI = [
 export default async function ({ params }) {
   if (params.ok) {
     $app().innerHTML = `<header class="testa"><span class="logo">Ancora</span><span></span></header>
-      <div class="pad"><h1>Grazie!</h1><p style="font-size:17px">Il regalo è confermato. Il giorno scelto arriverà il primo messaggio su WhatsApp.</p>
+      <div class="pad"><h1>Grazie!</h1><p style="font-size:17px">Il regalo è confermato. Il giorno scelto arriverà il primo messaggio.</p>
       ${params.ok.length > 10 ? `<a class="btn ambra" href="#/biglietto/${esc(params.ok)}">Stampa il biglietto da mettere sotto l'albero</a>` : ""}
       <a class="btn chiaro" style="margin-top:10px" href="#/accesso">Entra in Ancora</a></div>`;
     return;
@@ -34,17 +34,17 @@ export function montaModulo(el, params = {}) {
     <form id="f" class="pad">
       <span class="chip on" style="background:#B3402F;margin:0 0 10px">Promo Natale</span>
       <h1>Un anno di ricordi, per chi vuoi tu</h1>
-      <p class="tenue" style="font-size:15px">Domande ogni settimana su WhatsApp, racconti a voce, foto e il libro digitale. Per tutta la famiglia.</p>
+      <p class="tenue" style="font-size:15px">Una domanda a settimana, racconti a voce, foto, ricette, l'albero e il libro digitale. Per tutta la famiglia.</p>
       <label>Chi lo riceve?</label>
       <div class="scelta" id="tipi">${TIPI.map((x, i) => `<button type="button" class="${i === 0 ? "on" : ""}" data-t="${x.id}">${x.t}<small>${x.s}</small></button>`).join("")}</div>
       <div id="narr">
-        <label>Chi racconta <span class="tenue" style="font-weight:600">· riceve le domande su WhatsApp</span></label>
+        <label>Chi racconta <span class="tenue" style="font-weight:600">· riceve una domanda a settimana</span></label>
         <div id="lista-narr"></div>
         <button type="button" class="chip" id="piu-narr">+ Aggiungi chi racconta (es. la mamma)</button>
       </div>
       <div id="inv">
         <label id="l-inv">Chi invitare</label>
-        <p class="tenue" style="margin:0 0 6px" id="t-inv">Scrivi tutti: ricevono il loro invito su WhatsApp il giorno del regalo.</p>
+        <p class="tenue" style="margin:0 0 6px" id="t-inv">Scrivi tutti: ognuno riceve il suo invito sul telefono il giorno del regalo.</p>
         <div id="lista-inv"></div>
         <button type="button" class="chip" id="piu-inv">+ Aggiungi un'altra persona</button>
       </div>
@@ -52,14 +52,14 @@ export function montaModulo(el, params = {}) {
       <label for="dd">Quando parte il primo messaggio</label><input id="dd" type="date" value="${natale}" required>
       <label for="an">Il tuo nome</label><input id="an" required>
       <label for="ae">La tua email</label><input id="ae" type="email" required>
-      <label for="at">Il tuo WhatsApp</label><input id="at" type="tel" inputmode="tel" placeholder="+39 …" required>
+      <label for="at">Il tuo cellulare</label><input id="at" type="tel" inputmode="tel" placeholder="+39 …" required>
       <div style="display:flex;align-items:baseline;justify-content:space-between;margin:18px 0 8px">
         <span class="tenue">12 mesi, tutta la famiglia<br>poi, se volete, 99 € l'anno</span><span style="font-family:Fraunces,serif;font-size:34px;font-weight:700">129 €</span></div>
       <div class="card" style="margin:0 0 14px;background:var(--ambra-chiaro);border-color:#EAD2AA">
         <b style="font-family:Fraunces,serif;font-size:19px;color:#4A3410">Cosa c'è nel regalo di Natale</b>
         <ul style="margin:10px 0 0;padding-left:20px;line-height:1.55;color:#4A3410">
           <li><b>12 mesi di Piano Famiglia</b> per tutta la famiglia, fino a 6 persone</li>
-          <li><b>Una domanda a settimana su WhatsApp</b> per chi racconta (fino a 4 persone): si risponde con un vocale</li>
+          <li><b>Una domanda a settimana</b> per chi racconta (fino a 4 persone): si risponde a voce</li>
           <li><b>Il cloud dei ricordi</b>: 50 GB per foto, video, vocali, storie e ricette</li>
           <li><b>La domanda della settimana</b> per tutti, l'<b>albero genealogico</b>, il <b>ricettario</b>, l'<b>agenda</b> e il <b>diario</b></li>
           <li><b>Il libro digitale</b> delle storie, con il QR per ascoltare la voce</li>
@@ -78,7 +78,7 @@ export function montaModulo(el, params = {}) {
     const d = document.createElement("div");
     d.className = "riga persona"; d.style.cssText = "gap:6px;margin-bottom:6px";
     d.innerHTML = `<input placeholder="${ph}" aria-label="Nome" style="flex:1" data-nome value="${esc(valore)}">
-      <input type="tel" inputmode="tel" placeholder="WhatsApp" aria-label="WhatsApp" style="flex:1.2" data-tel>
+      <input type="tel" inputmode="tel" placeholder="Cellulare" aria-label="Cellulare" style="flex:1.2" data-tel>
       <button type="button" class="chip" style="margin:0" aria-label="Togli">✕</button>`;
     d.querySelector("button").onclick = () => d.remove();
     document.getElementById(lista).appendChild(d);
@@ -112,7 +112,7 @@ export function montaModulo(el, params = {}) {
     const invitati = [...(tipo.id === "genitori" ? persone("#lista-narr", true) : []), ...(tipo.id === "me_stesso" ? [] : persone("#lista-inv", false))];
     const esito = document.getElementById("esito");
     const incompleto = invitati.find((p) => !p.nome || !/^\+\d{8,15}$/.test(p.telefono));
-    if (incompleto) { esito.innerHTML = `<span class="errore">Controlla nome e WhatsApp di ${esc(incompleto.nome || "tutti")}.</span>`; return; }
+    if (incompleto) { esito.innerHTML = `<span class="errore">Controlla nome e numero di ${esc(incompleto.nome || "tutti")}.</span>`; return; }
     if (tipo.id === "genitori" && !invitati.some((p) => p.narratore)) { esito.innerHTML = `<span class="errore">Scrivi chi racconta.</span>`; return; }
     if (tipo.id !== "genitori" && tipo.id !== "me_stesso" && !invitati.length) { esito.innerHTML = `<span class="errore">Scrivi almeno una persona da invitare.</span>`; return; }
     const primo = invitati.find((p) => p.narratore) ?? invitati[0];

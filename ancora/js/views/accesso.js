@@ -5,8 +5,8 @@ import { SUPABASE_URL } from "../config.js";
 // tanti ganci, uno per ogni famiglia: girano da soli
 const GANCI = [
   "Ancora. Le radici che restano.",
-  "La voce dei nonni, per sempre.",
-  "Scopri da dove vieni: le origini della tua famiglia.",
+  "Le storie di casa, raccontate da chi le ha vissute.",
+  "La famiglia che si mette insieme, un ricordo alla volta.",
   "Il cloud dei tuoi ricordi: storie, voci, foto, video, ricette, il diario.",
   "Le ricette di casa, con la voce di chi le fa.",
   "L'albero della famiglia, completato insieme.",
@@ -36,7 +36,7 @@ export default async function ({ params }) {
         <button class="btn" style="margin-top:12px">Entra</button>
         <p id="esitoe" role="status"></p>
       </form></details>
-    <div class="pad"><a class="btn ambra" href="#/prova">Prova gratis: fai una domanda al nonno</a>
+    <div class="pad"><a class="btn ambra" href="#/scopri">Scopri Ancora</a>
       <a class="btn chiaro" style="margin-top:10px" href="#/regala">Regala Ancora</a>
       <p style="text-align:center"><a href="#/scopri">Scopri Ancora</a> · <a href="#/perche">Perché Ancora</a></p></div>`;
 

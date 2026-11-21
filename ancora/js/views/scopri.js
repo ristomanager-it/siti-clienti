@@ -1,5 +1,5 @@
 // Pagina di vendita (pubblica). Versione di Natale: toni caldi delle feste, sempre con i colori del brand.
-// Perché, come, cosa; il confronto con il gruppo WhatsApp; prezzi; modulo d'acquisto.
+// Perché, come, cosa; più di una chat di gruppo; prezzi; modulo d'acquisto. Toni leggeri e vivi: si racconta adesso, insieme.
 // Foto: Unsplash (licenza Unsplash, uso libero).
 import { $app } from "../app.js";
 import { montaModulo } from "./regala.js";
@@ -8,8 +8,8 @@ import { montaModulo } from "./regala.js";
 const C = { rosso: "#8E2B22", rossoVivo: "#B3402F", oro: "#C9832E", panna: "#FBF3E2", salvia: "#4D7356", notte: "#12302C" };
 
 const MOTIVI = [
-  ["La voce dei nonni, per sempre.", "Le loro storie, con il loro tono e il loro dialetto."],
-  ["Scoprire da dove vieni.", "Il cognome, il paese, chi è partito e per dove."],
+  ["Le storie di casa, raccontate da chi le ha vissute.", "Con il loro tono, le loro parole, il loro dialetto."],
+  ["La famiglia che si mette insieme.", "Ognuno aggiunge un pezzo: una foto, un ricordo, un nome nell'albero."],
   ["Le ricette di casa.", "Con la voce di chi le fa, e le dosi giuste."],
   ["Vicini anche da lontano.", "Chi vive all'estero, i nipoti fuori sede, i nonni soli."],
   ["Ritrovarsi.", "Se in famiglia ci si è persi di vista."],
@@ -18,14 +18,14 @@ const MOTIVI = [
 
 const COME = [
   ["La voce prima di tutto", "Il tono, le pause, il dialetto, la risata. Si racconta parlando, non scrivendo."],
-  ["WhatsApp è il campanello, Ancora è la casa", "Una domanda alla volta arriva su WhatsApp. I ricordi vivono in Ancora, in ordine."],
+  ["Facile come una chat", "Si usa come le app di messaggi che tutti conoscono. Spesso sono i nipoti a farla vedere ai nonni, e poi vanno da soli."],
   ["Privato per davvero", "Ogni ricordo ha i suoi destinatari. Niente pubblicità, niente estranei: noi non leggiamo i contenuti."],
-  ["Semplice a 80 anni e a 15", "I nonni non scaricano niente: rispondono con un vocale."],
+  ["Semplice a 80 anni e a 15", "Un tasto per parlare, uno per la foto. Tutto qui."],
   ["I ricordi restano gratis, per sempre", "Si paga per farli crescere, mai per non perderli."],
 ];
 
 const COSA = [
-  ["Le domande su WhatsApp", "per chi racconta, una a settimana"],
+  ["Una domanda a settimana", "per chi racconta: si risponde a voce, quando si vuole"],
   ["La domanda della settimana", "per tutta la famiglia: ognuno risponde, ci si scopre"],
   ["Il cloud dei ricordi", "50 GB per foto, video, vocali, documenti: non solo foto e video"],
   ["Gli alberi di famiglia", "la tua, dei tuoi genitori, dei suoceri: uniti"],
@@ -39,7 +39,7 @@ const COSA = [
 
 const CONTRO = [
   ["I ricordi spariscono tra mille messaggi, buongiorno e catene", "Ogni ricordo ha il suo posto: per persona, per anno, per albero"],
-  ["Cambi telefono e perdi foto e vocali", "Tutto al sicuro nel cloud, per sempre"],
+  ["Cambi telefono e perdi foto e vocali", "Tutto al sicuro nel cloud"],
   ["Foto e video compressi", "Qualità originale"],
   ["Nessuno fa le domande giuste, e le storie non escono", "Una domanda a settimana, scelta per voi"],
   ["Niente albero, niente ricettario, niente libro", "Tutto dentro, e cresce con voi"],
@@ -47,8 +47,8 @@ const CONTRO = [
 ];
 
 const DOMANDE = [
-  ["Devono scaricare un'app i nonni?", "No. Ricevono la domanda su WhatsApp e rispondono con un vocale. Tutto il resto lo fa Ancora."],
-  ["Chi può entrare?", "Tutta la famiglia, senza pagare: figli, nipoti, cugini, anche chi vive all'estero. Nel regalo scrivi i nomi e i WhatsApp di tutti, e ognuno riceve il suo invito."],
+  ["È facile per i nonni?", "Sì: si usa come le app di messaggi che conoscono già. Di solito sono i nipoti a fargliela vedere la prima volta. E chi proprio non vuole l'app può rispondere anche da un messaggio sul telefono."],
+  ["Chi può entrare?", "Tutta la famiglia, senza pagare: figli, nipoti, cugini, anche chi vive all'estero. Nel regalo scrivi i nomi e i numeri di tutti, e ognuno riceve il suo invito."],
   ["Posso stare in più famiglie?", "Sì: la tua, quella dei tuoi genitori, quella di tua moglie o di tuo marito, gli amici. Gli alberi si collegano tra loro."],
   ["Cosa succede dopo 12 mesi?", "Si continua solo se volete, a 99 € l'anno o 9,99 € al mese. I ricordi restano gratis per sempre."],
   ["Chi vede i miei ricordi?", "Solo chi scegli tu. Ogni ricordo può essere per tutti, per una famiglia o solo per te. Noi non li leggiamo."],
@@ -74,14 +74,14 @@ export default async function () {
         <h1 style="font-family:Fraunces,serif;font-size:44px;line-height:1.02;margin:0 0 12px;color:${C.panna}">Il cloud dei tuoi ricordi.</h1>
         <p style="font-size:18px;line-height:1.45;margin:0 0 20px;color:#F3E6D2">Non solo foto e video: le voci, le storie, le ricette e l'albero della tua famiglia. Al sicuro, solo per voi.</p>
         <a class="btn" href="#acquista" id="vai" style="background:${C.oro};color:${C.notte}">Regala Ancora · 129 €</a>
-        <a class="btn" href="#/prova" style="margin-top:10px;background:transparent;color:${C.panna};border:2px solid rgba(251,243,226,.6)">Prova gratis: fai una domanda al nonno</a>
+        <a class="btn" href="#come" id="vai-come" style="margin-top:10px;background:transparent;color:${C.panna};border:2px solid rgba(251,243,226,.6)">Scopri come funziona</a>
       </div>
     </section>
 
     ${sezione(`${etichetta("Perché", C.oro)}
-      ${titolo("Nessuno dovrebbe perdere la voce di chi ama.", C.panna)}
-      <p style="font-size:17px;line-height:1.55;margin:0 0 14px;color:#F1E4CF">Le storie di una famiglia si perdono in silenzio: nessuno le scrive, e quando vogliamo sentirle è tardi.</p>
-      <p style="font-family:Fraunces,serif;font-size:20px;line-height:1.45;margin:0;color:${C.panna}">L'<b>ancora</b> tiene ferma la barca nel porto sicuro: le radici, la famiglia. <b>Ancora</b> vuol dire anche di più, un'altra volta: «nonno, raccontamela ancora».</p>`,
+      ${titolo("Ogni famiglia ha una storia. Raccontatela insieme.", C.panna)}
+      <p style="font-size:17px;line-height:1.55;margin:0 0 14px;color:#F1E4CF">Le storie di casa vivono nei pranzi della domenica, nelle foto sparse su dieci telefoni, nelle ricette che nessuno ha mai scritto. Ancora le mette insieme, in un posto solo, vostro.</p>
+      <p style="font-family:Fraunces,serif;font-size:20px;line-height:1.45;margin:0;color:${C.panna}">L'<b>ancora</b> tiene ferma la barca nel porto sicuro: le radici, la famiglia. <b>Ancora</b> vuol dire anche di più, un'altra volta: «raccontamela ancora».</p>`,
       C.notte)}
 
     ${sezione(`${etichetta("Ognuno il suo motivo")}
@@ -90,9 +90,9 @@ export default async function () {
         <div class="tenue" style="margin-top:2px">${d}</div></div>`).join("")}`, C.panna)}
 
     ${sezione(`${etichetta("Come funziona")}
-      ${titolo("Una domanda. Un vocale. Un ricordo per sempre.")}
-      ${[["Regali Ancora", "A Natale o quando vuoi. Scrivi i nomi e i WhatsApp di tutti: chi racconta e chi invitare."],
-         ["Arriva la domanda", "Ogni settimana, su WhatsApp: «Com'era la casa dove sei cresciuto?». Si risponde con un vocale."],
+      <span id="come"></span>${titolo("Una domanda. Una risposta a voce. Un ricordo in più.")}
+      ${[["Regali Ancora", "A Natale o quando vuoi. Scrivi i nomi e i numeri di tutti: chi racconta e chi invitare."],
+         ["Arriva la domanda", "Ogni settimana una domanda nuova: «Com'era la casa dove sei cresciuto?». Si risponde a voce, con calma."],
          ["La famiglia ascolta", "La voce finisce nell'album di famiglia. Figli e nipoti ascoltano, commentano, chiedono ancora."]]
         .map(([t, d], i) => `<div style="display:flex;gap:16px;padding:12px 0">
           <b style="font-family:Fraunces,serif;font-size:40px;line-height:.9;color:${C.oro};width:30px">${i + 1}</b>
@@ -109,11 +109,10 @@ export default async function () {
       ${titolo("Tutto quello che una famiglia vuole tenere.")}
       ${COSA.map(([t, d]) => `<div style="padding:11px 0;border-bottom:1px solid var(--bordo)"><b>${t}</b> <span class="tenue">· ${d}</span></div>`).join("")}`)}
 
-    ${sezione(`${etichetta("Il gruppo WhatsApp non basta")}
-      ${titolo("WhatsApp è perfetto per «a che ora arrivate?». Non per la storia di una famiglia.")}
-      <p class="tenue" style="margin:0 0 14px">Ancora non lo sostituisce: lo usa come campanello.</p>
+    ${sezione(`${etichetta("Più di una chat di gruppo")}
+      ${titolo("La chat serve per «a che ora arrivate?». La storia della famiglia merita di più.")}
       <div style="display:grid;grid-template-columns:1fr 1fr;font-size:14px;background:#fff;border-radius:18px;overflow:hidden;border:1px solid #EAD9BF">
-        <div style="padding:12px;font-weight:800;background:#F3EEE6">Gruppo WhatsApp</div>
+        <div style="padding:12px;font-weight:800;background:#F3EEE6">Chat di gruppo</div>
         <div style="padding:12px;font-weight:800;background:${C.rosso};color:${C.panna}">Ancora</div>
         ${CONTRO.map(([w, a]) => `<div style="padding:12px;border-top:1px solid #EFE6D8;color:#7C6F66">${w}</div>
           <div style="padding:12px;border-top:1px solid #EFE6D8;color:${C.notte};font-weight:600">${a}</div>`).join("")}
@@ -152,6 +151,7 @@ export default async function () {
     </footer>`;
 
   montaModulo(document.getElementById("modulo-regalo"));
+  document.getElementById("vai-come").onclick = (e) => { e.preventDefault(); document.getElementById("come").scrollIntoView({ behavior: "smooth" }); };
   // il bottone in alto scorre al modulo senza cambiare pagina
   document.getElementById("vai").onclick = (e) => {
     e.preventDefault();
