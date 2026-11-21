@@ -41,6 +41,19 @@ export default async function ({ params }) {
       <label for="at">Il tuo WhatsApp</label><input id="at" type="tel" inputmode="tel" placeholder="+39 …" required>
       <div style="display:flex;align-items:baseline;justify-content:space-between;margin:18px 0 8px">
         <span class="tenue">12 mesi, tutta la famiglia<br>poi, se volete, 99 € l'anno</span><span style="font-family:Fraunces,serif;font-size:34px;font-weight:700">129 €</span></div>
+      <div class="card" style="margin:0 0 14px;background:var(--ambra-chiaro);border-color:#EAD2AA">
+        <b style="font-family:Fraunces,serif;font-size:19px;color:#4A3410">Cosa c'è nel regalo di Natale</b>
+        <ul style="margin:10px 0 0;padding-left:20px;line-height:1.55;color:#4A3410">
+          <li><b>12 mesi di Piano Famiglia</b> per tutta la famiglia, fino a 6 persone</li>
+          <li><b>Una domanda a settimana su WhatsApp</b> per chi racconta (fino a 4 persone): si risponde con un vocale</li>
+          <li><b>Il cloud dei ricordi</b>: 50 GB per foto, video, vocali, storie e ricette</li>
+          <li><b>La domanda della settimana</b> per tutti, l'<b>albero genealogico</b>, il <b>ricettario</b>, l'<b>agenda</b> e il <b>diario</b></li>
+          <li><b>Il libro digitale</b> delle storie, con il QR per ascoltare la voce</li>
+          <li><b>Il biglietto da stampare</b> con il tuo messaggio, da mettere sotto l'albero</li>
+          <li>Parte il giorno che scegli, per esempio il <b>25 dicembre</b></li>
+        </ul>
+        <p style="margin:10px 0 0;font-size:13px;color:#5A3E12">Dopo 12 mesi si continua solo se volete, a 99 € l'anno. I ricordi restano gratis per sempre. Il libro stampato si ordina a parte, da 49 €.</p>
+      </div>
       <button class="btn ambra">Regala</button>
       <p class="tenue" style="text-align:center" id="nota">Se non accetta, ti rimborsiamo.</p>
       <p id="esito" role="status"></p>
