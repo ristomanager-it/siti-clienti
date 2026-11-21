@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#12302C">
+<title>Ancora · Gestione</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--notte:#12302C;--verde:#0F5257;--ambra:#C9832E;--ambra-chiaro:#F4E6CF;--carta:#FBF8F2;--bordo:#E8E1D4;--testo:#1D2422;--tenue:#5D635F;--rosso:#B3402F;--ok:#2F7A4F}
+*{box-sizing:border-box}
+body{margin:0;background:var(--carta);color:var(--testo);font:15px/1.45 Manrope,system-ui,sans-serif}
+main{max-width:1100px;margin:0 auto;padding:0 14px 60px}
+header{position:sticky;top:0;z-index:5;background:rgba(251,248,242,.94);backdrop-filter:blur(10px);display:flex;align-items:center;gap:12px;padding:calc(12px + env(safe-area-inset-top)) 14px 10px;max-width:1100px;margin:0 auto}
+.logo{font-family:Fraunces,serif;font-weight:700;font-size:24px;color:var(--notte)}
+.logo small{font-family:Manrope;font-size:12px;font-weight:800;color:var(--ambra);letter-spacing:.6px;text-transform:uppercase;margin-left:6px}
+header .sp{flex:1}
+.esci{border:0;background:none;color:var(--tenue);font:inherit;font-weight:700;cursor:pointer;min-height:44px}
+nav{display:flex;gap:6px;overflow-x:auto;padding:4px 0 14px;scrollbar-width:none}
+nav button{flex-shrink:0;border:0;border-radius:20px;padding:9px 16px;min-height:40px;font:inherit;font-weight:800;background:#EFEAE0;color:var(--tenue);cursor:pointer}
+nav button.on{background:var(--notte);color:#fff}
+.griglia{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.kpi{background:#fff;border:1px solid var(--bordo);border-radius:18px;padding:14px 16px}
+.kpi b{display:block;font-family:Fraunces,serif;font-size:28px;line-height:1.1;color:var(--notte)}
+.kpi span{font-size:12px;font-weight:700;color:var(--tenue)}
+.kpi.scuro{background:var(--notte);border-color:var(--notte)}.kpi.scuro b{color:#fff}.kpi.scuro span{color:#C9D8D4}
+h2{font-size:12px;font-weight:800;color:var(--tenue);letter-spacing:.6px;text-transform:uppercase;margin:22px 2px 10px}
+.card{background:#fff;border:1px solid var(--bordo);border-radius:18px;padding:14px 16px;margin-bottom:8px}
+.riga{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.riga .sp{flex:1}
+.nome{font-weight:800;font-size:16px}
+.tenue{color:var(--tenue);font-size:13px}
+.badge{display:inline-block;font-size:11px;font-weight:800;padding:3px 9px;border-radius:10px;background:#EFEAE0;color:var(--tenue)}
+.badge.attivo,.badge.pagato,.badge.accettato{background:#E2F0E7;color:var(--ok)}
+.badge.scaduto,.badge.insoluto,.badge.rifiutato,.badge.rimborsato{background:#F6E1DC;color:var(--rosso)}
+.badge.in_attesa_pagamento,.badge.inviato{background:var(--ambra-chiaro);color:#8A5A17}
+.dati{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px 14px;margin-top:10px;font-size:13px}
+.dati div span{display:block;color:var(--tenue);font-size:11px;font-weight:700}
+.btn{border:0;border-radius:20px;min-height:40px;padding:0 16px;font:inherit;font-weight:800;background:var(--notte);color:#fff;cursor:pointer}
+.btn.chiaro{background:#fff;color:var(--notte);border:1.5px solid var(--bordo)}
+.btn.grande{width:100%;min-height:52px;border-radius:26px;font-size:16px}
+input,select{width:100%;font:inherit;font-size:16px;padding:13px 15px;border:1.5px solid var(--bordo);border-radius:16px;background:#fff}
+label{display:block;font-size:12px;font-weight:800;color:var(--tenue);margin:12px 0 6px}
+.cerca{margin-bottom:10px}
+.barre{display:flex;align-items:flex-end;gap:6px;height:90px;padding:10px 4px 0}
+.barre div{flex:1;background:var(--ambra);border-radius:6px 6px 0 0;min-height:3px;position:relative}
+.barre div i{position:absolute;top:-18px;left:0;right:0;text-align:center;font-style:normal;font-size:11px;font-weight:800;color:var(--tenue)}
+.nota{background:var(--ambra-chiaro);color:#5A3E12;border-radius:16px;padding:12px 14px;font-size:13px;margin:6px 0 14px}
+.errore{color:var(--rosso);font-weight:700}
+.accesso{max-width:380px;margin:12vh auto 0;padding:0 18px}
+.accesso h1{font-family:Fraunces,serif;font-size:34px;margin:0 0 4px;color:var(--notte)}
+</style>
+</head>
+<body>
+<div id="radice"></div>
+<script type="module">
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+const sb = createClient("https://efhxgrszckfxxhecjtrl.supabase.co", "sb_publishable_sdPzUHQ_TLlTXKJPbAA12A_UfC1dB5j");
+
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const euro = (c) => (Number(c ?? 0) / 100).toLocaleString("it-IT", { style: "currency", currency: "EUR" });
+const data = (d) => d ? new Date(d).toLocaleDateString("it-IT", { day: "numeric", month: "short", year: "2-digit" }) : "—";
+const fa = (d) => { if (!d) return "mai"; const g = Math.floor((Date.now() - new Date(d)) / 864e5); return g <= 0 ? "oggi" : g === 1 ? "ieri" : `${g} giorni fa`; };
+const ETICHETTE = { in_attesa_pagamento: "in attesa", pagato: "pagato", inviato: "inviato", accettato: "accettato", rifiutato: "rifiutato", rimborsato: "rimborsato" };
+const TIPI_REGALO = { genitori: "ai genitori", famiglia: "alla famiglia", figli: "ai figli", fratelli: "ai fratelli", amici: "agli amici", me_stesso: "a sé stesso" };
+
+let vista = "panoramica";
+
+async function avvio() {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) return accesso();
+  const { data: ok } = await sb.rpc("is_admin");
+  if (!ok) return accesso("Questo account non è abilitato alla gestione.");
+  disegna();
+}
+
+function accesso(msg = "") {
+  $("#radice").innerHTML = `<form class="accesso" id="f">
+    <h1>Ancora</h1><p class="tenue" style="margin-top:0">Piattaforma di gestione</p>
+    <label for="em">Email</label><input id="em" type="email" autocomplete="username" required>
+    <label for="pw">Password</label><input id="pw" type="password" autocomplete="current-password" required>
+    <button class="btn grande" style="margin-top:16px">Entra</button>
+    <p id="es" class="errore" role="status">${esc(msg)}</p></form>`;
+  $("#f").onsubmit = async (e) => {
+    e.preventDefault();
+    $("#es").textContent = "";
+    const { error } = await sb.auth.signInWithPassword({ email: $("#em").value.trim(), password: $("#pw").value });
+    if (error) { $("#es").textContent = "Email o password non corretti."; return; }
+    avvio();
+  };
+}
+
+function disegna() {
+  $("#radice").innerHTML = `
+    <header><span class="logo">Ancora<small>gestione</small></span><span class="sp"></span>
+      <button class="esci" id="esci">Esci</button></header>
+    <main><nav>${[["panoramica", "Panoramica"], ["famiglie", "Famiglie"], ["regali", "Regali"], ["privacy", "Privacy"]]
+      .map(([k, t]) => `<button data-v="${k}" class="${k === vista ? "on" : ""}">${t}</button>`).join("")}</nav>
+      <div id="corpo"><p class="tenue">Caricamento…</p></div></main>`;
+  $("#esci").onclick = async () => { await sb.auth.signOut(); accesso(); };
+  document.querySelectorAll("nav button").forEach((b) => b.onclick = () => { vista = b.dataset.v; disegna(); });
+  ({ panoramica, famiglie, regali, privacy })[vista]().catch((e) => {
+    $("#corpo").innerHTML = `<p class="errore">Errore: ${esc(e.message)}</p>`;
+  });
+}
+
+const rpc = async (nome, args) => { const { data, error } = await sb.rpc(nome, args); if (error) throw error; return data; };
+const kpi = (v, t, scuro) => `<div class="kpi ${scuro ? "scuro" : ""}"><b>${v}</b><span>${t}</span></div>`;
+
+async function panoramica() {
+  const p = await rpc("admin_panoramica");
+  const abb = p.abb_attivi ?? {};
+  const reg = p.regali ?? {};
+  const totAbb = Object.values(abb).reduce((a, b) => a + b, 0);
+  const sett = p.iscritti_settimane ?? [];
+  const max = Math.max(1, ...sett.map((s) => s.n));
+  $("#corpo").innerHTML = `
+    <div class="griglia">
+      ${kpi(euro(p.mrr_cent), "ricavo mensile ricorrente", true)}
+      ${kpi(totAbb, "famiglie paganti")}
+      ${kpi(euro(p.incasso_regali_cent), "incassato dai regali")}
+      ${kpi(euro(p.wa_costo_mese_cent), "costo WhatsApp del mese")}
+    </div>
+    <h2>Utilizzo</h2>
+    <div class="griglia">
+      ${kpi(p.famiglie, "famiglie")}${kpi(p.persone, "persone")}${kpi(p.narratori, "narratori")}
+      ${kpi(p.attivi_7g, "attivi negli ultimi 7 giorni")}${kpi(p.ricordi, "ricordi condivisi")}${kpi(p.ricordi_7g, "ricordi questa settimana")}
+      ${kpi(p.vocali_min + " min", "di voce registrata")}${kpi(p.foto, "foto")}${kpi(p.diari, "pagine di diario")}
+    </div>
+    <h2>Abbonamenti e regali</h2>
+    <div class="griglia">
+      ${kpi(abb.regalo ?? 0, "regalo 12 mesi")}${kpi(abb.annuale ?? 0, "annuali")}${kpi(abb.mensile ?? 0, "mensili")}
+      ${kpi(p.scadenze_30g, "in scadenza nei prossimi 30 giorni")}
+      ${kpi(reg.pagato ?? 0, "regali pagati da consegnare")}${kpi(reg.accettato ?? 0, "regali accettati")}
+    </div>
+    <h2>WhatsApp questo mese</h2>
+    <div class="griglia">${kpi(p.wa_out_mese, "messaggi inviati")}${kpi(p.wa_in_mese, "messaggi ricevuti")}</div>
+    <h2>Nuovi iscritti per settimana</h2>
+    <div class="card">${sett.length ? `<div class="barre">${sett.map((s) =>
+      `<div style="height:${Math.round(s.n / max * 100)}%" title="${esc(s.settimana)}"><i>${s.n}</i></div>`).join("")}</div>` : `<p class="tenue">Ancora nessun iscritto.</p>`}</div>`;
+}
+
+async function famiglie() {
+  const lista = await rpc("admin_famiglie");
+  const disegnaLista = (q = "") => {
+    const f = lista.filter((x) => !q || `${x.nome} ${x.pagante ?? ""} ${x.telefono ?? ""}`.toLowerCase().includes(q.toLowerCase()));
+    $("#elenco").innerHTML = f.map((x) => `
+      <div class="card">
+        <div class="riga"><span class="nome">${esc(x.nome)}</span>
+          <span class="badge ${esc(x.abb_stato ?? "")}">${esc(x.abb_stato ? `${x.abb_tipo} · ${x.abb_stato}` : "senza piano")}</span>
+          <span class="sp"></span><button class="btn chiaro" data-prolunga="${x.id}">+ mesi</button></div>
+        <div class="tenue">${esc(x.pagante ?? "—")} ${x.telefono ? `· ${esc(x.telefono)}` : ""}</div>
+        <div class="dati">
+          <div><span>Membri</span>${x.membri}</div><div><span>Narratori</span>${x.narratori}${x.narratori_extra ? ` (+${x.narratori_extra})` : ""}</div>
+          <div><span>Ricordi</span>${x.ricordi}</div><div><span>Ultimo accesso</span>${fa(x.ultimo_accesso)}</div>
+          <div><span>WhatsApp mese</span>${x.wa_mese} / 30</div><div><span>Scadenza</span>${data(x.abb_fine)}</div>
+          <div><span>Iscritta</span>${data(x.creata_il)}</div>
+        </div></div>`).join("") || `<p class="tenue">Nessuna famiglia.</p>`;
+    document.querySelectorAll("[data-prolunga]").forEach((b) => b.onclick = async () => {
+      const mesi = Number(window.prompt("Di quanti mesi prolungare il piano di questa famiglia?", "1"));
+      if (!mesi || mesi < 1 || mesi > 24) return;
+      await rpc("admin_prolunga", { p_famiglia: b.dataset.prolunga, p_mesi: mesi });
+      disegna();
+    });
+  };
+  $("#corpo").innerHTML = `<div class="nota">Qui vedi solo dati di servizio. Testi, foto, vocali e cerchie delle famiglie non sono visibili da questa piattaforma.</div>
+    <input class="cerca" id="q" type="search" placeholder="Cerca famiglia, nome o telefono"><div id="elenco"></div>`;
+  $("#q").oninput = (e) => disegnaLista(e.target.value);
+  disegnaLista();
+}
+
+async function regali() {
+  const lista = await rpc("admin_regali");
+  const tot = lista.filter((r) => ["pagato", "inviato", "accettato"].includes(r.stato)).reduce((a, r) => a + r.importo_cent, 0);
+  $("#corpo").innerHTML = `<div class="griglia" style="margin-bottom:14px">${kpi(lista.length, "regali totali")}${kpi(euro(tot), "incassati", true)}</div>` +
+    (lista.map((r) => `
+      <div class="card">
+        <div class="riga"><span class="nome">${esc(r.destinatario_nome)}</span><span class="tenue">${esc(TIPI_REGALO[r.destinatario_tipo] ?? r.destinatario_tipo)}</span>
+          <span class="sp"></span><span class="badge ${esc(r.stato)}">${esc(ETICHETTE[r.stato] ?? r.stato)}</span></div>
+        <div class="tenue">da ${esc(r.acquirente_nome)} · ${esc(r.acquirente_email)}${r.acquirente_telefono ? ` · ${esc(r.acquirente_telefono)}` : ""}</div>
+        <div class="dati"><div><span>Codice</span>${esc(r.codice)}</div><div><span>Importo</span>${euro(r.importo_cent)}</div>
+          <div><span>Primo messaggio</span>${data(r.data_invio)}</div><div><span>Acquistato</span>${data(r.creato_il)}</div>
+          <div><span>WhatsApp destinatario</span>${esc(r.destinatario_telefono)}</div></div>
+        ${["pagato", "inviato", "rifiutato"].includes(r.stato) ? `<button class="btn chiaro" style="margin-top:10px" data-rimborso="${r.id}">Segna come rimborsato</button>` : ""}
+      </div>`).join("") || `<p class="tenue">Ancora nessun regalo venduto.</p>`);
+  document.querySelectorAll("[data-rimborso]").forEach((b) => b.onclick = async () => {
+    if (!window.confirm("Hai già fatto il rimborso su Stripe? Qui lo segni soltanto.")) return;
+    await rpc("admin_regalo_stato", { p_regalo: b.dataset.rimborso, p_stato: "rimborsato" });
+    disegna();
+  });
+}
+
+async function privacy() {
+  const lista = await rpc("admin_accessi");
+  $("#corpo").innerHTML = `<div class="nota">Ogni volta che l'assistenza apre un contenuto di una famiglia, l'accesso resta registrato qui e la persona lo vede nel suo profilo. Da qui non si può cancellare.</div>` +
+    (lista.map((a) => `<div class="card"><div class="riga"><b>${esc(a.persona ?? "—")}</b><span class="badge">${esc(a.motivo.replaceAll("_", " "))}</span>
+      <span class="sp"></span><span class="tenue">${data(a.creato_il)}</span></div>${a.nota ? `<div class="tenue">${esc(a.nota)}</div>` : ""}</div>`).join("")
+      || `<p class="tenue">Nessun accesso ai contenuti. Bene così.</p>`);
+}
+
+sb.auth.onAuthStateChange((ev) => { if (ev === "SIGNED_OUT") accesso(); });
+avvio();
+</script>
+</body>
+</html>
