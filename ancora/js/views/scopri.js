@@ -66,7 +66,7 @@ const foto = (src, alt, alta = 300, posizione = "center") =>
 export default async function ({ params } = {}) {
   $app().innerHTML = `
     <a href="#acquista" class="vai-acquista" style="display:block;background:${C.rosso};color:${C.panna};text-align:center;font-weight:800;font-size:14px;padding:10px 14px;text-decoration:none;letter-spacing:.02em">
-      🎄 Promo Natale: 12 mesi per tutta la famiglia a 129 € · <u>Regala ora</u></a>
+      🎄 Promo Natale · 129 € tutta la famiglia · <u>Regala</u></a>
     <div style="position:relative">
     ${testataPubblica({ trasparente: true })}
 
@@ -92,7 +92,7 @@ export default async function ({ params } = {}) {
       ${titolo("Sul telefono di tutti. E a fine anno, il libro.")}
       <div style="position:relative;height:440px;margin-top:10px">
         <!-- il libro aperto, dietro -->
-        <div style="position:absolute;right:-6px;top:60px;width:230px;height:300px;transform:rotate(6deg);background:#FFFDF8;border-radius:6px 14px 14px 6px;box-shadow:0 18px 40px rgba(60,30,10,.25);padding:22px 20px;border-left:10px solid ${C.rosso}">
+        <div style="position:absolute;right:-4px;top:56px;width:196px;height:300px;transform:rotate(5deg);background:#FFFDF8;border-radius:6px 14px 14px 6px;box-shadow:0 18px 40px rgba(60,30,10,.25);padding:20px 14px 20px 52px;border-left:10px solid ${C.rosso}">
           <div style="font-family:Fraunces,serif;font-size:12px;color:${C.oro};letter-spacing:.1em;text-transform:uppercase">Le storie di casa</div>
           <div style="font-family:Fraunces,serif;font-size:19px;line-height:1.2;margin:8px 0 10px;color:${C.notte}">La casa dove sono cresciuta</div>
           <div style="font-size:11px;line-height:1.55;color:#5D635F">Avevamo un cortile con il fico, e la domenica arrivavano tutti i cugini. La nonna faceva le tagliatelle sul tavolo di marmo…</div>
@@ -101,7 +101,7 @@ export default async function ({ params } = {}) {
             <span style="font-size:10px;color:#5D635F;line-height:1.3">Inquadra e<br>ascolta la sua voce</span></div>
         </div>
         <!-- il telefono, davanti -->
-        <div style="position:absolute;left:0;top:0;width:205px;height:420px;border-radius:34px;background:#111;padding:9px;box-shadow:0 20px 44px rgba(18,48,44,.35)">
+        <div style="position:absolute;left:0;top:0;width:190px;height:410px;border-radius:34px;background:#111;padding:9px;box-shadow:0 20px 44px rgba(18,48,44,.35)">
           <div style="width:100%;height:100%;border-radius:26px;background:#FBF8F2;overflow:hidden;font-size:11px">
             <div style="padding:14px 12px 8px;display:flex;align-items:center"><span class="logo" style="font-size:17px;flex:1">Ancora</span>
               <span style="width:22px;height:22px;border-radius:11px;background:${C.salvia}"></span></div>
