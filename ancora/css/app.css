@@ -72,6 +72,7 @@ audio{width:100%;margin-top:10px}
 
 /* barra in basso */
 .barra{position:fixed;left:12px;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));max-width:536px;margin:0 auto;height:64px;background:rgba(18,48,44,.94);backdrop-filter:blur(10px);border-radius:32px;display:grid;grid-template-columns:repeat(5,1fr);align-items:center;z-index:10}
+.barra[hidden]{display:none}
 .barra a{display:flex;align-items:center;justify-content:center;height:64px;color:rgba(255,255,255,.6)}
 .barra a.attivo{color:#fff}
 .barra .centro span{width:52px;height:52px;border-radius:26px;background:var(--ambra);display:flex;align-items:center;justify-content:center;color:#fff}
