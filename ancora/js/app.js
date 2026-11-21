@@ -26,6 +26,7 @@ const ROTTE = {
   "biglietto": () => import("./views/biglietto.js"),
   "ricette": () => import("./views/ricette.js"),
   "libro": () => import("./views/libro.js"),
+  "archivio": () => import("./views/archivio.js"),
   "cloud": () => import("./views/cloud.js"),
 };
 const PUBBLICHE = new Set(["accesso", "regala", "perche", "prova", "rispondi", "ascolta", "biglietto"]);

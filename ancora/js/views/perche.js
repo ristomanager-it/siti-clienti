@@ -30,6 +30,8 @@ Ciò che ci tiene saldi resta con noi, ancora e ancora.</div>
     </ul></div>
     <h2>Cosa</h2>
     <div class="pad" style="padding-top:0"><ul style="padding-left:20px">
+      <li><b>Il tuo cloud dei ricordi:</b> scatta o carica foto, video e vocali. Al sicuro per sempre, privati finché non li condividi. 2 GB gratis, 25 GB con il piano.</li>
+      <li><b>Il tuo cloud dei ricordi:</b> foto, video e vocali scattati o caricati dal telefono, privati finché non li condividi.</li>
       <li><b>Domande su WhatsApp</b> per chi racconta.</li>
       <li><b>Album di famiglia</b> con foto, vocali, cuori e risposte a voce.</li>
       <li><b>Cerchie:</b> famiglia, fratelli, amici. Ognuno decide chi vede cosa.</li>

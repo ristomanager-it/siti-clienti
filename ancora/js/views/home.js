@@ -31,6 +31,7 @@ export default async function ({ params }) {
   $app().innerHTML = `
     <header class="testa"><span class="logo">Ancora</span><span style="flex:1"></span>
       <a class="icona" href="#/agenda" aria-label="Agenda: vacanze, compiti, esami">${ICONE.agenda}</a>
+      <a class="icona" href="#/profilo" aria-label="Il mio profilo">${avatar(state.io, 30)}</a>
       <a class="icona" href="#/cerchie" aria-label="Cerchie e inviti"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></a></header>
     ${state.cerchie.length > 1 ? `<div class="storie" style="gap:6px;padding-bottom:8px" aria-label="Scegli la famiglia">${[["", "Tutti"], ...ordinaCerchie(state.cerchie).map((c) => [c.id, c.nome]), ["diretti", "Messaggi per me"]]
       .map(([id, n]) => `<a class="chip ${(filtro ?? "") === id ? "on" : ""}" style="flex-shrink:0;text-decoration:none" href="#/${id ? `?c=${id}` : ""}">${esc(n)}</a>`).join("")}</div>` : ""}
@@ -63,6 +64,7 @@ function ordinaCerchie(c) {
 
 function post(r, url, i) {
   const foto = (r.ricordi_media ?? []).filter((m) => m.tipo === "foto").sort((a, b) => a.ordine - b.ordine);
+  const video = (r.ricordi_media ?? []).find((m) => m.tipo === "video");
   const audio = (r.ricordi_media ?? []).find((m) => m.tipo === "audio");
   const cuori = (r.reazioni ?? []).filter((x) => x.tipo === "cuore");
   const mio = cuori.some((x) => x.persona_id === state.io.id);
@@ -73,7 +75,8 @@ function post(r, url, i) {
       <b style="display:block;font-family:Fraunces,serif;font-size:24px;margin:4px 0 8px">${esc(r.titolo ?? "")}</b>
       ${(ric.ingredienti ?? []).slice(0, 5).map((i) => `<div>· ${esc(i)}</div>`).join("")}${(ric.ingredienti ?? []).length > 5 ? `<div class="tenue">e altri ${(ric.ingredienti.length - 5)}…</div>` : ""}
       ${voce ? `<div style="margin-top:14px">${voce.replace('class="voce"', 'class="voce" style="margin:0;background:rgba(18,48,44,.9)"')}</div>` : ""}</div>` : "";
-  const media = ric && !foto.length ? `<a href="#/ricordo/${r.id}" style="text-decoration:none;color:inherit;display:block">${schedaRicetta}</a>` : foto.length
+  const media = video && !foto.length ? `<div class="foto" style="aspect-ratio:auto;background:#000"><video src="${esc(url[video.path])}" controls playsinline preload="metadata" style="width:100%;max-height:70vh;display:block"></video></div>`
+    : ric && !foto.length ? `<a href="#/ricordo/${r.id}" style="text-decoration:none;color:inherit;display:block">${schedaRicetta}</a>` : foto.length
     ? `<a class="foto" href="#/ricordo/${r.id}" style="background-image:url('${url[foto[0].path]}')" aria-label="Apri il ricordo">${voce}</a>`
     : `<div class="lettera">${esc(r.testo ?? "")}${voce ? `<div style="margin-top:14px">${voce.replace('class="voce"', 'class="voce" style="margin:0;background:rgba(18,48,44,.9)"')}</div>` : ""}</div>`;
   return `<article class="post">

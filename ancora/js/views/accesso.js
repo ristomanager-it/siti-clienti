@@ -6,7 +6,8 @@ export default async function ({ params }) {
   const invito = params?.invito ?? null;
   $app().innerHTML = `
     <div class="pad" style="padding-top:64px"><span class="logo" style="font-size:44px">Ancora</span>
-    <p style="font-family:Fraunces,serif;font-size:22px;line-height:1.3;color:var(--notte)">I ricordi della tua famiglia, con la voce di chi li racconta.</p></div>
+    <p style="font-family:Fraunces,serif;font-size:22px;line-height:1.3;color:var(--notte)">Il cloud dei ricordi della tua famiglia.</p>
+    <p style="margin:0;font-size:15px;color:var(--tenue)">Foto, video e vocali al sicuro per sempre, privati finché non li condividi. E la voce dei nonni, che racconta.</p></div>
     <form id="f" class="card">
       <label for="tel">Il tuo numero di telefono</label>
       <input id="tel" type="tel" inputmode="tel" placeholder="+39 333 123 4567" required autocomplete="tel">

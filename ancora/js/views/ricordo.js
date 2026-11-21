@@ -3,7 +3,7 @@ import { sb, state, $app, esc, quando, nomeDi, avatar, pulsanteVoce, urlMediaMol
 
 export default async function ({ id }) {
   const { data: r } = await sb.from("ricordi")
-    .select("id, tipo, titolo, testo, dettagli, creato_il, autore_id, persone:autore_id(id, nome, soprannome, foto_path), ricordi_media(path, tipo, durata_sec, ordine)")
+    .select("id, tipo, titolo, testo, dettagli, creato_il, autore_id, visibilita, cerchia_id, persone:autore_id(id, nome, soprannome, foto_path), ricordi_media(path, tipo, durata_sec, ordine)")
     .eq("id", id).maybeSingle();
   if (!r) { $app().innerHTML = `<p class="pad">Ricordo non trovato.</p>`; return; }
 
@@ -16,6 +16,7 @@ export default async function ({ id }) {
   const url = await urlMediaMolti([...media.map((m) => m.path), ...(risposte ?? []).flatMap((x) => (x.ricordi_media ?? []).map((m) => m.path))]);
   const audio = media.find((m) => m.tipo === "audio");
   const foto = media.filter((m) => m.tipo === "foto");
+  const video = media.filter((m) => m.tipo === "video");
   const cuori = (reazioni ?? []).filter((x) => x.tipo === "cuore");
   const commenti = (reazioni ?? []).filter((x) => x.tipo !== "cuore");
 
@@ -24,9 +25,11 @@ export default async function ({ id }) {
       <a class="post-testa" style="padding:0" href="#/profilo/${r.autore_id}">${avatar(r.persone, 34)}<div><b>${esc(nomeDi(r.persone))}</b><small>${quando(r.creato_il)}</small></div></a>
       <span style="width:44px"></span></header>
     ${r.titolo ? `<div class="pad"><h1 style="font-size:24px">${esc(r.titolo)}</h1></div>` : ""}
-    ${foto.length
+    ${video.map((v) => `<div class="foto" style="aspect-ratio:auto;background:#000;margin-bottom:8px"><video src="${esc(url[v.path])}" controls playsinline preload="metadata" style="width:100%;max-height:75vh;display:block"></video></div>`).join("")}
+    ${!foto.length && video.length && !r.testo && !audio ? "" : foto.length
       ? foto.map((f, i) => `<div class="foto" style="background-image:url('${url[f.path]}');margin-bottom:8px">${i === 0 && audio ? pulsanteVoce(url[audio.path], audio.durata_sec) : ""}</div>`).join("")
         + (r.testo ? `<div class="didascalia" style="margin-top:6px">${esc(r.testo)}</div>` : "")
+      : video.length && !r.testo && !audio ? ""
       : `<div class="lettera">${esc(r.testo ?? "")}${audio ? `<div style="margin-top:14px">${pulsanteVoce(url[audio.path], audio.durata_sec, 1, "margin:0;background:rgba(18,48,44,.9)")}</div>` : ""}</div>`}
     ${r.tipo === "ricetta" ? `<div class="card" style="margin-top:12px">
       <span class="tenue" style="text-transform:uppercase;font-weight:800;letter-spacing:.5px">Ingredienti${r.dettagli?.porzioni ? ` · per ${r.dettagli.porzioni} persone` : ""}</span>
@@ -47,13 +50,32 @@ export default async function ({ id }) {
       `<div class="card"><b>${esc(nomeDi(c.persone))}</b> ${esc(c.testo)}</div>`).join("") : ""}
 
     <div class="pad" style="margin-top:12px">
-      ${r.autore_id !== state.io.id ? `<a class="btn ambra" href="#/racconta?risposta=${r.id}">Rispondi con la tua voce</a>` : ""}
+      ${r.autore_id !== state.io.id ? `<a class="btn ambra" href="#/racconta?risposta=${r.id}">Rispondi con la tua voce</a>`
+        : `<div class="card" style="margin:0 0 10px"><label style="margin-top:0">Chi lo vede</label>
+            <div>${[{ id: "solo_io", nome: "Solo io" }, ...state.cerchie].map((c) => {
+              const on = c.id === "solo_io" ? r.visibilita === "solo_io" : r.cerchia_id === c.id && r.visibilita === "cerchia";
+              return `<button class="chip ${on ? "on" : ""}" data-vedo="${c.id}">${esc(c.nome)}</button>`;
+            }).join("")}</div>
+            <button class="chip" data-elimina style="margin-top:8px;color:var(--rosso)">Elimina</button></div>`}
       <form id="rx" style="margin-top:10px">
         <label class="visually-hidden" for="msg">Scrivi un commento</label>
         <div class="riga"><input id="msg" placeholder="Scrivi a ${esc(nomeDi(r.persone))}…">
           <button class="icona" aria-label="Invia" style="background:var(--notte);color:#fff;flex-shrink:0">${ICONE.commento.replace('width="26" height="26"', 'width="20" height="20"')}</button></div>
       </form>
     </div>`;
+
+  document.querySelectorAll("[data-vedo]").forEach((b) => b.onclick = async () => {
+    const c = b.dataset.vedo;
+    await sb.from("ricordi").update(c === "solo_io" ? { visibilita: "solo_io", cerchia_id: null } : { visibilita: "cerchia", cerchia_id: c }).eq("id", id);
+    location.reload();
+  });
+  document.querySelector("[data-elimina]")?.addEventListener("click", async () => {
+    if (!confirm("Eliminare questo ricordo per sempre?")) return;
+    const file = (r.ricordi_media ?? []).map((m) => m.path);
+    if (file.length) await sb.storage.from("ricordi").remove(file);
+    await sb.from("ricordi").delete().eq("id", id);
+    history.back();
+  });
 
   document.getElementById("rx").onsubmit = async (e) => {
     e.preventDefault();

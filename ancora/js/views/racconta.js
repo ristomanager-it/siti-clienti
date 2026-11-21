@@ -34,8 +34,8 @@ export default async function ({ params }) {
       </div>
       <label for="testo">Oppure scrivi</label>
       <textarea id="testo" rows="3"></textarea>
-      <label for="foto">Foto</label>
-      <input id="foto" type="file" accept="image/*" multiple>
+      <label for="foto">Foto o video</label>
+      <input id="foto" type="file" accept="image/*,video/*" multiple>
       <label>Con chi lo condividi</label>
       <div id="cerchie">${[{ id: "solo_io", nome: "Solo io" }, ...cerchie].map((c) =>
         `<button type="button" class="chip ${c.id === scelta ? "on" : ""}" data-c="${c.id}">${esc(c.nome)}</button>`).join("")}</div>
@@ -108,13 +108,16 @@ export default async function ({ params }) {
     if (blob) {
       const path = `${base}/vocale.${blob.type.includes("mp4") ? "m4a" : "webm"}`;
       await sb.storage.from("ricordi").upload(path, blob, { contentType: blob.type });
-      await sb.from("ricordi_media").insert({ ricordo_id: r.id, path, tipo: "audio", durata_sec: secondi });
+      await sb.from("ricordi_media").insert({ ricordo_id: r.id, path, tipo: "audio", durata_sec: secondi, byte: blob.size, mime: blob.type || null });
       // trascrizione lato server (funzione da aggiungere: trascrivi-ricordo)
     }
     for (const [i, f] of files.entries()) {
-      const path = `${base}/foto-${i}.${f.name.split(".").pop()}`;
+      const tipoF = f.type.startsWith("video") ? "video" : "foto";
+      if (f.size > 50 * 1024 * 1024) { alert(`"${f.name}" supera i 50 MB e non è stato caricato.`); continue; }
+      const path = `${base}/${tipoF}-${i}.${f.name.split(".").pop()}`;
       await sb.storage.from("ricordi").upload(path, f, { contentType: f.type });
-      await sb.from("ricordi_media").insert({ ricordo_id: r.id, path, tipo: "foto", ordine: i });
+      await sb.from("ricordi_media").insert({ ricordo_id: r.id, path, tipo: tipoF, ordine: i, byte: f.size, mime: f.type || null,
+        scattato_il: f.lastModified ? new Date(f.lastModified).toISOString() : null });
     }
     if (domanda) await sb.from("domande_inviate").update({ stato: "risposta", risposta_il: new Date().toISOString() }).eq("id", domanda.id);
     location.hash = rispostaA ? `#/ricordo/${rispostaA.id}` : "#/";
