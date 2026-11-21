@@ -48,7 +48,8 @@ export default async function ({ id }) {
     ${fm?.narratore ? `<div class="libro"><span class="copertina">Le storie di ${esc(p.nome)}</span>
       <div style="flex:1"><b>Il suo libro · volume ${volume}</b>
         <div style="font-size:13px;color:#C9D8D4">${nelVolume} storie su ${STORIE_PER_VOLUME} per completarlo</div>
-        <div class="barra-prog"><i style="width:${Math.round(nelVolume / STORIE_PER_VOLUME * 100)}%"></i></div></div></div>` : ""}
+        <div class="barra-prog"><i style="width:${Math.round(nelVolume / STORIE_PER_VOLUME * 100)}%"></i></div>
+        <a href="#/libro/${p.id}" style="color:#F4E6CF;font-weight:800;font-size:13px;display:inline-block;margin-top:8px">Sfoglia e stampa il libro →</a></div></div>` : ""}
     ${conFoto.length ? `<div class="griglia">${conFoto.map((x) =>
       `<a href="#/ricordo/${x.r.id}" style="background-image:url('${url[x.f.path]}')" aria-label="Apri il ricordo">${x.a ? `<span>▶ voce</span>` : ""}</a>`).join("")}</div>`
       : `<p class="pad tenue">Ancora nessuna foto.</p>`}`;
