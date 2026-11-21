@@ -73,11 +73,24 @@ export default async function ({ id }) {
     document.getElementById("f-copertina").onchange = carica("copertina");
     const spenti = new Set(state.io.moduli_spenti ?? []);
     $app().insertAdjacentHTML("beforeend", `<h2>Le mie impostazioni</h2><div class="card">
+      <form id="mio-nome" style="margin-bottom:14px">
+        <div class="riga" style="gap:8px"><div style="flex:1"><label for="n-nome" style="margin-top:0">Nome</label><input id="n-nome" value="${esc(state.io.nome ?? "")}" required maxlength="40"></div>
+          <div style="flex:1"><label for="n-cogn" style="margin-top:0">Cognome</label><input id="n-cogn" value="${esc(state.io.cognome ?? "")}" maxlength="40"></div></div>
+        <label for="n-sopr">Come ti chiamano in famiglia (se vuoi)</label><input id="n-sopr" value="${esc(state.io.soprannome ?? "")}" maxlength="30" placeholder="Nonno Peppe, zia Lella">
+        <button class="btn chiaro" style="margin-top:10px">Salva</button></form>
       <div class="riga" style="margin-bottom:12px"><b style="flex:1">Notifiche</b><button class="chip" id="notif" style="margin:0">…</button></div>
       <p class="tenue" style="margin-top:0">Cosa vuoi vedere e condividere nell'agenda. Se spegni una voce, non la vedi tu e nessuno vede la tua.</p>
       ${[["vacanze", "Vacanze"], ["compiti", "Compiti"], ["esami", "Esami"]].map(([k, t]) =>
         `<label class="riga" style="margin:10px 0;font-weight:700;color:var(--testo)"><input type="checkbox" data-mio-modulo="${k}" ${spenti.has(k) ? "" : "checked"} style="width:22px;height:22px"> ${t}</label>`).join("")}
     </div>`);
+    document.getElementById("mio-nome").onsubmit = async (e) => {
+      e.preventDefault();
+      const v = (id) => document.getElementById(id).value.trim();
+      const dati = { nome: v("n-nome"), cognome: v("n-cogn") || null, soprannome: v("n-sopr") || null };
+      const { error } = await sb.from("persone").update(dati).eq("id", state.io.id);
+      if (error) { alert("Non salvato: " + error.message); return; }
+      Object.assign(state.io, dati); location.reload();
+    };
     const bN = document.getElementById("notif");
     const aggiornaN = async () => { const on = await notificheAttive(); bN.textContent = on ? "✓ Attive" : "Attiva"; bN.classList.toggle("on", on); };
     aggiornaN();

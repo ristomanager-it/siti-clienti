@@ -45,12 +45,13 @@ export default async function () {
         ${[["vacanze", "Vacanze insieme"], ["compiti", "Compiti dei ragazzi"], ["esami", "Esami"]].map(([k, t]) =>
           `<label class="riga" style="margin:10px 0;font-weight:700;color:var(--testo)"><input type="checkbox" data-modulo="${k}" data-c="${c.id}" ${c.moduli?.[k] ? "checked" : ""} style="width:22px;height:22px"> ${t}</label>`).join("")}
         <p class="tenue" style="margin:0;font-size:13px">Le voci accese compaiono nel menu ☰ di tutti i membri.</p></details>` : ""}
-      <div class="riga" style="margin-top:12px;gap:8px">
-        <a class="btn chiaro" style="flex:1;min-height:44px" href="#/?c=${c.id}">Apri</a>
-        ${c.tipo === "famiglia" ? `<a class="btn chiaro" style="flex:1;min-height:44px" href="#/albero?c=${c.id}">Albero</a>` : ""}
-        ${mia ? `<button class="btn chiaro invita" data-c="${c.id}" style="flex:1;min-height:44px">Invita</button>
-                 <button class="chip" data-rinomina="${c.id}">Rinomina</button>`
-              : `<button class="chip" data-esci="${c.id}">Esci</button>`}
+      <div class="riga" style="margin-top:14px;gap:8px">
+        <a class="btn" style="flex:1;min-height:46px" href="#/?c=${c.id}">Apri</a>
+        ${mia ? `<button class="btn chiaro invita" data-c="${c.id}" style="flex:1;min-height:46px">Invita</button>` : ""}
+      </div>
+      <div style="display:flex;gap:18px;margin-top:12px;font-size:14px;font-weight:700">
+        ${c.tipo === "famiglia" ? `<a href="#/albero?c=${c.id}">L'albero</a>` : ""}
+        ${mia ? `<a href="#" data-rinomina="${c.id}">Rinomina</a>` : `<a href="#" data-esci="${c.id}" style="color:#8A3B2E">Esci dalla cerchia</a>`}
       </div></div></div>`;
   };
 
@@ -90,13 +91,13 @@ export default async function () {
     location.reload();
   });
 
-  document.querySelectorAll("[data-esci]").forEach((b) => b.onclick = async () => {
+  document.querySelectorAll("[data-esci]").forEach((b) => b.onclick = async (e) => { e.preventDefault();
     if (!confirm("Uscire da questa cerchia? Non vedrai più i suoi ricordi.")) return;
     await sb.from("cerchia_membri").delete().eq("cerchia_id", b.dataset.esci).eq("persona_id", state.io.id);
     location.reload();
   });
 
-  document.querySelectorAll("[data-rinomina]").forEach((b) => b.onclick = async () => {
+  document.querySelectorAll("[data-rinomina]").forEach((b) => b.onclick = async (e) => { e.preventDefault();
     const c = state.cerchie.find((x) => x.id === b.dataset.rinomina);
     const nome = prompt("Nuovo nome", c?.nome ?? "");
     if (!nome?.trim()) return;
