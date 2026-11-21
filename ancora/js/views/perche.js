@@ -15,7 +15,7 @@ Ciò che ci tiene saldi resta con noi, ancora e ancora.</div>
     <div class="pad" style="padding-top:0"><ul style="padding-left:20px;line-height:1.6">
       <li><b>La voce dei nonni, per sempre.</b> Le loro storie, con il loro tono e il loro dialetto.</li>
       <li><b>Scoprire da dove vieni.</b> Il cognome, il paese, chi è partito: la domanda della settimana e l'albero.</li>
-      <li><b>Il cloud privato dei ricordi.</b> Foto, video e vocali al sicuro, senza pubblicità e senza estranei.</li>
+      <li><b>Il cloud dei tuoi ricordi.</b> Non solo foto e video: le storie, le voci, le ricette, il diario, l'albero. Al sicuro, senza pubblicità e senza estranei.</li>
       <li><b>Le ricette di casa,</b> con la voce di chi le fa.</li>
       <li><b>Sentirsi vicini quando si è lontani:</b> chi vive all'estero, i nipoti fuori sede, i nonni soli.</li>
       <li><b>Ritrovarsi,</b> se in famiglia ci si è persi di vista.</li>

@@ -6,7 +6,7 @@ import { SUPABASE_URL } from "../config.js";
 const GANCI = [
   "La voce dei nonni, per sempre.",
   "Scopri da dove vieni: le origini della tua famiglia.",
-  "Il cloud privato dei ricordi di famiglia: foto, video, vocali.",
+  "Il cloud dei tuoi ricordi: storie, voci, foto, video, ricette, il diario.",
   "Le ricette di casa, con la voce di chi le fa.",
   "L'albero della famiglia, completato insieme.",
   "Per chi è lontano: sentirsi vicini, ogni settimana.",
