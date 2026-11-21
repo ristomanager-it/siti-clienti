@@ -1,5 +1,5 @@
 // Accesso: si inserisce il numero, il link arriva su WhatsApp. Niente password.
-import { $app, esc } from "../app.js";
+import { sb, $app, esc } from "../app.js";
 import { SUPABASE_URL } from "../config.js";
 
 export default async function ({ params }) {
@@ -14,7 +14,21 @@ export default async function ({ params }) {
       <button class="btn" type="submit">Ricevi il link</button>
       <p id="esito" role="status"></p>
     </form>
+    <details class="card"><summary style="font-weight:800;cursor:pointer;min-height:32px">Entra con email e password</summary>
+      <form id="fe">
+        <label for="em">Email</label><input id="em" type="email" autocomplete="username" required>
+        <label for="pw">Password</label><input id="pw" type="password" autocomplete="current-password" required>
+        <button class="btn" style="margin-top:12px">Entra</button>
+        <p id="esitoe" role="status"></p>
+      </form></details>
     <div class="pad"><a class="btn chiaro" href="#/regala">Regala Ancora</a></div>`;
+
+  document.getElementById("fe").onsubmit = async (e) => {
+    e.preventDefault();
+    const { error } = await sb.auth.signInWithPassword({ email: document.getElementById("em").value.trim(), password: document.getElementById("pw").value });
+    if (error) { document.getElementById("esitoe").innerHTML = `<span class="errore">Email o password non corretti.</span>`; return; }
+    location.hash = invito ? `#/?invito=${invito}` : "#/";
+  };
 
   document.getElementById("f").onsubmit = async (e) => {
     e.preventDefault();
