@@ -42,9 +42,7 @@ export default async function ({ params }) {
   const nomeCerchia = (id) => state.cerchie.find((c) => c.id === id)?.nome ?? "";
 
   $app().innerHTML = `
-    <header class="testa"><span class="logo" style="font-size:22px">Agenda</span><span></span></header>
-    <div class="storie" style="gap:6px;padding-bottom:8px">${tipiVisibili.map((t) =>
-      `<a class="chip ${t === tipo ? "on" : ""}" style="flex-shrink:0;text-decoration:none" href="#/agenda?t=${t}">${TIPI[t].titolo}</a>`).join("")}</div>
+    <header class="testa"><span class="logo" style="font-size:22px">${TIPI[tipo].titolo}</span><span style="flex:1"></span></header>
     ${prossime.map((v) => scheda(v)).join("") || `<p class="pad tenue">${T.vuoto}</p>`}
     <form id="nuovo" class="card">
       <label style="margin-top:0" for="ti">Nuovo ${T.uno}</label>

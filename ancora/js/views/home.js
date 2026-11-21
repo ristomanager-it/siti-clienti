@@ -57,7 +57,6 @@ export default async function ({ params }) {
 
   $app().innerHTML = `
     <header class="testa"><span class="logo">Ancora</span><span style="flex:1"></span>
-      <a class="icona" href="#/agenda" aria-label="Agenda: vacanze, compiti, esami">${ICONE.agenda}</a>
       <a class="icona" href="#/profilo" aria-label="Il mio profilo">${avatar(state.io, 30, url[state.io.foto_path])}</a>
       <a class="icona" href="#/cerchie" aria-label="Cerchie e inviti"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></a></header>
     ${state.cerchie.length > 1 ? `<div class="storie" style="gap:6px;padding-bottom:8px" aria-label="Scegli la famiglia">${[["", "Tutti"], ...ordinaCerchie(state.cerchie).map((c) => [c.id, c.nome]), ["diretti", "Messaggi per me"]]

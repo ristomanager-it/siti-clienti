@@ -185,7 +185,11 @@ async function render() {
   const carica = ROTTE[nome] ?? ROTTE[""];
   const vista = await carica();
   $app().innerHTML = "";
-  try { await vista.default({ id, params }); if (!PUBBLICHE.has(nome) && nome === "") setTimeout(bentornato, 1200); }
+  try {
+    await vista.default({ id, params });
+    if (!PUBBLICHE.has(nome) && state.io && state.io.modalita !== "semplice") aggiungiMenu();
+    if (!PUBBLICHE.has(nome) && nome === "") setTimeout(bentornato, 1200);
+  }
   catch (e) { console.error(e); $app().innerHTML = `<p class="errore">Qualcosa non ha funzionato. Riprova tra poco.</p>`; }
   window.scrollTo(0, 0);
 }
@@ -292,3 +296,49 @@ export function consensoCookie(forza = false) {
   d.querySelector("#ck-si").onclick = () => scegli(true);
 }
 consensoCookie();
+
+// --- Menu laterale dell'app: tutte le voci in un posto, al posto di bottoni e chip sparsi ---
+function vociMenu() {
+  const spenti = new Set(state.io.moduli_spenti ?? []);
+  const attivi = (k) => !spenti.has(k) && state.cerchie.some((c) => c.moduli?.[k]);
+  return [
+    ["La famiglia", [["#/", "Bacheca della famiglia"], ["#/settimana", "La domanda della settimana"], ["#/albero", "L'albero"], ["#/cerchie", "Famiglie e cerchie"]]],
+    ["I miei ricordi", [["#/archivio", "Il cloud dei ricordi"], ["#/racconta", "Racconta"], ["#/diario", "Il diario"], ["#/ricette", "Il ricettario"], [`#/libro/${state.io.id}`, "Il mio libro"]]],
+    ["Agenda", [["vacanze", "Vacanze"], ["compiti", "Compiti"], ["esami", "Esami"]].filter(([k]) => attivi(k)).map(([k, t]) => [`#/agenda?t=${k}`, t])],
+    ["Il mio account", [["#/profilo", "Profilo e impostazioni"], ["#/piano", "Il piano"], ["#/servizi", "Servizi"], ["#/omaggio", "Codice omaggio"]]],
+  ].filter(([, v]) => v.length);
+}
+
+function aggiungiMenu() {
+  const testa = document.querySelector("#app header.testa");
+  if (!testa || testa.querySelector(".apri-menu")) return;
+  const b = document.createElement("button");
+  b.className = "icona apri-menu"; b.setAttribute("aria-label", "Menu");
+  b.style.cssText = "border:0;background:transparent;cursor:pointer;color:inherit";
+  b.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>`;
+  testa.appendChild(b);
+  b.onclick = apriMenu;
+}
+
+function apriMenu() {
+  document.getElementById("menu-app")?.remove();
+  const attuale = location.hash || "#/";
+  const m = document.createElement("div");
+  m.id = "menu-app";
+  m.innerHTML = `<div data-chiudi style="position:fixed;inset:0;background:rgba(18,48,44,.45);z-index:40"></div>
+    <nav aria-label="Menu" style="position:fixed;top:0;right:0;bottom:0;width:min(84vw,330px);z-index:41;background:#FBF8F2;overflow:auto;
+      padding:calc(16px + env(safe-area-inset-top)) 18px calc(24px + env(safe-area-inset-bottom));box-shadow:-10px 0 30px rgba(0,0,0,.2);animation:entra .18s ease-out">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">${avatar(state.io, 40)}
+        <b style="flex:1;font-size:17px">${esc(nomeDi(state.io))}</b>
+        <button data-chiudi aria-label="Chiudi" style="width:40px;height:40px;border-radius:20px;border:0;background:#EFE8DC;font-size:18px;cursor:pointer">✕</button></div>
+      ${vociMenu().map(([gruppo, voci]) => `<div style="margin-top:18px;font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#8A5A17">${gruppo}</div>
+        ${voci.map(([h, t]) => `<a href="${h}" style="display:block;padding:12px 10px;margin:2px -10px;border-radius:12px;text-decoration:none;font-size:17px;font-weight:700;
+          color:#12302C;${attuale === h ? "background:#F3E6CF" : ""}">${t}</a>`).join("")}`).join("")}
+      <button id="esci-app" style="margin-top:22px;border:0;background:transparent;color:#8A3B2E;font-weight:700;font-size:15px;cursor:pointer;padding:8px 0">Esci</button>
+    </nav>`;
+  document.body.appendChild(m);
+  const chiudi = () => m.remove();
+  m.querySelectorAll("[data-chiudi], nav a").forEach((x) => x.addEventListener("click", chiudi));
+  m.querySelector("#esci-app").onclick = async () => { await sb.auth.signOut(); state.io = null; chiudi(); location.hash = "#/accesso"; };
+  addEventListener("hashchange", chiudi, { once: true });
+}

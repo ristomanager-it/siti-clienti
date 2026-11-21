@@ -41,9 +41,10 @@ export default async function () {
           <button class="chip" data-az="rimuovi" data-c="${c.id}" data-p="${m.persone.id}">Rimuovi</button>
         </div>`).join("")
         : `<div style="display:flex;gap:4px;margin-top:10px;flex-wrap:wrap">${lista.slice(0, 8).map((m) => avatar(m.persone, 28)).join("")}</div>`}
-      ${mia ? `<div style="margin-top:12px"><span class="tenue">In questa cerchia:</span>
-        ${[["vacanze", "Vacanze"], ["compiti", "Compiti"], ["esami", "Esami"]].map(([k, t]) =>
-          `<button class="chip ${c.moduli?.[k] ? "on" : ""}" data-modulo="${k}" data-c="${c.id}">${c.moduli?.[k] ? "✓ " : ""}${t}</button>`).join("")}</div>` : ""}
+      ${mia ? `<details style="margin-top:12px"><summary class="tenue" style="cursor:pointer;font-weight:700">Agenda di questa cerchia</summary>
+        ${[["vacanze", "Vacanze insieme"], ["compiti", "Compiti dei ragazzi"], ["esami", "Esami"]].map(([k, t]) =>
+          `<label class="riga" style="margin:10px 0;font-weight:700;color:var(--testo)"><input type="checkbox" data-modulo="${k}" data-c="${c.id}" ${c.moduli?.[k] ? "checked" : ""} style="width:22px;height:22px"> ${t}</label>`).join("")}
+        <p class="tenue" style="margin:0;font-size:13px">Le voci accese compaiono nel menu ☰ di tutti i membri.</p></details>` : ""}
       <div class="riga" style="margin-top:12px;gap:8px">
         <a class="btn chiaro" style="flex:1;min-height:44px" href="#/?c=${c.id}">Apri</a>
         ${c.tipo === "famiglia" ? `<a class="btn chiaro" style="flex:1;min-height:44px" href="#/albero?c=${c.id}">Albero</a>` : ""}
@@ -104,11 +105,10 @@ export default async function () {
   });
 
   // accendi/spegni vacanze, compiti, esami per questa cerchia (solo chi l'ha creata)
-  document.querySelectorAll("[data-modulo]").forEach((b) => b.onclick = async () => {
+  document.querySelectorAll("[data-modulo]").forEach((b) => b.onchange = async () => {
     const c = state.cerchie.find((x) => x.id === b.dataset.c);
-    const moduli = { ...(c.moduli ?? {}), [b.dataset.modulo]: !c.moduli?.[b.dataset.modulo] };
-    await sb.from("cerchie").update({ moduli }).eq("id", c.id);
-    location.reload();
+    c.moduli = { ...(c.moduli ?? {}), [b.dataset.modulo]: b.checked };
+    await sb.from("cerchie").update({ moduli: c.moduli }).eq("id", c.id);
   });
 
   document.querySelectorAll(".invita").forEach((b) => b.onclick = () => invita(b.dataset.c));
