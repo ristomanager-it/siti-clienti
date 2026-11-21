@@ -16,8 +16,9 @@ const ROTTE = {
   "cerchie": () => import("./views/cerchie.js"),
   "regala": () => import("./views/regala.js"),
   "accesso": () => import("./views/accesso.js"),
+  "perche": () => import("./views/perche.js"),
 };
-const PUBBLICHE = new Set(["accesso", "regala"]);
+const PUBBLICHE = new Set(["accesso", "regala", "perche"]);
 
 export const $app = () => document.getElementById("app");
 export const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
