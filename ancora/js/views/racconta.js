@@ -15,7 +15,8 @@ export default async function ({ params }) {
   let scelta = rispostaA?.cerchia_id ?? cerchie.find((c) => c.tipo === "famiglia")?.id ?? "solo_io";
   const invito = domanda?.testo
     ?? (rispostaA ? `Rispondi a ${rispostaA.persone?.soprannome ?? rispostaA.persone?.nome}` : null)
-    ?? (params.foto ? "Chi c'è in questa foto? Dove eravate?" : "Racconta una cosa che vuoi ricordare.");
+    ?? (params.ricetta ? "La ricetta di famiglia: racconta come si fa, e chi te l'ha insegnata."
+      : params.foto ? "Chi c'è in questa foto? Dove eravate?" : "Racconta una cosa che vuoi ricordare.");
 
   $app().innerHTML = `
     <header class="testa"><span class="logo" style="font-size:22px">Racconta</span><span></span></header>
@@ -24,6 +25,13 @@ export default async function ({ params }) {
       <button id="rec" class="rec" type="button" aria-label="Tieni premuto e parla">${ICONE.mic.replace('width="26" height="26"', 'width="48" height="48"')}</button>
       <p id="stato" class="tenue" style="text-align:center" role="status">Tieni premuto e parla</p>
       <audio id="anteprima" controls hidden></audio>
+      <label class="riga" style="font-weight:800;color:var(--testo)"><input id="isric" type="checkbox" ${params.ricetta ? "checked" : ""} style="width:22px;height:22px"> È una ricetta</label>
+      <div id="ric" ${params.ricetta ? "" : "hidden"}>
+        <label for="rnome">Nome della ricetta</label><input id="rnome" placeholder="Il ragù della nonna">
+        <label for="rpor">Per quante persone</label><input id="rpor" inputmode="numeric" placeholder="6" style="width:auto">
+        <label for="ring">Ingredienti, uno per riga</label><textarea id="ring" rows="5" placeholder="500 g di macinato misto&#10;1 kg di passata&#10;1 bicchiere di vino rosso"></textarea>
+        <label for="rpro">Come si fa</label><textarea id="rpro" rows="5" placeholder="Il segreto è la pazienza: almeno tre ore a fuoco basso…"></textarea>
+      </div>
       <label for="testo">Oppure scrivi</label>
       <textarea id="testo" rows="3"></textarea>
       <label for="foto">Foto</label>
@@ -35,6 +43,8 @@ export default async function ({ params }) {
       <button id="salva" class="btn" style="margin-top:16px">Condividi</button>
       <p id="esito" role="status"></p>
     </div>`;
+
+  document.getElementById("isric").onchange = (e) => { document.getElementById("ric").hidden = !e.target.checked; };
 
   document.querySelectorAll("#cerchie .chip").forEach((b) => b.onclick = () => {
     scelta = b.dataset.c;
@@ -71,13 +81,21 @@ export default async function ({ params }) {
     const esito = document.getElementById("esito");
     const testo = document.getElementById("testo").value.trim();
     const files = [...document.getElementById("foto").files];
-    if (!blob && !testo && !files.length) { esito.textContent = "Registra, scrivi o aggiungi una foto."; return; }
+    const isRic = document.getElementById("isric").checked;
+    const ricetta = isRic ? {
+      nome: document.getElementById("rnome").value.trim() || "Ricetta di famiglia",
+      porzioni: parseInt(document.getElementById("rpor").value, 10) || null,
+      ingredienti: document.getElementById("ring").value.split("\n").map((x) => x.trim()).filter(Boolean),
+      procedimento: document.getElementById("rpro").value.trim() || null,
+    } : null;
+    if (!blob && !testo && !files.length && !ricetta?.ingredienti.length && !ricetta?.procedimento) { esito.textContent = "Registra, scrivi o aggiungi una foto."; return; }
     esito.textContent = "Salvataggio…";
 
     const { data: r, error } = await sb.from("ricordi").insert({
       autore_id: state.io.id,
-      tipo: rispostaA ? "risposta" : (files.length && !blob ? "foto" : "racconto"),
-      titolo: domanda?.testo ?? null, testo: testo || null,
+      tipo: ricetta ? "ricetta" : rispostaA ? "risposta" : (files.length && !blob ? "foto" : "racconto"),
+      titolo: ricetta ? ricetta.nome : domanda?.testo ?? null, testo: testo || null,
+      dettagli: ricetta ? { porzioni: ricetta.porzioni, ingredienti: ricetta.ingredienti, procedimento: ricetta.procedimento } : null,
       visibilita: scelta === "solo_io" ? "solo_io" : "cerchia",
       cerchia_id: scelta === "solo_io" ? null : scelta,
       in_memoria: document.getElementById("memoria").checked,

@@ -12,7 +12,7 @@ export default async function ({ params }) {
   // filtro per famiglia/cerchia: chi sta in più famiglie (la sua, quella della moglie, gli amici) sceglie quale guardare
   const filtro = params?.c ?? null;
   let q = sb.from("ricordi")
-    .select("id, tipo, titolo, testo, creato_il, autore_id, cerchia_id, persone:autore_id(id, nome, soprannome, foto_path), ricordi_media(path, tipo, durata_sec, ordine), reazioni(persona_id, tipo)")
+    .select("id, tipo, titolo, testo, dettagli, creato_il, autore_id, cerchia_id, persone:autore_id(id, nome, soprannome, foto_path), ricordi_media(path, tipo, durata_sec, ordine), reazioni(persona_id, tipo)")
     .neq("visibilita", "solo_io");
   if (filtro === "diretti") q = q.in("visibilita", ["diretto", "segreto"]);
   else if (filtro) q = q.eq("cerchia_id", filtro);
@@ -67,7 +67,13 @@ function post(r, url, i) {
   const cuori = (r.reazioni ?? []).filter((x) => x.tipo === "cuore");
   const mio = cuori.some((x) => x.persona_id === state.io.id);
   const voce = audio ? pulsanteVoce(url[audio.path], audio.durata_sec, i) : "";
-  const media = foto.length
+  const ric = r.tipo === "ricetta" ? r.dettagli ?? {} : null;
+  const schedaRicetta = ric ? `<div class="lettera" style="font-family:Manrope,sans-serif;font-size:15px;white-space:normal">
+      <span class="tenue" style="text-transform:uppercase;font-weight:800;letter-spacing:.5px;color:#8A5A17">Ricetta di famiglia${ric.porzioni ? ` · per ${ric.porzioni}` : ""}</span>
+      <b style="display:block;font-family:Fraunces,serif;font-size:24px;margin:4px 0 8px">${esc(r.titolo ?? "")}</b>
+      ${(ric.ingredienti ?? []).slice(0, 5).map((i) => `<div>· ${esc(i)}</div>`).join("")}${(ric.ingredienti ?? []).length > 5 ? `<div class="tenue">e altri ${(ric.ingredienti.length - 5)}…</div>` : ""}
+      ${voce ? `<div style="margin-top:14px">${voce.replace('class="voce"', 'class="voce" style="margin:0;background:rgba(18,48,44,.9)"')}</div>` : ""}</div>` : "";
+  const media = ric && !foto.length ? `<a href="#/ricordo/${r.id}" style="text-decoration:none;color:inherit;display:block">${schedaRicetta}</a>` : foto.length
     ? `<a class="foto" href="#/ricordo/${r.id}" style="background-image:url('${url[foto[0].path]}')" aria-label="Apri il ricordo">${voce}</a>`
     : `<div class="lettera">${esc(r.testo ?? "")}${voce ? `<div style="margin-top:14px">${voce.replace('class="voce"', 'class="voce" style="margin:0;background:rgba(18,48,44,.9)"')}</div>` : ""}</div>`;
   return `<article class="post">

@@ -3,7 +3,7 @@ import { sb, state, $app, esc, quando, nomeDi, avatar, pulsanteVoce, urlMediaMol
 
 export default async function ({ id }) {
   const { data: r } = await sb.from("ricordi")
-    .select("id, tipo, titolo, testo, creato_il, autore_id, persone:autore_id(id, nome, soprannome, foto_path), ricordi_media(path, tipo, durata_sec, ordine)")
+    .select("id, tipo, titolo, testo, dettagli, creato_il, autore_id, persone:autore_id(id, nome, soprannome, foto_path), ricordi_media(path, tipo, durata_sec, ordine)")
     .eq("id", id).maybeSingle();
   if (!r) { $app().innerHTML = `<p class="pad">Ricordo non trovato.</p>`; return; }
 
@@ -28,6 +28,12 @@ export default async function ({ id }) {
       ? foto.map((f, i) => `<div class="foto" style="background-image:url('${url[f.path]}');margin-bottom:8px">${i === 0 && audio ? pulsanteVoce(url[audio.path], audio.durata_sec) : ""}</div>`).join("")
         + (r.testo ? `<div class="didascalia" style="margin-top:6px">${esc(r.testo)}</div>` : "")
       : `<div class="lettera">${esc(r.testo ?? "")}${audio ? `<div style="margin-top:14px">${pulsanteVoce(url[audio.path], audio.durata_sec, 1, "margin:0;background:rgba(18,48,44,.9)")}</div>` : ""}</div>`}
+    ${r.tipo === "ricetta" ? `<div class="card" style="margin-top:12px">
+      <span class="tenue" style="text-transform:uppercase;font-weight:800;letter-spacing:.5px">Ingredienti${r.dettagli?.porzioni ? ` · per ${r.dettagli.porzioni} persone` : ""}</span>
+      <ul style="padding-left:20px;margin:8px 0 0;line-height:1.7">${(r.dettagli?.ingredienti ?? []).map((i) => `<li>${esc(i)}</li>`).join("")}</ul>
+      ${r.dettagli?.procedimento ? `<span class="tenue" style="text-transform:uppercase;font-weight:800;letter-spacing:.5px;display:block;margin-top:14px">Come si fa</span>
+        <p style="white-space:pre-line;margin:6px 0 0;line-height:1.6">${esc(r.dettagli.procedimento)}</p>` : ""}
+    </div>` : ""}
     <div class="pad tenue">${cuori.length ? `♥ ${cuori.map((c) => esc(nomeDi(c.persone))).join(", ")}` : ""}</div>
 
     ${(risposte ?? []).length ? `<h2>Risposte</h2>` + risposte.map((x) => {
