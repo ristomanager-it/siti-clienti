@@ -15,8 +15,9 @@ const TIPI = [
 export default async function ({ params }) {
   if (params.ok) {
     $app().innerHTML = `<header class="testa"><span class="logo">Ancora</span><span></span></header>
-      <div class="pad"><h1>Grazie!</h1><p style="font-size:17px">Il regalo è confermato. Il giorno scelto arriverà il primo messaggio su WhatsApp.
-      Ti abbiamo mandato per email il biglietto da stampare.</p><a class="btn" href="#/accesso">Entra in Ancora</a></div>`;
+      <div class="pad"><h1>Grazie!</h1><p style="font-size:17px">Il regalo è confermato. Il giorno scelto arriverà il primo messaggio su WhatsApp.</p>
+      ${params.ok.length > 10 ? `<a class="btn ambra" href="#/biglietto/${esc(params.ok)}">Stampa il biglietto da mettere sotto l'albero</a>` : ""}
+      <a class="btn chiaro" style="margin-top:10px" href="#/accesso">Entra in Ancora</a></div>`;
     return;
   }
   let tipo = TIPI[0];
@@ -32,6 +33,7 @@ export default async function ({ params }) {
         <label for="dn" id="ldn">${tipo.chi}</label><input id="dn" placeholder="${tipo.ph}">
         <label for="dt" id="ldt">${tipo.tel}</label><input id="dt" type="tel" inputmode="tel" placeholder="+39 333 123 4567">
       </div>
+      <label for="mg">Un messaggio sul biglietto (se vuoi)</label><textarea id="mg" rows="2" maxlength="240" placeholder="Papà, raccontaci tutto. Ti vogliamo bene."></textarea>
       <label for="dd">Quando parte il primo messaggio</label><input id="dd" type="date" value="${natale}" required>
       <label for="an">Il tuo nome</label><input id="an" required>
       <label for="ae">La tua email</label><input id="ae" type="email" required>
@@ -71,7 +73,7 @@ export default async function ({ params }) {
       body: JSON.stringify({
         tipo: "regalo", destinatario_tipo: tipo.id,
         destinatario_nome: tipo.chi ? v("dn") : v("an"), destinatario_telefono: tipo.chi ? norm(v("dt")) : norm(v("at")),
-        data_invio: v("dd"), acquirente_nome: v("an"), acquirente_email: v("ae"), acquirente_telefono: norm(v("at")),
+        data_invio: v("dd"), messaggio: v("mg") || null, acquirente_nome: v("an"), acquirente_email: v("ae"), acquirente_telefono: norm(v("at")),
       }),
     });
     const j = await res.json();

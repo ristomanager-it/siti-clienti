@@ -23,8 +23,9 @@ const ROTTE = {
   "prova": () => import("./views/prova.js"),
   "rispondi": () => import("./views/prova.js"),
   "ascolta": () => import("./views/prova.js"),
+  "biglietto": () => import("./views/biglietto.js"),
 };
-const PUBBLICHE = new Set(["accesso", "regala", "perche", "prova", "rispondi", "ascolta"]);
+const PUBBLICHE = new Set(["accesso", "regala", "perche", "prova", "rispondi", "ascolta", "biglietto"]);
 
 export const $app = () => document.getElementById("app");
 export const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
