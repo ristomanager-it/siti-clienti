@@ -1,12 +1,12 @@
 // Profilo di una persona: numeri, "Chiedi", il suo libro che cresce, l'album a griglia.
-import { sb, state, $app, esc, nomeDi, avatar, urlMediaMolti, ICONE, attivaNotifiche, notificheAttive } from "../app.js";
+import { sb, state, $app, esc, nomeDi, avatar, urlMediaMolti, ICONE, attivaNotifiche, notificheAttive, cambiaImmagine } from "../app.js";
 
 const STORIE_PER_VOLUME = 25;
 
 export default async function ({ id }) {
   const pid = id ?? state.io.id;
   const io = pid === state.io.id;
-  const { data: p } = await sb.from("persone").select("id, nome, soprannome, foto_path, bio, data_nascita").eq("id", pid).maybeSingle();
+  const { data: p } = await sb.from("persone").select("id, nome, soprannome, foto_path, copertina_path, bio, data_nascita").eq("id", pid).maybeSingle();
   if (!p) { $app().innerHTML = `<p class="pad">Profilo non trovato.</p>`; return; }
 
   const { data: ricordi } = await sb.from("ricordi")
@@ -17,7 +17,7 @@ export default async function ({ id }) {
   const secondi = lista.flatMap((r) => r.ricordi_media ?? []).filter((m) => m.tipo === "audio").reduce((s, m) => s + (m.durata_sec ?? 0), 0);
   const conFoto = lista.map((r) => ({ r, f: (r.ricordi_media ?? []).find((m) => m.tipo === "foto"), a: (r.ricordi_media ?? []).find((m) => m.tipo === "audio") }))
     .filter((x) => x.f);
-  const url = await urlMediaMolti([...conFoto.map((x) => x.f.path), p.foto_path].filter(Boolean));
+  const url = await urlMediaMolti([...conFoto.map((x) => x.f.path), p.foto_path, p.copertina_path].filter(Boolean));
   const { data: fm } = await sb.from("famiglia_membri").select("narratore").eq("persona_id", pid).maybeSingle();
 
   const volume = Math.floor(racconti / STORIE_PER_VOLUME) + 1;
@@ -27,9 +27,15 @@ export default async function ({ id }) {
   $app().innerHTML = `
     <header class="testa">${id ? `<a class="icona" href="#/" aria-label="Indietro">${ICONE.indietro}</a>` : `<span style="width:44px"></span>`}
       <b>${esc(nomeDi(p))}</b><span style="width:44px"></span></header>
-    <div class="pad" style="display:flex;align-items:center;gap:18px">
-      <span class="anello" style="width:92px;height:92px;border-radius:46px;flex-shrink:0">${avatar(p, 86, p.foto_path ? url[p.foto_path] : null).replace('class="av"', 'class="av" style="border:3px solid var(--carta);font-size:28px"')}</span>
-      <div style="display:grid;grid-template-columns:repeat(3,auto);gap:16px;text-align:center">
+    <div style="position:relative;height:150px;background:${p.copertina_path ? `url('${url[p.copertina_path]}') center/cover` : "linear-gradient(135deg,#7FA37E,#4D7356)"}">
+      ${io ? `<label class="chip" style="position:absolute;right:12px;bottom:10px;margin:0;background:rgba(251,248,242,.92)">📷 Copertina<input type="file" accept="image/*" id="f-copertina" hidden></label>` : ""}
+    </div>
+    <div class="pad" style="display:flex;align-items:flex-end;gap:18px;margin-top:-56px;position:relative">
+      <label style="position:relative;flex-shrink:0;${io ? "cursor:pointer" : ""}">
+        <span class="anello" style="width:104px;height:104px;border-radius:52px;display:inline-block">${avatar(p, 98, p.foto_path ? url[p.foto_path] : null).replace('class="av"', 'class="av" style="border:3px solid var(--carta);font-size:30px"')}</span>
+        ${io ? `<span style="position:absolute;right:0;bottom:4px;width:32px;height:32px;border-radius:16px;background:var(--carta);display:grid;place-items:center;box-shadow:0 1px 4px rgba(0,0,0,.2)">📷</span><input type="file" accept="image/*" id="f-foto" hidden>` : ""}
+      </label>
+      <div style="display:grid;grid-template-columns:repeat(3,auto);gap:16px;text-align:center;padding-bottom:4px">
         <div><b style="font-size:20px">${racconti}</b><div class="tenue">racconti</div></div>
         <div><b style="font-size:20px">${secondi >= 3600 ? Math.round(secondi / 3600) + " h" : Math.round(secondi / 60) + " min"}</b><div class="tenue">di voce</div></div>
         <div><b style="font-size:20px">${conFoto.length}</b><div class="tenue">foto</div></div>
@@ -56,6 +62,14 @@ export default async function ({ id }) {
       : `<p class="pad tenue">Ancora nessuna foto.</p>`}`;
 
   if (io) {
+    // foto profilo e copertina: rimpicciolite sul telefono, poi caricate
+    const carica = (campo) => async (e) => {
+      const f = e.target.files?.[0]; if (!f) return;
+      e.target.closest("label").style.opacity = .5;
+      if (await cambiaImmagine({ file: f, tabella: "persone", id: state.io.id, campo, cartella: "profilo", vecchia: p[campo + "_path"] })) location.reload();
+    };
+    document.getElementById("f-foto").onchange = carica("foto");
+    document.getElementById("f-copertina").onchange = carica("copertina");
     const spenti = new Set(state.io.moduli_spenti ?? []);
     $app().insertAdjacentHTML("beforeend", `<h2>Le mie impostazioni</h2><div class="card">
       <div class="riga" style="margin-bottom:12px"><b style="flex:1">Notifiche</b><button class="chip" id="notif" style="margin:0">…</button></div>
@@ -83,3 +97,4 @@ export default async function ({ id }) {
     e.target.querySelector("button").textContent = "Inviata! Gli arriva con la prossima domanda";
   });
 }
+

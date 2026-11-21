@@ -92,7 +92,7 @@ async function caricaIo() {
   const { data: io } = await sb.from("persone").select("*").eq("auth_user_id", user.id).maybeSingle();
   if (!io) return null;
   const { data: fm } = await sb.from("famiglia_membri").select("famiglia_id, ruolo, narratore, famiglie(nome)").eq("persona_id", io.id).maybeSingle();
-  const { data: cerchie } = await sb.from("cerchie").select("id, nome, tipo, proprietario_id, moduli").order("creata_il");
+  const { data: cerchie } = await sb.from("cerchie").select("id, nome, tipo, proprietario_id, moduli, foto_path, copertina_path").order("creata_il");
   state.io = io; state.famiglia = fm; state.cerchie = cerchie ?? [];
   state.accessoPrima = io.ultimo_accesso_app;   // per il "bentornato" (prima di aggiornarlo)
   sb.from("persone").update({ ultimo_accesso_app: new Date().toISOString() }).eq("id", io.id).then(() => {});
@@ -187,3 +187,42 @@ sb.auth.onAuthStateChange((evento) => { if (evento === "SIGNED_IN" && !state.io)
 window.addEventListener("hashchange", render);
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
 render();
+
+// Foto profilo e copertine (persone e cerchie): rimpicciolite sul telefono, poi caricate.
+// cartella: "profilo" oppure "cerchia/<id>"; la vecchia immagine si cancella.
+export function rimpicciolisci(file, lato) {
+  return new Promise((ok) => {
+    const img = new Image();
+    img.onload = () => {
+      const k = Math.min(1, lato / Math.max(img.width, img.height));
+      const c = document.createElement("canvas");
+      c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+      c.toBlob((b) => ok(b ?? file), "image/jpeg", 0.85);
+    };
+    img.onerror = () => ok(file);
+    img.src = URL.createObjectURL(file);
+  });
+}
+export async function cambiaImmagine({ file, tabella, id, campo, cartella, vecchia }) {
+  const blob = await rimpicciolisci(file, campo === "copertina" ? 1600 : 600);
+  const path = `${state.io.id}/${cartella}/${campo}-${Date.now()}.jpg`;
+  const up = await sb.storage.from("ricordi").upload(path, blob, { contentType: "image/jpeg" });
+  if (up.error) { alert("Non caricata: " + up.error.message); return false; }
+  const { error } = await sb.from(tabella).update({ [campo + "_path"]: path }).eq("id", id);
+  if (error) { alert("Non salvata: " + error.message); return false; }
+  if (vecchia?.startsWith(state.io.id + "/")) sb.storage.from("ricordi").remove([vecchia]);
+  return true;
+}
+// Testata con copertina e foto tonda; con "modifica" compaiono i tasti 📷.
+export const testata = ({ nome, foto, copertina, persona, modifica, chiave, alta = 150, tondo = 98 }) => `
+  <div style="position:relative;height:${alta}px;background:${copertina ? `url('${copertina}') center/cover` : "linear-gradient(135deg,#7FA37E,#4D7356)"}">
+    ${modifica ? `<label class="chip" style="position:absolute;right:12px;bottom:10px;margin:0;background:rgba(251,248,242,.92)">📷 Copertina<input type="file" accept="image/*" data-img="copertina" data-k="${chiave ?? ""}" hidden></label>` : ""}
+  </div>
+  <div class="pad" style="display:flex;align-items:flex-end;gap:14px;margin-top:-${Math.round(tondo / 2 + 6)}px;position:relative">
+    <label style="position:relative;flex-shrink:0;${modifica ? "cursor:pointer" : ""}">
+      <span class="anello" style="width:${tondo + 6}px;height:${tondo + 6}px;border-radius:50%;display:inline-block">${avatar(persona ?? { nome }, tondo, foto).replace('class="av"', `class="av" style="border:3px solid var(--carta);font-size:${Math.round(tondo / 3.2)}px"`)}</span>
+      ${modifica ? `<span style="position:absolute;right:0;bottom:4px;width:32px;height:32px;border-radius:16px;background:var(--carta);display:grid;place-items:center;box-shadow:0 1px 4px rgba(0,0,0,.2)">📷</span><input type="file" accept="image/*" data-img="foto" data-k="${chiave ?? ""}" hidden>` : ""}
+    </label>
+    <div style="flex:1;padding-bottom:6px" data-testata-dx></div>
+  </div>`;

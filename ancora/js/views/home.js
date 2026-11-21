@@ -1,5 +1,5 @@
 // Il feed della famiglia: storie della settimana in alto, poi i ricordi con foto grande e voce.
-import { sb, state, $app, esc, quando, nomeDi, avatar, pulsanteVoce, urlMediaMolti, ICONE, settimana } from "../app.js";
+import { sb, state, $app, esc, quando, nomeDi, avatar, pulsanteVoce, urlMediaMolti, ICONE, settimana, testata } from "../app.js";
 
 export default async function ({ params }) {
   // arrivo dal link di invito: entra nella cerchia/famiglia e ricarica i dati
@@ -21,6 +21,9 @@ export default async function ({ params }) {
 
   const paths = lista.flatMap((r) => (r.ricordi_media ?? []).map((m) => m.path))
     .concat(lista.map((r) => r.persone?.foto_path).filter(Boolean));
+  const scelta = state.cerchie.find((c) => c.id === filtro);   // la pagina della famiglia scelta
+  if (scelta) paths.push(...[scelta.foto_path, scelta.copertina_path].filter(Boolean));
+  if (state.io.foto_path) paths.push(state.io.foto_path);
   const url = await urlMediaMolti([...new Set(paths)]);
 
   // storie: chi ha raccontato negli ultimi 7 giorni
@@ -55,10 +58,12 @@ export default async function ({ params }) {
   $app().innerHTML = `
     <header class="testa"><span class="logo">Ancora</span><span style="flex:1"></span>
       <a class="icona" href="#/agenda" aria-label="Agenda: vacanze, compiti, esami">${ICONE.agenda}</a>
-      <a class="icona" href="#/profilo" aria-label="Il mio profilo">${avatar(state.io, 30)}</a>
+      <a class="icona" href="#/profilo" aria-label="Il mio profilo">${avatar(state.io, 30, url[state.io.foto_path])}</a>
       <a class="icona" href="#/cerchie" aria-label="Cerchie e inviti"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></a></header>
     ${state.cerchie.length > 1 ? `<div class="storie" style="gap:6px;padding-bottom:8px" aria-label="Scegli la famiglia">${[["", "Tutti"], ...ordinaCerchie(state.cerchie).map((c) => [c.id, c.nome]), ["diretti", "Messaggi per me"]]
       .map(([id, n]) => `<a class="chip ${(filtro ?? "") === id ? "on" : ""}" style="flex-shrink:0;text-decoration:none" href="#/${id ? `?c=${id}` : ""}">${esc(n)}</a>`).join("")}</div>` : ""}
+    ${scelta ? testata({ nome: scelta.nome, persona: { id: scelta.id, nome: scelta.nome }, foto: url[scelta.foto_path], copertina: url[scelta.copertina_path], alta: 130, tondo: 72 })
+      .replace(`<div style="flex:1;padding-bottom:6px" data-testata-dx></div>`, `<div style="flex:1;padding-bottom:6px"><b style="font-size:19px">${esc(scelta.nome)}</b>${scelta.proprietario_id === state.io.id ? `<div><a class="tenue" href="#/cerchie">Cambia foto e copertina</a></div>` : ""}</div>`) : ""}
     ${cardSettimana}
     ${storie.length ? `<div class="storie" aria-label="Racconti della settimana">${storie.map((r) => {
       const fotoR = (r.ricordi_media ?? []).find((m) => m.tipo === "foto");

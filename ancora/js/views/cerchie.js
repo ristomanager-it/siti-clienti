@@ -1,7 +1,7 @@
 // Famiglie e cerchie. Si può stare in più famiglie: la propria, quella del coniuge, più gli amici.
 // Il piano (chi paga) non decide chi vede cosa: lo decidono le cerchie.
 // Pausa e rimozione senza avvisi all'interessato. Inviti via WhatsApp.
-import { sb, state, $app, esc, avatar, nomeDi } from "../app.js";
+import { sb, state, $app, esc, avatar, nomeDi, urlMediaMolti, testata, cambiaImmagine } from "../app.js";
 
 const TIPI = [
   { id: "famiglia", t: "Famiglia", ph: "Famiglia Rossi" },
@@ -18,6 +18,7 @@ export default async function () {
   const { data: proprietari } = altre.length
     ? await sb.from("persone").select("id, nome, soprannome").in("id", [...new Set(altre.map((c) => c.proprietario_id))])
     : { data: [] };
+  const url = await urlMediaMolti(state.cerchie.flatMap((c) => [c.foto_path, c.copertina_path]).filter(Boolean));
   const diChi = new Map((proprietari ?? []).map((p) => [p.id, nomeDi(p)]));
   const di = (id) => (membri ?? []).filter((m) => m.cerchia_id === id);
 
@@ -27,9 +28,10 @@ export default async function () {
   const scheda = (c) => {
     const mia = c.proprietario_id === state.io.id;
     const lista = di(c.id);
-    return `<div class="card">
-      <div class="riga"><b style="flex:1;font-size:17px">${esc(c.nome)}</b>
-        <span class="tenue">${lista.length + 1} persone</span></div>
+    return `<div class="card" style="padding:0;overflow:hidden">
+      ${testata({ nome: c.nome, persona: { id: c.id, nome: c.nome }, foto: url[c.foto_path], copertina: url[c.copertina_path], modifica: mia, chiave: c.id, alta: 110, tondo: 64 })
+        .replace("<div style=\"flex:1;padding-bottom:6px\" data-testata-dx></div>", `<div style="flex:1;padding-bottom:6px"><b style="font-size:17px">${esc(c.nome)}</b><div class="tenue">${lista.length + 1} persone</div></div>`)}
+      <div style="padding:0 16px 16px">
       ${mia ? "" : `<div class="tenue">di ${esc(diChi.get(c.proprietario_id) ?? "")}</div>`}
       ${mia ? lista.map((m) => `
         <div class="riga" style="margin-top:10px">
@@ -48,7 +50,7 @@ export default async function () {
         ${mia ? `<button class="btn chiaro invita" data-c="${c.id}" style="flex:1;min-height:44px">Invita</button>
                  <button class="chip" data-rinomina="${c.id}">Rinomina</button>`
               : `<button class="chip" data-esci="${c.id}">Esci</button>`}
-      </div></div>`;
+      </div></div></div>`;
   };
 
   $app().innerHTML = `
@@ -64,6 +66,14 @@ export default async function () {
       <input id="nome" placeholder="${TIPI[0].ph}" required>
       <button class="btn" style="margin-top:10px">Crea e invita</button>
     </form>`;
+
+  // --- foto e copertina della cerchia (solo chi l'ha creata) ---
+  document.querySelectorAll("input[data-img]").forEach((i) => i.onchange = async () => {
+    const f = i.files?.[0]; if (!f) return;
+    const c = state.cerchie.find((x) => x.id === i.dataset.k);
+    i.closest("label").style.opacity = .5;
+    if (await cambiaImmagine({ file: f, tabella: "cerchie", id: c.id, campo: i.dataset.img, cartella: `cerchia/${c.id}`, vecchia: c[i.dataset.img + "_path"] })) location.reload();
+  });
 
   // --- gestione membri (solo nelle cerchie mie) ---
   document.querySelectorAll("[data-az]").forEach((b) => b.onclick = async () => {
