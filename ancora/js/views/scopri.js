@@ -122,6 +122,34 @@ export default async function ({ params } = {}) {
       <p class="tenue" style="margin:6px 0 0;text-align:center">L'app è vera; i nomi sono di esempio.</p>
     </section>
 
+    <section style="background:#F3E3C8;padding:0 16px 34px">
+      <div style="background:#fff;border-radius:26px;overflow:hidden;box-shadow:0 14px 34px rgba(60,30,10,.14);border:2px solid ${C.oro}">
+        <div style="background:${C.rosso};color:${C.panna};padding:18px 20px;display:flex;align-items:center;gap:12px">
+          <span style="font-size:34px" aria-hidden="true">🎁</span>
+          <div style="flex:1"><div style="font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#F4D39B">Il regalo di Natale</div>
+            <b style="font-family:Fraunces,serif;font-size:22px;line-height:1.15">Un anno di Ancora per tutta la famiglia</b></div>
+          <b style="font-family:Fraunces,serif;font-size:32px">129 €</b></div>
+        <ul style="list-style:none;margin:0;padding:16px 20px 6px">
+          ${[["Tutta la famiglia dentro", "nonni, figli, nipoti, cugini: ognuno con il suo invito"],
+             ["La domanda della settimana per tutti", "ognuno la sua, più una per tutta la famiglia"],
+             ["Racconti a voce", "si parla, non si scrive: la voce resta nell'album"],
+             ["Il cloud dei ricordi", "50 GB per foto, video e vocali, non solo foto e video"],
+             ["Gli alberi di famiglia uniti", "la tua, dei tuoi genitori, dei suoceri"],
+             ["Il ricettario di casa", "con la voce di chi cucina e le dosi giuste"],
+             ["Agenda e diario", "vacanze insieme, compiti, esami: solo se volete"],
+             ["Il libro digitale delle storie", "con il QR per ascoltare la voce"],
+             ["Il biglietto da mettere sotto l'albero", "con il tuo messaggio, da stampare"]]
+            .map(([t, d]) => `<li style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #F1E7D6">
+              <span style="flex-shrink:0;width:22px;height:22px;border-radius:11px;background:${C.salvia};color:#fff;display:grid;place-items:center;font-size:13px;font-weight:800">✓</span>
+              <span><b>${t}</b><br><span class="tenue" style="font-size:14px">${d}</span></span></li>`).join("")}
+        </ul>
+        <div style="padding:10px 20px 20px">
+          <a href="#acquista" class="btn vai-acquista" style="background:${C.oro};color:${C.notte}">Regala Ancora · 129 €</a>
+          <p class="tenue" style="margin:10px 0 0;text-align:center;font-size:13px">Parte il giorno che scegli. Dopo 12 mesi si continua solo se volete. Se non accetta, ti rimborsiamo.</p>
+        </div>
+      </div>
+    </section>
+
     ${sezione(`${etichetta("Perché", C.oro)}
       ${titolo("Ogni famiglia ha una storia. Raccontatela insieme.", C.panna)}
       <p style="font-size:17px;line-height:1.55;margin:0 0 14px;color:#F1E4CF">Le storie di casa vivono nei pranzi della domenica, nelle foto sparse su dieci telefoni, nelle ricette che nessuno ha mai scritto. Ancora le mette insieme, in un posto solo, vostro.</p>
