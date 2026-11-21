@@ -39,6 +39,9 @@ export default async function () {
           <button class="chip" data-az="rimuovi" data-c="${c.id}" data-p="${m.persone.id}">Rimuovi</button>
         </div>`).join("")
         : `<div style="display:flex;gap:4px;margin-top:10px;flex-wrap:wrap">${lista.slice(0, 8).map((m) => avatar(m.persone, 28)).join("")}</div>`}
+      ${mia ? `<div style="margin-top:12px"><span class="tenue">In questa cerchia:</span>
+        ${[["vacanze", "Vacanze"], ["compiti", "Compiti"], ["esami", "Esami"]].map(([k, t]) =>
+          `<button class="chip ${c.moduli?.[k] ? "on" : ""}" data-modulo="${k}" data-c="${c.id}">${c.moduli?.[k] ? "✓ " : ""}${t}</button>`).join("")}</div>` : ""}
       <div class="riga" style="margin-top:12px;gap:8px">
         <a class="btn chiaro" style="flex:1;min-height:44px" href="#/?c=${c.id}">Apri</a>
         ${c.tipo === "famiglia" ? `<a class="btn chiaro" style="flex:1;min-height:44px" href="#/albero?c=${c.id}">Albero</a>` : ""}
@@ -87,6 +90,14 @@ export default async function () {
     const nome = prompt("Nuovo nome", c?.nome ?? "");
     if (!nome?.trim()) return;
     await sb.from("cerchie").update({ nome: nome.trim() }).eq("id", b.dataset.rinomina);
+    location.reload();
+  });
+
+  // accendi/spegni vacanze, compiti, esami per questa cerchia (solo chi l'ha creata)
+  document.querySelectorAll("[data-modulo]").forEach((b) => b.onclick = async () => {
+    const c = state.cerchie.find((x) => x.id === b.dataset.c);
+    const moduli = { ...(c.moduli ?? {}), [b.dataset.modulo]: !c.moduli?.[b.dataset.modulo] };
+    await sb.from("cerchie").update({ moduli }).eq("id", c.id);
     location.reload();
   });
 

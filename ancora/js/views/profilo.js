@@ -51,6 +51,21 @@ export default async function ({ id }) {
       `<a href="#/ricordo/${x.r.id}" style="background-image:url('${url[x.f.path]}')" aria-label="Apri il ricordo">${x.a ? `<span>▶ voce</span>` : ""}</a>`).join("")}</div>`
       : `<p class="pad tenue">Ancora nessuna foto.</p>`}`;
 
+  if (io) {
+    const spenti = new Set(state.io.moduli_spenti ?? []);
+    $app().insertAdjacentHTML("beforeend", `<h2>Le mie impostazioni</h2><div class="card">
+      <p class="tenue" style="margin-top:0">Cosa vuoi vedere e condividere nell'agenda. Se spegni una voce, non la vedi tu e nessuno vede la tua.</p>
+      ${[["vacanze", "Vacanze"], ["compiti", "Compiti"], ["esami", "Esami"]].map(([k, t]) =>
+        `<label class="riga" style="margin:10px 0;font-weight:700;color:var(--testo)"><input type="checkbox" data-mio-modulo="${k}" ${spenti.has(k) ? "" : "checked"} style="width:22px;height:22px"> ${t}</label>`).join("")}
+    </div>`);
+    document.querySelectorAll("[data-mio-modulo]").forEach((c) => c.onchange = async () => {
+      const s = new Set(state.io.moduli_spenti ?? []);
+      c.checked ? s.delete(c.dataset.mioModulo) : s.add(c.dataset.mioModulo);
+      state.io.moduli_spenti = [...s];
+      await sb.from("persone").update({ moduli_spenti: [...s] }).eq("id", state.io.id);
+    });
+  }
+
   document.getElementById("chiedi")?.addEventListener("submit", async (e) => {
     e.preventDefault();
     const q = document.getElementById("q");

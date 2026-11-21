@@ -18,6 +18,7 @@ const ROTTE = {
   "accesso": () => import("./views/accesso.js"),
   "perche": () => import("./views/perche.js"),
   "albero": () => import("./views/albero.js"),
+  "agenda": () => import("./views/agenda.js"),
 };
 const PUBBLICHE = new Set(["accesso", "regala", "perche"]);
 
@@ -53,6 +54,7 @@ export const ICONE = {
   cuore: `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg>`,
   commento: `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 21l1.9-5.4A8 8 0 1 1 21 12z"/></svg>`,
   mic: `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M19 10a7 7 0 0 1-14 0"/><path d="M12 17v5"/></svg>`,
+  agenda: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>`,
   indietro: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>`,
 };
 
@@ -71,7 +73,7 @@ async function caricaIo() {
   const { data: io } = await sb.from("persone").select("*").eq("auth_user_id", user.id).maybeSingle();
   if (!io) return null;
   const { data: fm } = await sb.from("famiglia_membri").select("famiglia_id, ruolo, narratore, famiglie(nome)").eq("persona_id", io.id).maybeSingle();
-  const { data: cerchie } = await sb.from("cerchie").select("id, nome, tipo, proprietario_id").order("creata_il");
+  const { data: cerchie } = await sb.from("cerchie").select("id, nome, tipo, proprietario_id, moduli").order("creata_il");
   state.io = io; state.famiglia = fm; state.cerchie = cerchie ?? [];
   sb.from("persone").update({ ultimo_accesso_app: new Date().toISOString() }).eq("id", io.id).then(() => {});
   return io;
