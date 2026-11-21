@@ -46,7 +46,8 @@ export default async function ({ id }) {
       ${io ? `<a class="btn chiaro" href="#/racconta" style="margin-top:10px">Racconta qualcosa</a>
              <div class="riga" style="margin-top:8px;gap:8px"><a class="btn chiaro" href="#/piano" style="flex:1">Il piano</a>
                <a class="btn chiaro" href="#/ricette" style="flex:1">Ricettario</a>
-               <a class="btn chiaro" href="#/servizi" style="flex:1">Servizi</a></div>`
+               <a class="btn chiaro" href="#/servizi" style="flex:1">Servizi</a></div>
+             <p style="text-align:center;margin:10px 0 0"><a href="#/omaggio">Hai un codice omaggio?</a></p>`
         : `<form id="chiedi" style="margin-top:10px">
             <label class="visually-hidden" for="q">Cosa vuoi chiedergli</label>
             <input id="q" placeholder="Cosa vuoi chiedere a ${esc(nomeDi(p))}?" required>

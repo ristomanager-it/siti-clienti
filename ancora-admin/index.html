@@ -101,12 +101,12 @@ function disegna() {
   $("#radice").innerHTML = `
     <header><span class="logo">Ancora<small>gestione</small></span><span class="sp"></span>
       <button class="esci" id="esci">Esci</button></header>
-    <main><nav>${[["panoramica", "Panoramica"], ["famiglie", "Famiglie"], ["regali", "Regali"], ["ordini", "Ordini libri"], ["privacy", "Privacy"], ["manifesto", "Manifesto"]]
+    <main><nav>${[["panoramica", "Panoramica"], ["famiglie", "Famiglie"], ["regali", "Regali"], ["ordini", "Ordini libri"], ["omaggi", "Omaggi"], ["privacy", "Privacy"], ["manifesto", "Manifesto"]]
       .map(([k, t]) => `<button data-v="${k}" class="${k === vista ? "on" : ""}">${t}</button>`).join("")}</nav>
       <div id="corpo"><p class="tenue">Caricamento…</p></div></main>`;
   $("#esci").onclick = async () => { await sb.auth.signOut(); accesso(); };
   document.querySelectorAll("nav button").forEach((b) => b.onclick = () => { vista = b.dataset.v; disegna(); });
-  ({ panoramica, famiglie, regali, ordini, privacy, manifesto })[vista]().catch((e) => {
+  ({ panoramica, famiglie, regali, ordini, omaggi, privacy, manifesto })[vista]().catch((e) => {
     $("#corpo").innerHTML = `<p class="errore">Errore: ${esc(e.message)}</p>`;
   });
 }
@@ -225,6 +225,22 @@ async function ordini() {
     }).join("") || `<p class="tenue">Ancora nessun libro ordinato.</p>`);
   document.querySelectorAll("[data-stato]").forEach((b) => b.onclick = async () => { await rpc("admin_ordine_stato", { p_id: b.dataset.stato, p_stato: b.dataset.v }); disegna(); });
   document.querySelectorAll("[data-stampa]").forEach((b) => b.onclick = () => stampa(b.dataset.stampa));
+}
+
+async function omaggi() {
+  const lista = await rpc("admin_omaggi");
+  const link = (c) => `https://ristomanager-it.github.io/siti-clienti/ancora/#/omaggio/${c}`;
+  $("#corpo").innerHTML = `<div class="card"><b>Crea codici omaggio</b>
+      <div class="tenue">Ogni codice attiva 12 mesi di Piano Famiglia. Si usa una volta sola.</div>
+      <div class="riga" style="margin-top:10px;gap:6px"><input id="quanti" type="number" min="1" max="50" value="1" style="width:70px">
+        <input id="nota" placeholder="Per chi (es. zia, amico)" style="flex:1"><button class="btn" id="crea">Crea</button></div></div>` +
+    (lista.map((o) => `<div class="card"><div class="riga"><b style="font-family:monospace;font-size:15px">${esc(o.codice)}</b>
+        <span class="badge ${o.usato_il ? "accettato" : "in_attesa_pagamento"}">${o.usato_il ? "usato " + data(o.usato_il) : "libero"}</span><span class="sp"></span>
+        ${o.usato_il ? "" : `<button class="btn chiaro" data-copia="${esc(link(o.codice))}">Copia link</button>
+          <a class="btn chiaro" target="_blank" href="https://wa.me/?text=${encodeURIComponent("Ti regalo un anno di Ancora, il cloud dei ricordi della famiglia: " + link(o.codice))}">WhatsApp</a>`}</div>
+        <div class="tenue">${esc(o.nota ?? "")} · creato ${data(o.creato_il)}</div></div>`).join(""));
+  $("#crea").onclick = async () => { await rpc("admin_crea_omaggi", { p_quanti: Number($("#quanti").value), p_nota: $("#nota").value || null }); disegna(); };
+  document.querySelectorAll("[data-copia]").forEach((b) => b.onclick = async () => { await navigator.clipboard.writeText(b.dataset.copia); b.textContent = "Copiato ✓"; });
 }
 
 async function stampa(id) {
