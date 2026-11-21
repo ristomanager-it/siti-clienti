@@ -301,8 +301,11 @@ consensoCookie();
 function vociMenu() {
   const spenti = new Set(state.io.moduli_spenti ?? []);
   const attivi = (k) => !spenti.has(k) && state.cerchie.some((c) => c.moduli?.[k]);
+  const famiglie = [...state.cerchie].sort((a, b) => (a.tipo === "famiglia" ? 0 : 1) - (b.tipo === "famiglia" ? 0 : 1));
   return [
-    ["La famiglia", [["#/", "Bacheca della famiglia"], ["#/settimana", "La domanda della settimana"], ["#/albero", "L'albero"], ["#/cerchie", "Famiglie e cerchie"]]],
+    ["Le mie famiglie e i gruppi", [...famiglie.map((c) => [`#/?c=${c.id}`, c.nome]),
+      ...(famiglie.length > 1 ? [["#/?c=tutti", "Tutte insieme"]] : []), ["#/?c=diretti", "Messaggi per me"]]],
+    ["La famiglia", [ ["#/settimana", "La domanda della settimana"], ["#/albero", "L'albero"], ["#/cerchie", "Famiglie e cerchie"]]],
     ["I miei ricordi", [["#/archivio", "Il cloud dei ricordi"], ["#/racconta", "Racconta"], ["#/diario", "Il diario"], ["#/ricette", "Il ricettario"], [`#/libro/${state.io.id}`, "Il mio libro"]]],
     ["Agenda", [["vacanze", "Vacanze"], ["compiti", "Compiti"], ["esami", "Esami"]].filter(([k]) => attivi(k)).map(([k, t]) => [`#/agenda?t=${k}`, t])],
     ["Il mio account", [["#/profilo", "Profilo e impostazioni"], ["#/piano", "Il piano"], ["#/servizi", "Servizi"], ["#/omaggio", "Codice omaggio"]]],

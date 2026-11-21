@@ -10,7 +10,13 @@ export default async function ({ params }) {
   if (state.io.modalita === "semplice") return semplice();
 
   // filtro per famiglia/cerchia: chi sta in più famiglie (la sua, quella della moglie, gli amici) sceglie quale guardare
-  const filtro = params?.c ?? null;
+  // senza scelta si apre l'ultima famiglia guardata (o la prima); "tutti" mostra tutte insieme
+  let ricordata = null; try { ricordata = localStorage.getItem("ancora_cerchia"); } catch { /* niente */ }
+  const valida = (id) => id === "tutti" || id === "diretti" || state.cerchie.some((c) => c.id === id);
+  const filtroScelto = params?.c && valida(params.c) ? params.c
+    : (ricordata && valida(ricordata) ? ricordata : (ordinaCerchie(state.cerchie)[0]?.id ?? "tutti"));
+  try { localStorage.setItem("ancora_cerchia", filtroScelto); } catch { /* niente */ }
+  const filtro = filtroScelto === "tutti" ? null : filtroScelto;
   let q = sb.from("ricordi")
     .select("id, tipo, titolo, testo, dettagli, creato_il, autore_id, cerchia_id, persone:autore_id(id, nome, soprannome, foto_path), ricordi_media(path, tipo, durata_sec, ordine), reazioni(persona_id, tipo)")
     .neq("visibilita", "solo_io");
@@ -56,13 +62,10 @@ export default async function ({ params }) {
   }
 
   $app().innerHTML = `
-    <header class="testa"><span class="logo">Ancora</span><span style="flex:1"></span>
-      <a class="icona" href="#/profilo" aria-label="Il mio profilo">${avatar(state.io, 30, url[state.io.foto_path])}</a>
-      <a class="icona" href="#/cerchie" aria-label="Cerchie e inviti"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></a></header>
-    ${state.cerchie.length > 1 ? `<div class="storie" style="gap:6px;padding-bottom:8px" aria-label="Scegli la famiglia">${[["", "Tutti"], ...ordinaCerchie(state.cerchie).map((c) => [c.id, c.nome]), ["diretti", "Messaggi per me"]]
-      .map(([id, n]) => `<a class="chip ${(filtro ?? "") === id ? "on" : ""}" style="flex-shrink:0;text-decoration:none" href="#/${id ? `?c=${id}` : ""}">${esc(n)}</a>`).join("")}</div>` : ""}
+    <header class="testa"><b style="font-family:Fraunces,serif;font-size:24px;line-height:1.1;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(
+      scelta?.nome ?? (filtro === "diretti" ? "Messaggi per me" : state.cerchie.length ? "Tutte le famiglie" : "Ancora"))}</b></header>
     ${scelta ? testata({ nome: scelta.nome, persona: { id: scelta.id, nome: scelta.nome }, foto: url[scelta.foto_path], copertina: url[scelta.copertina_path], alta: 130, tondo: 72 })
-      .replace(`<div style="flex:1;padding-bottom:6px" data-testata-dx></div>`, `<div style="flex:1;padding-bottom:6px"><b style="font-size:19px">${esc(scelta.nome)}</b>${scelta.proprietario_id === state.io.id ? `<div><a class="tenue" href="#/cerchie">Cambia foto e copertina</a></div>` : ""}</div>`) : ""}
+      .replace(`<div style="flex:1;padding-bottom:6px" data-testata-dx></div>`, `<div style="flex:1;padding-bottom:6px">${scelta.proprietario_id === state.io.id && !scelta.foto_path ? `<a class="tenue" href="#/cerchie">Aggiungi foto e copertina</a>` : ""}</div>`) : ""}
     ${cardSettimana}
     <div id="mia-domanda"></div>
     ${storie.length ? `<div class="storie" aria-label="Racconti della settimana">${storie.map((r) => {
