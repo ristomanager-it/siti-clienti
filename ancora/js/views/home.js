@@ -27,8 +27,8 @@ export default async function ({ params }) {
   const url = await urlMediaMolti([...new Set(paths)]);
 
   // storie: chi ha raccontato negli ultimi 7 giorni
-  const settimana = Date.now() - 7 * 86400_000;
-  const storie = [...new Map(lista.filter((r) => new Date(r.creato_il).getTime() > settimana && r.autore_id !== state.io.id)
+  const settimanaFa = Date.now() - 7 * 86400_000;
+  const storie = [...new Map(lista.filter((r) => new Date(r.creato_il).getTime() > settimanaFa && r.autore_id !== state.io.id)
     .map((r) => [r.autore_id, r])).values()];
 
   // la domanda della settimana: per la famiglia scelta, o la prima famiglia
