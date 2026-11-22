@@ -1,7 +1,7 @@
 // Famiglie e cerchie. Si può stare in più famiglie: la propria, quella del coniuge, più gli amici.
 // Il piano (chi paga) non decide chi vede cosa: lo decidono le cerchie.
 // Pausa e rimozione senza avvisi all'interessato. Inviti via WhatsApp.
-import { sb, state, $app, esc, avatar, nomeDi, urlMediaMolti, testata, cambiaImmagine } from "../app.js";
+import { sb, state, $app, esc, avatar, nomeDi, urlMediaMolti, testata, cambiaImmagine, invitaInCerchia } from "../app.js";
 
 const TIPI = [
   { id: "famiglia", t: "Famiglia", ph: "Famiglia Rossi" },
@@ -64,7 +64,7 @@ export default async function () {
       <div class="scelta" id="tipo">${TIPI.map((x, i) => `<button type="button" class="${i === 0 ? "on" : ""}" data-t="${x.id}">${x.t}</button>`).join("")}</div>
       <label for="nome">Nome</label>
       <input id="nome" placeholder="${TIPI[0].ph}" required>
-      <button class="btn" style="margin-top:10px">Crea e invita</button>
+      <button class="btn" style="margin-top:10px">Crea</button>
     </form>`;
 
   // --- foto e copertina della cerchia (solo chi l'ha creata) ---
@@ -112,7 +112,7 @@ export default async function () {
 
   document.querySelectorAll(".invita").forEach((b) => b.onclick = () => invita(b.dataset.c));
 
-  // --- nuova cerchia: tipo + nome, poi subito l'invito ---
+  // --- nuova cerchia: tipo + nome, poi si prepara la pagina e si invita ---
   let tipo = TIPI[0];
   document.querySelectorAll("#tipo button").forEach((b) => b.onclick = () => {
     tipo = TIPI.find((x) => x.id === b.dataset.t);
@@ -125,16 +125,9 @@ export default async function () {
       .insert({ proprietario_id: state.io.id, nome: document.getElementById("nome").value.trim(), tipo: tipo.id })
       .select("id").single();
     if (error) { alert("Non sono riuscito a crearla: " + error.message); return; }
-    await invita(c.id);
-    location.reload();
+    // prima si prepara la pagina (foto, copertina, benvenuto), poi si invita: chi arriva vede già cos'è
+    location.replace(`#/?c=${c.id}&nuova=1`); location.reload();
   };
 }
 
-async function invita(cerchiaId) {
-  const c = state.cerchie.find((x) => x.id === cerchiaId);
-  const { data: inv, error } = await sb.from("inviti").insert({ invitato_da: state.io.id, cerchia_id: cerchiaId }).select("codice").single();
-  if (error) { alert("Invito non creato: " + error.message); return; }
-  const link = `${location.origin}${location.pathname}#/iscriviti?invito=${inv.codice}`;
-  const testo = encodeURIComponent(`Ti invito in "${c?.nome ?? "Ancora"}", il nostro spazio privato per i ricordi: ${link}`);
-  window.open(`https://wa.me/?text=${testo}`, "_blank");
-}
+const invita = (id) => invitaInCerchia(id);

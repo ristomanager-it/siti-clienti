@@ -18,7 +18,9 @@ const GANCI = [
 
 export default async function ({ params }) {
   const invito = params?.invito ?? null;
-  $app().innerHTML = `
+  const ant = invito ? await fetch(`${SUPABASE_URL}/functions/v1/invito?codice=${encodeURIComponent(invito)}`).then((r) => r.json()).catch(() => null) : null;
+  const { anteprima } = invito ? await import("./iscriviti.js") : {};
+  $app().innerHTML = `${ant && !ant.errore ? anteprima(ant) : ""}
     <div class="pad" style="padding-top:64px"><span class="logo" style="font-size:44px">Ancora</span><div class="tenue" style="font-weight:700;letter-spacing:.02em;margin:-4px 0 18px">Il cloud dei tuoi ricordi</div>
     <p id="gancio" style="font-family:Fraunces,serif;font-size:25px;line-height:1.25;color:var(--notte);min-height:94px;margin-bottom:4px;transition:opacity .5s">${GANCI[0]}</p>
     </div>

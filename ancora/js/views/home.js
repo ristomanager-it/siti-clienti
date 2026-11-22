@@ -1,5 +1,5 @@
 // Il feed della famiglia: storie della settimana in alto, poi i ricordi con foto grande e voce.
-import { sb, state, $app, esc, quando, nomeDi, avatar, pulsanteVoce, urlMediaMolti, ICONE, settimana, testata, aggiorna } from "../app.js";
+import { sb, state, $app, esc, quando, nomeDi, avatar, pulsanteVoce, urlMediaMolti, ICONE, settimana, testata, aggiorna, cambiaImmagine, invitaInCerchia } from "../app.js";
 
 export default async function ({ params }) {
   // arrivo dal link di invito: entra nella cerchia/famiglia e ricarica i dati
@@ -83,13 +83,26 @@ export default async function ({ params }) {
       }).join("")}
     </div>
     <input type="file" id="file-storia" accept="image/*,video/*" hidden>
-    ${scelta ? testata({ nome: scelta.nome, persona: { id: scelta.id, nome: scelta.nome }, foto: url[scelta.foto_path], copertina: url[scelta.copertina_path], alta: 130, tondo: 72 })
-      .replace(`<div style="flex:1;padding-bottom:6px" data-testata-dx></div>`, `<div style="flex:1;padding-bottom:6px">${scelta.proprietario_id === state.io.id && !scelta.foto_path ? `<a class="tenue" href="#/cerchie">Aggiungi foto e copertina</a>` : ""}</div>`) : ""}
+    ${scelta ? testata({ nome: scelta.nome, persona: { id: scelta.id, nome: scelta.nome }, foto: url[scelta.foto_path], copertina: url[scelta.copertina_path], alta: 130, tondo: 72, modifica: scelta.proprietario_id === state.io.id, chiave: scelta.id })
+      .replace(`<div style="flex:1;padding-bottom:6px" data-testata-dx></div>`, `<div style="flex:1;padding-bottom:6px">${scelta.proprietario_id === state.io.id ? `<button class="chip" data-invita="${scelta.id}" style="margin:0">+ Invita</button>` : ""}</div>`) : ""}
+    ${scelta && params?.nuova && scelta.proprietario_id === state.io.id ? `<div class="card" style="margin:0 16px 16px;border:2px solid var(--ambra)">
+      <b style="font-family:Fraunces,serif;font-size:21px">«${esc(scelta.nome)}» è pronta</b>
+      <p class="tenue" style="margin:4px 0 10px">Preparala prima di invitare: chi arriva vede subito cos'è.</p>
+      <div style="padding:6px 0">${scelta.foto_path && scelta.copertina_path ? "✅" : "①"} <b>Foto e copertina</b> · tocca 📷 qui sopra</div>
+      <div style="padding:6px 0">② <a href="#/racconta?c=${scelta.id}"><b>Scrivi il benvenuto</b></a> o metti una prima foto</div>
+      <button class="btn ambra" data-invita="${scelta.id}" style="margin-top:10px">③ Invita la famiglia</button></div>` : ""}
     ${cardSettimana}
     <div id="mia-domanda"></div>
     ${lista.map((r, i) => post(r, url, i)).join("") || `<div class="pad"><h1>Ancora vuoto</h1><p class="tenue">Invita la famiglia dalle cerchie, o racconta tu per primo.</p></div>`}`;
   miaDomanda();
   collegaStorie(perPersona, url, filtro);
+  document.querySelectorAll("[data-invita]").forEach((b) => b.onclick = () => invitaInCerchia(b.dataset.invita));
+  document.querySelectorAll("input[data-img]").forEach((i) => i.onchange = async () => {
+    const f = i.files?.[0]; if (!f) return;
+    const c = state.cerchie.find((x) => x.id === i.dataset.k);
+    i.closest("label").style.opacity = .5;
+    if (await cambiaImmagine({ file: f, tabella: "cerchie", id: c.id, campo: i.dataset.img, cartella: `cerchia/${c.id}`, vecchia: c[i.dataset.img + "_path"] })) location.reload();
+  });
   controllaNovita(lista[0]?.creato_il ?? new Date(0).toISOString(), filtro);
 
   document.querySelectorAll("[data-cuore]").forEach((b) => b.onclick = async () => {

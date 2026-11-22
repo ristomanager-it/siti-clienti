@@ -4,10 +4,11 @@ import { SUPABASE_URL } from "../config.js";
 
 export default async function ({ params } = {}) {
   const invito = params?.invito ?? "", amico = params?.amico ?? "";
-  $app().innerHTML = `
-    <div class="pad" style="padding-top:48px"><span class="logo" style="font-size:40px">Ancora</span>
+  const ant = invito ? await fetch(`${SUPABASE_URL}/functions/v1/invito?codice=${encodeURIComponent(invito)}`).then((r) => r.json()).catch(() => null) : null;
+  $app().innerHTML = `${ant && !ant.errore ? anteprima(ant) : ""}
+    <div class="pad" style="padding-top:${ant && !ant.errore ? 18 : 48}px">${ant && !ant.errore ? "" : `<span class="logo" style="font-size:40px">Ancora</span>`}
       <div class="tenue" style="font-weight:700;margin:-4px 0 18px">Il cloud dei tuoi ricordi</div>
-      <h1 style="font-size:28px;line-height:1.2">${invito ? "Ti aspettano in famiglia." : "Crea il tuo account gratis."}</h1>
+      <h1 style="font-size:28px;line-height:1.2">${ant && !ant.errore ? "Crea il tuo account ed entra." : invito ? "Ti aspettano in famiglia." : "Crea il tuo account gratis."}</h1>
       <p style="font-size:16px;margin:0">${invito ? "Crea il tuo account e sei dentro." : "La tua famiglia, i tuoi gruppi, i tuoi ricordi. Gratis, senza carta di credito."}</p></div>
     <form id="f" class="card">
       <div class="riga" style="gap:8px">
@@ -38,4 +39,16 @@ export default async function ({ params } = {}) {
     await sb.auth.signInWithPassword({ email, password });
     location.replace(invito ? `#/?invito=${encodeURIComponent(invito)}` : "#/"); location.reload();
   };
+}
+
+// l'anteprima della famiglia che ti ha invitato: copertina, foto, chi invita, quanti sono già dentro
+export function anteprima(a) {
+  return `<div style="position:relative;aspect-ratio:16/9;max-height:240px;width:100%;background:${a.copertina ? `url('${a.copertina}') center/cover` : "linear-gradient(135deg,#7FA37E,#4D7356)"}"></div>
+    <div class="pad" style="display:flex;gap:14px;align-items:flex-end;margin-top:-44px;position:relative">
+      <span style="width:84px;height:84px;border-radius:42px;border:4px solid var(--carta);flex-shrink:0;display:grid;place-items:center;font-family:Fraunces,serif;font-size:28px;font-weight:700;color:#fff;
+        background:${a.foto ? `url('${a.foto}') center/cover` : "var(--notte)"}">${a.foto ? "" : esc((a.cerchia ?? "A")[0])}</span>
+      <div style="padding-bottom:4px"><span class="tenue" style="font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.06em">${esc(a.da)} ti invita in</span>
+        <b style="display:block;font-family:Fraunces,serif;font-size:24px;line-height:1.15">${esc(a.cerchia)}</b>
+        <span class="tenue" style="font-size:14px">${a.membri} ${a.membri === 1 ? "persona" : "persone"}${a.ricordi ? ` · ${a.ricordi} ricordi` : ""}</span></div>
+    </div>`;
 }

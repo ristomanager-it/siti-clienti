@@ -17,7 +17,7 @@ export default async function ({ params }) {
     domandaSett = data?.testo ?? null;
   }
   const cerchie = state.cerchie;
-  let scelta = (params.settimana && params.c) || rispostaA?.cerchia_id || cerchie.find((c) => c.tipo === "famiglia")?.id || "solo_io";
+  let scelta = params.c || rispostaA?.cerchia_id || cerchie.find((c) => c.tipo === "famiglia")?.id || "solo_io";
   const invito = domandaSett ?? domanda?.testo
     ?? (rispostaA ? `Rispondi a ${rispostaA.persone?.soprannome ?? rispostaA.persone?.nome}` : null)
     ?? (params.ricetta ? "La ricetta di famiglia: racconta come si fa, e chi te l'ha insegnata."

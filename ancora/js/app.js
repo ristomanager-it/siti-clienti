@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "56";
+const VER = "57";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 const ROTTE = {
@@ -482,3 +482,14 @@ async function aggiornaBadgeChat() {
 setInterval(aggiornaBadgeChat, 20_000);
 addEventListener("hashchange", () => setTimeout(aggiornaBadgeChat, 800));
 setTimeout(aggiornaBadgeChat, 2500);
+
+/** Crea un invito per una famiglia/gruppo e apre la condivisione (WhatsApp o il menu del telefono). */
+export async function invitaInCerchia(cerchiaId) {
+  const c = state.cerchie.find((x) => x.id === cerchiaId);
+  const { data: inv, error } = await sb.from("inviti").insert({ invitato_da: state.io.id, cerchia_id: cerchiaId }).select("codice").single();
+  if (error) { alert("Invito non creato: " + error.message); return; }
+  const link = `${location.origin}${location.pathname}#/iscriviti?invito=${inv.codice}`;
+  const testo = `Ti ho preparato un posto in "${c?.nome ?? "Ancora"}", la nostra casa privata per foto, storie e chat di famiglia. Entra da qui: ${link}`;
+  try { if (navigator.share) { await navigator.share({ title: c?.nome ?? "Ancora", text: testo }); return; } } catch { return; }
+  window.open(`https://wa.me/?text=${encodeURIComponent(testo)}`, "_blank");
+}
