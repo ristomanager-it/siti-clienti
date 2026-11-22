@@ -33,7 +33,7 @@ export default async function ({ id, params }) {
     </div>
     <div class="pad" style="display:flex;align-items:flex-end;gap:18px;margin-top:-56px;position:relative">
       <label style="position:relative;flex-shrink:0;${io ? "cursor:pointer" : ""}">
-        <span class="anello" style="width:104px;height:104px;border-radius:52px;display:inline-block">${avatar(p, 98, p.foto_path ? url[p.foto_path] : null).replace('class="av"', 'class="av" style="border:3px solid var(--carta);font-size:30px"')}</span>
+        <span class="anello" style="width:104px;height:104px;border-radius:52px;display:inline-block">${avatar(p, 98, p.foto_path ? url[p.foto_path] : null, "border:3px solid var(--carta);font-size:30px;")}</span>
         ${io ? `<span style="position:absolute;right:0;bottom:4px;width:32px;height:32px;border-radius:16px;background:var(--carta);display:grid;place-items:center;box-shadow:0 1px 4px rgba(0,0,0,.2)">📷</span><input type="file" accept="image/*" id="f-foto" hidden>` : ""}
       </label>
       <div style="display:grid;grid-template-columns:repeat(3,auto);gap:16px;text-align:center;padding-bottom:4px">

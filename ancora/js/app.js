@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "66";
+const VER = "67";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 const ROTTE = {
@@ -81,8 +81,8 @@ export async function urlMediaMolti(paths) {
 export const nomeDi = (p) => p?.soprannome ?? p?.nome ?? "";
 const COLORI = ["#12302C", "#8C4A2E", "#C9832E", "#0F5257", "#5E7F77", "#7A3B2E"];
 export const colore = (id) => COLORI[[...String(id ?? "")].reduce((a, c) => a + c.charCodeAt(0), 0) % COLORI.length];
-export const avatar = (p, size = 38, fotoUrl = null) =>
-  `<span class="av" style="width:${size}px;height:${size}px;background-color:${colore(p?.id)};${fotoUrl ? `background-image:url('${fotoUrl}')` : ""}">${fotoUrl ? "" : esc(iniziali(nomeDi(p)))}</span>`;
+export const avatar = (p, size = 38, fotoUrl = null, extra = "") =>
+  `<span class="av" style="${extra}width:${size}px;height:${size}px;background-color:${colore(p?.id)};${fotoUrl ? `background-image:url('${fotoUrl}')` : ""}">${fotoUrl ? "" : esc(iniziali(nomeDi(p)))}</span>`;
 export const onda = (n = 18, seed = 1) => `<span class="onda" aria-hidden="true">${Array.from({ length: n }, (_, i) =>
   `<b style="height:${6 + Math.round(Math.abs(Math.sin((i + seed) * 1.7)) * 16)}px"></b>`).join("")}</span>`;
 export const durata = (s) => s ? `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, "0")}` : "";
@@ -258,7 +258,7 @@ export const testata = ({ nome, foto, copertina, persona, modifica, chiave, alta
   </div>
   <div class="pad" style="display:flex;align-items:flex-end;gap:14px;margin-top:-${Math.round(tondo / 2 + 6)}px;position:relative">
     <label style="position:relative;flex-shrink:0;${modifica ? "cursor:pointer" : ""}">
-      <span class="anello" style="width:${tondo + 6}px;height:${tondo + 6}px;border-radius:50%;display:inline-block">${avatar(persona ?? { nome }, tondo, foto).replace('class="av"', `class="av" style="border:3px solid var(--carta);font-size:${Math.round(tondo / 3.2)}px"`)}</span>
+      <span class="anello" style="width:${tondo + 6}px;height:${tondo + 6}px;border-radius:50%;display:inline-block">${avatar(persona ?? { nome }, tondo, foto, `border:3px solid var(--carta);font-size:${Math.round(tondo / 3.2)}px;`)}</span>
       ${modifica ? `<span style="position:absolute;right:0;bottom:4px;width:32px;height:32px;border-radius:16px;background:var(--carta);display:grid;place-items:center;box-shadow:0 1px 4px rgba(0,0,0,.2)">📷</span><input type="file" accept="image/*" data-img="foto" data-k="${chiave ?? ""}" hidden>` : ""}
     </label>
     <div style="flex:1;padding-bottom:6px" data-testata-dx></div>
