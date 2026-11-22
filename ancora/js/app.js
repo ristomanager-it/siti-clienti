@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "45";
+const VER = "46";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 const ROTTE = {
@@ -348,3 +348,53 @@ function apriMenu() {
   m.querySelector("#esci-app").onclick = async () => { await sb.auth.signOut(); state.io = null; chiudi(); location.hash = "#/accesso"; };
   addEventListener("hashchange", chiudi, { once: true });
 }
+
+// --- Aggiornamento: tira giù per aggiornare, e aggiornamento da solo quando riapri l'app ---
+const PAGINE_VIVE = new Set(["", "settimana", "archivio", "cerchie", "albero", "agenda", "ricette", "profilo", "ricordo", "racconti"]);
+const paginaAttuale = () => (location.hash.replace(/^#\/?/, "").split(/[/?]/)[0] || "");
+const occupato = () => document.querySelector("#menu-app, #banner-cookie, input:focus, textarea:focus")
+  || [...document.querySelectorAll("video")].some((v) => !v.paused)
+  || [...document.body.children].some((e) => e.id !== "tira-giu" && e.id !== "app" && getComputedStyle(e).position === "fixed" && Number(getComputedStyle(e).zIndex) >= 40);
+
+export async function aggiorna() {
+  if (!state.io || !PAGINE_VIVE.has(paginaAttuale())) return;
+  const y = scrollY;
+  await render();
+  scrollTo(0, Math.min(y, document.body.scrollHeight));
+}
+
+(function tiraGiu() {
+  let inizio = null, dy = 0;
+  const ind = document.createElement("div");
+  ind.id = "tira-giu"; ind.setAttribute("aria-hidden", "true");
+  ind.style.cssText = "position:fixed;top:0;left:50%;z-index:45;width:40px;height:40px;margin-left:-20px;border-radius:20px;background:#fff;box-shadow:0 4px 14px rgba(0,0,0,.18);display:grid;place-items:center;color:#C9832E;font-weight:800;transform:translateY(-60px);transition:transform .15s";
+  ind.textContent = "↻";
+  document.body.appendChild(ind);
+  addEventListener("touchstart", (e) => {
+    inizio = scrollY <= 0 && !occupato() && state.io && PAGINE_VIVE.has(paginaAttuale()) ? e.touches[0].clientY : null; dy = 0;
+  }, { passive: true });
+  addEventListener("touchmove", (e) => {
+    if (inizio == null) return;
+    dy = Math.max(0, e.touches[0].clientY - inizio);
+    ind.style.transition = "none";
+    ind.style.transform = `translateY(${Math.min(dy, 110) - 50}px) rotate(${dy * 3}deg)`;
+  }, { passive: true });
+  addEventListener("touchend", async () => {
+    if (inizio == null) return;
+    inizio = null; ind.style.transition = "transform .15s";
+    if (dy > 80) {
+      ind.style.transform = "translateY(20px)"; ind.animate([{ rotate: "0deg" }, { rotate: "360deg" }], { duration: 700, iterations: Infinity });
+      await aggiorna();
+      ind.getAnimations().forEach((a) => a.cancel());
+    }
+    ind.style.transform = "translateY(-60px)";
+  });
+})();
+
+// riaperta l'app dopo almeno un minuto: si aggiorna da sola
+let nascostaDa = null;
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) { nascostaDa = Date.now(); return; }
+  if (nascostaDa && Date.now() - nascostaDa > 60_000 && !occupato()) aggiorna();
+  nascostaDa = null;
+});

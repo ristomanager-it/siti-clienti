@@ -1,5 +1,5 @@
 // Il feed della famiglia: storie della settimana in alto, poi i ricordi con foto grande e voce.
-import { sb, state, $app, esc, quando, nomeDi, avatar, pulsanteVoce, urlMediaMolti, ICONE, settimana, testata } from "../app.js";
+import { sb, state, $app, esc, quando, nomeDi, avatar, pulsanteVoce, urlMediaMolti, ICONE, settimana, testata, aggiorna } from "../app.js";
 
 export default async function ({ params }) {
   // arrivo dal link di invito: entra nella cerchia/famiglia e ricarica i dati
@@ -90,6 +90,7 @@ export default async function ({ params }) {
     ${lista.map((r, i) => post(r, url, i)).join("") || `<div class="pad"><h1>Ancora vuoto</h1><p class="tenue">Invita la famiglia dalle cerchie, o racconta tu per primo.</p></div>`}`;
   miaDomanda();
   collegaStorie(perPersona, url, filtro);
+  controllaNovita(lista[0]?.creato_il ?? new Date(0).toISOString(), filtro);
 
   document.querySelectorAll("[data-cuore]").forEach((b) => b.onclick = async () => {
     const id = b.dataset.cuore;
@@ -238,4 +239,27 @@ function segna(id) {
   try { const v = JSON.parse(localStorage.getItem("ancora_storie_viste") ?? "{}"); v[id] = Date.now();
     for (const k of Object.keys(v)) if (Date.now() - v[k] > 3 * 86400_000) delete v[k];
     localStorage.setItem("ancora_storie_viste", JSON.stringify(v)); } catch { /* niente */ }
+}
+
+// ogni 45 secondi: ci sono ricordi o storie nuove? compare "Nuovi ricordi ↑" (nessun salto improvviso della pagina)
+let novitaTimer = null;
+function controllaNovita(ultimo, filtro) {
+  clearInterval(novitaTimer);
+  const pagina = location.hash;
+  novitaTimer = setInterval(async () => {
+    if (location.hash !== pagina || !document.getElementById("mia-domanda")) { clearInterval(novitaTimer); return; }
+    if (document.hidden || document.getElementById("avviso-novita")) return;
+    let q = sb.from("ricordi").select("id", { count: "exact", head: true }).neq("visibilita", "solo_io")
+      .neq("autore_id", state.io.id).gt("creato_il", ultimo);
+    if (filtro && filtro !== "diretti") q = q.eq("cerchia_id", filtro);
+    const { count } = await q;
+    if (!count) return;
+    const b = document.createElement("button");
+    b.id = "avviso-novita";
+    b.textContent = count === 1 ? "↑ 1 novità" : `↑ ${count} novità`;
+    b.style.cssText = "position:fixed;top:calc(70px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);z-index:30;border:0;border-radius:999px;padding:10px 18px;background:#12302C;color:#FBF3E2;font-weight:800;box-shadow:0 6px 18px rgba(0,0,0,.25);cursor:pointer";
+    b.onclick = async () => { b.remove(); scrollTo({ top: 0 }); await aggiorna(); };
+    document.body.appendChild(b);
+    addEventListener("hashchange", () => b.remove(), { once: true });
+  }, 45_000);
 }
