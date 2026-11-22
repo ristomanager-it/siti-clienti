@@ -35,7 +35,8 @@ const COSA = [
   ["Famiglie e cerchie", "parenti, fratelli, amici: ognuno decide chi vede cosa"],
   ["L'agenda", "vacanze insieme, compiti, esami: solo se volete"],
   ["Il diario", "privato, con «accadeva oggi»"],
-  ["Il libro delle storie", "digitale incluso, stampato su richiesta"],
+  ["Il libro della famiglia", "l'anno di tutti, mese per mese, con i QR per sentire le voci: in PDF e stampato"],
+  ["Il film dell'anno", "le foto e i video di tutti, montati con la musica, da mandare a tutti"],
 ];
 
 const CONTRO = [
@@ -54,7 +55,10 @@ const DOMANDE = [
   ["Posso stare in più famiglie?", "Sì: la tua, quella dei tuoi genitori, quella di tua moglie o di tuo marito, gli amici. Gli alberi si collegano tra loro."],
   ["Cosa succede dopo 12 mesi?", "Si continua solo se volete, a 99 € l'anno o 9,99 € al mese. I ricordi restano gratis per sempre."],
   ["Chi vede i miei ricordi?", "Solo chi scegli tu. Ogni ricordo può essere per tutti, per una famiglia o solo per te. Noi non li leggiamo."],
-  ["E se chi lo riceve non accetta?", "Ti rimborsiamo."],
+  ["Come arriva il regalo?", "Subito dopo il pagamento ricevi il biglietto con il codice: lo mandi su WhatsApp il giorno che vuoi, oppure lo stampi e lo metti sotto l'albero. Chi lo riceve crea la sua famiglia e attiva il codice."],
+  ["Quando arriva il libro?", "A fine anno, a casa: a colori, con copertina rigida, con le storie, le foto e i QR per ascoltare le voci. Il PDF si scarica quando volete. Copie in più: 35 € l'una."],
+  ["E il film?", "Si crea nell'app con un tocco: le foto e i video dell'anno, montati con la musica. Lo salvate e lo mandate a tutti."],
+  ["E se il codice non viene usato?", "Se non viene attivato entro 30 giorni dalla data scelta, ti rimborsiamo per intero."],
 ];
 
 const titolo = (t, colore = C.notte) => `<h2 style="font-family:Fraunces,serif;font-size:30px;line-height:1.1;text-transform:none;letter-spacing:0;color:${colore};margin:0 0 12px;padding:0">${t}</h2>`;
