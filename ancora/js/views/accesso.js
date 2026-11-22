@@ -28,6 +28,7 @@ export default async function ({ params }) {
       <p class="tenue">Ti mandiamo il link di accesso su WhatsApp.</p>
       <button class="btn" type="submit">Ricevi il link</button>
       <p id="esito" role="status"></p>
+      <p style="text-align:center;margin:8px 0 0">Non hai un account? <a href="#/iscriviti${invito ? `?invito=${invito}` : ""}"><b>Crealo gratis</b></a></p>
     </form>
     <details class="card"><summary style="font-weight:800;cursor:pointer;min-height:32px">Entra con email e password</summary>
       <form id="fe">

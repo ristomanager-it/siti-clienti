@@ -206,7 +206,7 @@ async function privacy() {
 }
 
 // --- ordini dei libri stampati: indirizzo, stato, impaginazione per la stampa ---
-const STATI = { pagato: "da fare", in_lavorazione: "in lavorazione", spedito: "spedito", annullato: "annullato" };
+const STATI = { da_fare: "Incluso nel regalo · da fare",  pagato: "da fare", in_lavorazione: "in lavorazione", spedito: "spedito", annullato: "annullato" };
 async function ordini() {
   const lista = await rpc("admin_ordini");
   $("#corpo").innerHTML = `<div class="nota">Chi ordina il libro autorizza l'impaginazione: quando lo apri per la stampa, l'accesso resta registrato in Privacy.</div>` +
@@ -214,7 +214,8 @@ async function ordini() {
       const ind = o.indirizzo?.address ?? {};
       return `<div class="card">
         <div class="riga"><span class="nome">Le storie di ${esc(o.narratore ?? "—")}</span><span class="badge ${o.stato === "spedito" ? "accettato" : o.stato === "pagato" ? "in_attesa_pagamento" : ""}">${esc(STATI[o.stato] ?? o.stato)}</span>
-          <span class="sp"></span><span class="tenue">${o.servizio === "libro_bn" ? "bianco e nero" : "colori"} · ${euro(o.importo_cent)}</span></div>
+          <span class="sp"></span><span class="tenue">${o.servizio === "libro_bn" ? "bianco e nero" : "colori"} · ${o.regalo_id ? "regalo di Natale" : euro(o.importo_cent)}${o.copie > 1 ? ` · ${o.copie} copie` : ""}</span></div>
+        ${o.consegna_prevista ? `<div class="tenue">📅 da spedire entro il ${data(o.consegna_prevista)} · chiedere l'indirizzo un mese prima</div>` : ""}
         <div class="tenue">ordinato da ${esc(o.cliente ?? "—")} ${o.email ? `· ${esc(o.email)}` : ""} · ${data(o.creato_il)}</div>
         <div style="margin-top:8px;font-size:14px">${esc(o.indirizzo?.name ?? "")}<br>${esc([ind.line1, ind.line2].filter(Boolean).join(", "))}<br>${esc([ind.postal_code, ind.city, ind.state].filter(Boolean).join(" "))}</div>
         <div class="riga" style="margin-top:10px;gap:6px">

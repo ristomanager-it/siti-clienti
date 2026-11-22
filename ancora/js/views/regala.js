@@ -54,19 +54,20 @@ export function montaModulo(el, params = {}) {
       <label for="ae">La tua email</label><input id="ae" type="email" required>
       <label for="at">Il tuo cellulare</label><input id="at" type="tel" inputmode="tel" placeholder="+39 …" required>
       <div style="display:flex;align-items:baseline;justify-content:space-between;margin:18px 0 8px">
-        <span class="tenue">12 mesi, tutta la famiglia<br>poi, se volete, 99 € l'anno</span><span style="font-family:Fraunces,serif;font-size:34px;font-weight:700">129 €</span></div>
+        <span class="tenue">12 mesi + il libro stampato<br>valore 168 €</span><span style="font-family:Fraunces,serif;font-size:34px;font-weight:700">129 €</span></div>
       <div class="card" style="margin:0 0 14px;background:var(--ambra-chiaro);border-color:#EAD2AA">
         <b style="font-family:Fraunces,serif;font-size:19px;color:#4A3410">Cosa c'è nel regalo di Natale</b>
         <ul style="margin:10px 0 0;padding-left:20px;line-height:1.55;color:#4A3410">
-          <li><b>12 mesi di Piano Famiglia</b> per tutta la famiglia, fino a 6 persone</li>
+          <li><b>12 mesi di Piano Famiglia</b> per tutta la famiglia, senza limiti di persone</li>
+          <li><b>Il libro stampato a colori</b> delle vostre storie, a casa a fine anno, con il QR per ascoltare le voci</li>
+          <li><b>L'album del pranzo di Natale</b>: i parenti caricano le foto con un QR</li>
           <li><b>Una domanda a settimana per tutti</b>, ognuno la sua, più la domanda di famiglia: si risponde a voce</li>
-          <li><b>Il cloud dei ricordi</b>: 50 GB per foto, video, vocali, storie e ricette</li>
+          <li><b>200 GB per tutta la famiglia</b>: foto, video, vocali, storie e ricette</li>
           <li><b>La domanda della settimana</b> per tutti, l'<b>albero genealogico</b>, il <b>ricettario</b>, l'<b>agenda</b> e il <b>diario</b></li>
-          <li><b>Il libro digitale</b> delle storie, con il QR per ascoltare la voce</li>
           <li><b>Il biglietto da stampare</b> con il tuo messaggio, da mettere sotto l'albero</li>
           <li>Parte il giorno che scegli, per esempio il <b>25 dicembre</b></li>
         </ul>
-        <p style="margin:10px 0 0;font-size:13px;color:#5A3E12">Dopo 12 mesi si continua solo se volete, a 99 € l'anno. I ricordi restano gratis per sempre. Il libro stampato si ordina a parte, da 49 €.</p>
+        <p style="margin:10px 0 0;font-size:13px;color:#5A3E12">Dopo 12 mesi si continua solo se volete, a 99 € l'anno. I ricordi restano gratis per sempre. Copie in più del libro: 35 € l'una.</p>
       </div>
       <label style="display:flex;gap:10px;align-items:flex-start;font-weight:600;margin:0 0 12px"><input type="checkbox" id="termini" required style="width:22px;height:22px;flex-shrink:0">
         <span>Ho letto e accetto le <a href="#/condizioni" target="_blank">condizioni di vendita</a> e l'<a href="#/privacy" target="_blank">informativa privacy</a>.</span></label>

@@ -28,7 +28,7 @@ const COME = [
 const COSA = [
   ["Una domanda a settimana, per tutti", "ognuno la sua, dai nonni ai nipoti; e la famiglia può fartene di sue"],
   ["La domanda della settimana", "per tutta la famiglia: ognuno risponde, ci si scopre"],
-  ["Il cloud dei ricordi", "50 GB per foto, video, vocali, documenti: non solo foto e video"],
+  ["Il cloud dei ricordi", "2 GB gratis a testa, 200 GB per tutta la famiglia con il piano: non solo foto e video"],
   ["Gli alberi di famiglia", "la tua, dei tuoi genitori, dei suoceri: uniti"],
   ["Il ricettario di casa", "con la voce di chi cucina"],
   ["L'album di famiglia", "foto, vocali, cuori, risposte a voce"],
@@ -77,7 +77,8 @@ export default async function ({ params } = {}) {
         <h1 style="font-family:Fraunces,serif;font-size:44px;line-height:1.02;margin:0 0 12px;color:${C.panna}">Il cloud dei tuoi ricordi.</h1>
         <p style="font-size:18px;line-height:1.45;margin:0 0 20px;color:#F3E6D2">Non solo foto e video: le voci, le storie, le ricette e l'albero della tua famiglia. Al sicuro, solo per voi.</p>
         <a class="btn vai-acquista" href="#acquista" style="background:${C.oro};color:${C.notte}">Regala Ancora · 129 €</a>
-        <a class="btn" href="#come" id="vai-come" style="margin-top:10px;background:transparent;color:${C.panna};border:2px solid rgba(251,243,226,.6)">Scopri come funziona</a>
+        <a class="btn" href="#/iscriviti" style="margin-top:10px;background:transparent;color:${C.panna};border:2px solid rgba(251,243,226,.6)">Inizia gratis</a>
+        <a href="#come" id="vai-come" style="display:block;text-align:center;margin-top:12px;color:#F3E6D2;font-weight:700">Scopri come funziona ↓</a>
       </div>
     </section>
     </div>
@@ -127,17 +128,18 @@ export default async function ({ params } = {}) {
         <div style="background:${C.rosso};color:${C.panna};padding:18px 20px;display:flex;align-items:center;gap:12px">
           <span style="font-size:34px" aria-hidden="true">🎁</span>
           <div style="flex:1"><div style="font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#F4D39B">Il regalo di Natale</div>
-            <b style="font-family:Fraunces,serif;font-size:22px;line-height:1.15">Un anno di Ancora per tutta la famiglia</b></div>
-          <b style="font-family:Fraunces,serif;font-size:32px">129 €</b></div>
+            <b style="font-family:Fraunces,serif;font-size:22px;line-height:1.15">Un anno di Ancora e il libro delle vostre storie</b></div>
+          <div style="text-align:right"><small style="display:block;font-size:12px;color:#F4D39B">valore 168 €</small><b style="font-family:Fraunces,serif;font-size:32px">129 €</b></div></div>
         <ul style="list-style:none;margin:0;padding:16px 20px 6px">
-          ${[["Tutta la famiglia dentro", "nonni, figli, nipoti, cugini: ognuno con il suo invito"],
+          ${[["Il libro stampato a colori", "a fine anno arriva a casa con le storie dei 12 mesi e il QR per ascoltare le voci"],
+             ["L'album del pranzo di Natale", "tutti i parenti caricano le foto con un QR, senza scaricare niente"],
+             ["Tutta la famiglia dentro", "senza limiti di persone: ognuno con il suo invito"],
              ["La domanda della settimana per tutti", "ognuno la sua, più una per tutta la famiglia"],
              ["Racconti a voce", "si parla, non si scrive: la voce resta nell'album"],
-             ["Il cloud dei ricordi", "50 GB per foto, video e vocali, non solo foto e video"],
+             ["200 GB per tutta la famiglia", "foto, video e vocali in qualità originale: non solo foto e video"],
              ["Gli alberi di famiglia uniti", "la tua, dei tuoi genitori, dei suoceri"],
              ["Il ricettario di casa", "con la voce di chi cucina e le dosi giuste"],
              ["Agenda e diario", "vacanze insieme, compiti, esami: solo se volete"],
-             ["Il libro digitale delle storie", "con il QR per ascoltare la voce"],
              ["Il biglietto da mettere sotto l'albero", "con il tuo messaggio, da stampare"]]
             .map(([t, d]) => `<li style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #F1E7D6">
               <span style="flex-shrink:0;width:22px;height:22px;border-radius:11px;background:${C.salvia};color:#fff;display:grid;place-items:center;font-size:13px;font-weight:800">✓</span>
@@ -198,14 +200,18 @@ export default async function ({ params } = {}) {
     ${sezione(`${etichetta("Pacchetti")}
       <div style="border-radius:22px;padding:20px;background:${C.rosso};color:${C.panna};margin-bottom:12px">
         <div class="riga"><b style="flex:1;font-size:19px">Regalo di Natale</b><b style="font-family:Fraunces,serif;font-size:36px">129 €</b></div>
-        <div style="color:#F1DCCB;margin-top:4px;line-height:1.45">12 mesi di Piano Famiglia per tutta la famiglia, il biglietto da mettere sotto l'albero, parte il giorno che scegli.</div></div>
+        <div style="color:#F1DCCB;margin-top:4px;line-height:1.45">12 mesi di Piano Famiglia, <b>il libro stampato a colori</b> a fine anno, l'album del pranzo di Natale e il biglietto sotto l'albero. Valore 168 €.</div></div>
       <div style="border-radius:22px;padding:20px;background:#fff;border:1px solid var(--bordo);margin-bottom:12px">
         <div class="riga"><b style="flex:1;font-size:18px">Piano Famiglia</b><b style="font-family:Fraunces,serif;font-size:26px;color:${C.salvia}">99 € <small style="font-size:14px">l'anno</small></b></div>
-        <div class="tenue" style="margin-top:4px">Oppure 9,99 € al mese. Dopo il regalo si continua solo se volete.</div></div>
+        <div class="tenue" style="margin-top:4px">Oppure 9,99 € al mese. <b>200 GB per tutta la famiglia</b> (basta che paghi uno), le domande sul telefono per i nonni senza app, il libro digitale.</div></div>
+      <div style="border-radius:22px;padding:20px;background:${C.panna};border:1px solid #EAD9BF;margin-bottom:12px">
+        <div class="riga"><b style="flex:1;font-size:18px">Gratis</b><b style="font-family:Fraunces,serif;font-size:26px;color:${C.notte}">0 €</b></div>
+        <div class="tenue" style="margin-top:4px">L'account, tutte le famiglie e i gruppi che vuoi, chat, storie, albero, ricettario, diario. 2 GB a testa, +1 GB per ogni amico che porti (fino a +10 GB).</div>
+        <a class="btn chiaro" href="#/iscriviti" style="margin-top:12px">Crea il tuo account gratis</a></div>
       <div style="padding:4px 4px 0;line-height:1.7">
         <b>Servizi in più, quando servono</b><br>
         <span class="tenue">Libro stampato 49 € in bianco e nero, 69 € a colori · Un narratore in più 1,99 € al mese · Spazio +100 GB 2,99 € al mese</span></div>
-      <p style="margin:14px 0 0;color:${C.salvia};font-weight:700">Gratis per sempre: entrare in famiglia, i ricordi già salvati, l'albero.</p>`, "transparent", "inherit", "pacchetti")}
+      <p style="margin:14px 0 0;color:${C.salvia};font-weight:700">I ricordi già salvati restano tuoi e gratis, anche se smetti di pagare.</p>`, "transparent", "inherit", "pacchetti")}
 
     <section id="acquista" style="background:${C.panna};padding-top:30px;scroll-margin-top:60px">
       <div style="padding:0 20px">${etichetta("Regala Ancora")}</div>

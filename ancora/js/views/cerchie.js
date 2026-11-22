@@ -46,7 +46,7 @@ export default async function () {
           `<label class="riga" style="margin:10px 0;font-weight:700;color:var(--testo)"><input type="checkbox" data-modulo="${k}" data-c="${c.id}" ${c.moduli?.[k] ? "checked" : ""} style="width:22px;height:22px"> ${t}</label>`).join("")}</details>` : ""}
       <div class="riga" style="margin-top:14px;gap:8px">
         <a class="btn" style="flex:1;min-height:46px" href="#/?c=${c.id}">Apri</a>
-        ${mia ? `<button class="btn chiaro invita" data-c="${c.id}" style="flex:1;min-height:46px">Invita</button>` : ""}
+        <button class="btn chiaro invita" data-c="${c.id}" style="flex:1;min-height:46px">Invita</button>
       </div>
       <div style="display:flex;gap:18px;margin-top:12px;font-size:14px;font-weight:700">
         ${c.tipo === "famiglia" ? `<a href="#/albero?c=${c.id}">L'albero</a>` : ""}
@@ -134,7 +134,7 @@ async function invita(cerchiaId) {
   const c = state.cerchie.find((x) => x.id === cerchiaId);
   const { data: inv, error } = await sb.from("inviti").insert({ invitato_da: state.io.id, cerchia_id: cerchiaId }).select("codice").single();
   if (error) { alert("Invito non creato: " + error.message); return; }
-  const link = `${location.origin}${location.pathname}#/accesso?invito=${inv.codice}`;
+  const link = `${location.origin}${location.pathname}#/iscriviti?invito=${inv.codice}`;
   const testo = encodeURIComponent(`Ti invito in "${c?.nome ?? "Ancora"}", il nostro spazio privato per i ricordi: ${link}`);
   window.open(`https://wa.me/?text=${testo}`, "_blank");
 }

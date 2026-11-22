@@ -37,9 +37,11 @@ export default async function ({ params }) {
         <a class="btn chiaro" style="flex:1;min-height:56px" href="#/racconta">Vocale</a>
       </div>
       <div id="coda"></div>
-      <div style="margin-top:12px"><div class="tenue">${peso(spazio?.byte ?? 0)} su ${spazio?.quota_gb ?? 2} GB · ${spazio?.foto ?? 0} foto · ${spazio?.video ?? 0} video · ${spazio?.audio ?? 0} audio</div>
+      ${spazio?.famiglia ? `<div style="margin-top:12px"><div class="tenue"><b>${esc(spazio.famiglia.nome)}</b> · ${peso(spazio.famiglia.byte)} su ${spazio.famiglia.quota_gb} GB della famiglia</div>
+        <div class="barra-prog" style="background:#EFEAE0"><i style="width:${Math.min(100, Math.round(spazio.famiglia.byte / (spazio.famiglia.quota_gb * 1e9) * 100))}%"></i></div></div>` : ""}
+      <div style="margin-top:12px"><div class="tenue">${spazio?.famiglia ? "Il mio spazio: " : ""}${peso(spazio?.byte ?? 0)} su ${spazio?.quota_gb ?? 2} GB · ${spazio?.foto ?? 0} foto · ${spazio?.video ?? 0} video · ${spazio?.audio ?? 0} audio${spazio?.amici < 10 ? ` · <a href="#/invita">+1 GB per amico</a>` : ""}</div>
         <div class="barra-prog" style="background:#EFEAE0"><i style="width:${Math.min(100, Math.round((spazio?.byte ?? 0) / ((spazio?.quota_gb ?? 2) * 1e9) * 100))}%"></i></div>
-        ${(spazio?.byte ?? 0) > (spazio?.quota_gb ?? 2) * 0.8e9 ? `<p class="tenue" style="margin:6px 0 0">Stai finendo lo spazio. ${spazio?.piano ? `<a href="#/servizi">Aggiungi 100 GB</a>` : `<a href="#/piano">Con il Piano Famiglia hai 50 GB</a>`}</p>` : ""}</div>
+        ${(spazio?.byte ?? 0) > (spazio?.quota_gb ?? 2) * 0.8e9 ? `<p class="tenue" style="margin:6px 0 0">Stai finendo lo spazio. ${spazio?.piano ? `<a href="#/servizi">Aggiungi 100 GB</a>` : `<a href="#/invita">Invita amici: +1 GB ciascuno</a> · <a href="#/piano">Piano Famiglia: 200 GB</a>`}</p>` : ""}</div>
     </div>
     <div class="storie" style="gap:6px;padding-bottom:8px">${FILTRI.map(([k, t]) =>
       `<a class="chip ${filtro === k ? "on" : ""}" style="flex-shrink:0;text-decoration:none" href="#/archivio${k ? `?f=${k}` : ""}">${t}</a>`).join("")}</div>

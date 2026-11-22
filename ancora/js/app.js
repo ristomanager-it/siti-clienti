@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "47";
+const VER = "48";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 const ROTTE = {
@@ -26,6 +26,8 @@ const ROTTE = {
   "omaggio": () => import(`./views/omaggio.js?v=${VER}`),
   "scopri": () => import(`./views/scopri.js?v=${VER}`),
   "istruzioni": () => import(`./views/istruzioni.js?v=${VER}`),
+  "iscriviti": () => import(`./views/iscriviti.js?v=${VER}`),
+  "invita": () => import(`./views/invita.js?v=${VER}`),
   "chisiamo": () => import(`./views/info.js?v=${VER}`).then((m) => ({ default: m.chisiamo })),
   "contatti": () => import(`./views/info.js?v=${VER}`).then((m) => ({ default: m.contatti })),
   "privacy": () => import(`./views/info.js?v=${VER}`).then((m) => ({ default: m.privacy })),
@@ -40,7 +42,7 @@ const ROTTE = {
   "settimana": () => import(`./views/settimana.js?v=${VER}`),
   "servizi": () => import(`./views/servizi.js?v=${VER}`),
 };
-const PUBBLICHE = new Set(["chisiamo", "contatti", "privacy", "cookie", "condizioni", "scopri", "omaggio", "accesso", "regala", "perche", "prova", "rispondi", "ascolta", "biglietto"]);
+const PUBBLICHE = new Set(["iscriviti", "chisiamo", "contatti", "privacy", "cookie", "condizioni", "scopri", "omaggio", "accesso", "regala", "perche", "prova", "rispondi", "ascolta", "biglietto"]);
 
 export const $app = () => document.getElementById("app");
 export const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -311,7 +313,7 @@ function vociMenu() {
     ["La famiglia", [ ["#/settimana", "La domanda della settimana"], ["#/albero", "L'albero"], ["#/cerchie", "Famiglie e cerchie"]]],
     ["I miei ricordi", [["#/archivio", "Il cloud dei ricordi"], ["#/racconta", "Racconta"], ["#/diario", "Il diario"], ["#/ricette", "Il ricettario"], [`#/libro/${state.io.id}`, "Il mio libro"]]],
     ["Agenda", [["vacanze", "Vacanze"], ["compiti", "Compiti"], ["esami", "Esami"]].filter(([k]) => attivi(k)).map(([k, t]) => [`#/agenda?t=${k}`, t])],
-    ["Il mio account", [["#/profilo", "Profilo e impostazioni"], ["#/piano", "Il piano"], ["#/servizi", "Servizi"], ["#/omaggio", "Codice omaggio"], ["#/istruzioni", "Istruzioni"]]],
+    ["Il mio account", [["#/invita", "Invita un amico · +1 GB"], ["#/profilo", "Profilo e impostazioni"], ["#/piano", "Il piano"], ["#/servizi", "Servizi"], ["#/omaggio", "Codice omaggio"], ["#/istruzioni", "Istruzioni"]]],
   ].filter(([, v]) => v.length);
 }
 
