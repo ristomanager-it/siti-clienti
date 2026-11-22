@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "59";
+const VER = "60";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 const ROTTE = {
@@ -523,7 +523,7 @@ export async function invitaInCerchia(cerchiaId) {
   const { data: inv, error } = await sb.from("inviti").insert({ invitato_da: state.io.id, cerchia_id: cerchiaId }).select("codice").single();
   if (error) { alert("Invito non creato: " + error.message); return; }
   const link = `${location.origin}${location.pathname}#/iscriviti?invito=${inv.codice}`;
-  const testo = `Ti ho preparato un posto in "${c?.nome ?? "Ancora"}", la nostra casa privata per foto, storie e chat di famiglia. Entra da qui: ${link}`;
+  const testo = `Ti ho preparato un posto in "${c?.nome ?? "Ancora"}" su Ancora.\n\nÈ come un social, ma solo per noi: foto, storie, vocali e chat, senza pubblicità e senza estranei. Le cose belle restano in ordine invece di perdersi nella chat. È gratis.\n\nEntra da qui: ${link}`;
   try { if (navigator.share) { await navigator.share({ title: c?.nome ?? "Ancora", text: testo }); return; } } catch { return; }
   window.open(`https://wa.me/?text=${encodeURIComponent(testo)}`, "_blank");
 }

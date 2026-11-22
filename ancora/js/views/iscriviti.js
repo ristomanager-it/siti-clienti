@@ -49,5 +49,9 @@ export function anteprima(a) {
       <div style="padding-bottom:4px"><span class="tenue" style="font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.06em">${esc(a.da)} ti invita in</span>
         <b style="display:block;font-family:Fraunces,serif;font-size:24px;line-height:1.15">${esc(a.cerchia)}</b>
         <span class="tenue" style="font-size:14px">${a.membri} ${a.membri === 1 ? "persona" : "persone"}${a.ricordi ? ` · ${a.ricordi} ricordi` : ""}</span></div>
-    </div>`;
+    </div>
+    <div class="pad" style="padding-top:0"><div class="card" style="margin:0;background:#FBF4E6;font-size:15px;line-height:1.5">
+      <b style="font-family:Fraunces,serif;font-size:18px">Cos'è Ancora</b><br>
+      Il posto privato della ${a.tipo === "famiglia" ? "famiglia" : "vostra cerchia"}: foto, storie, vocali e chat, come un social ma <b>solo per voi</b>.
+      Si entra solo su invito, niente pubblicità né estranei. Le cose belle restano in ordine, non si perdono nella chat. <b>È gratis.</b></div></div>`;
 }
