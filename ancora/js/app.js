@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "50";
+const VER = "51";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 const ROTTE = {
@@ -28,6 +28,7 @@ const ROTTE = {
   "istruzioni": () => import(`./views/istruzioni.js?v=${VER}`),
   "iscriviti": () => import(`./views/iscriviti.js?v=${VER}`),
   "invita": () => import(`./views/invita.js?v=${VER}`),
+  "chat": () => import(`./views/chat.js?v=${VER}`),
   "chisiamo": () => import(`./views/info.js?v=${VER}`).then((m) => ({ default: m.chisiamo })),
   "contatti": () => import(`./views/info.js?v=${VER}`).then((m) => ({ default: m.contatti })),
   "privacy": () => import(`./views/info.js?v=${VER}`).then((m) => ({ default: m.privacy })),
@@ -465,3 +466,14 @@ export function seServePiu(error) {
   if (error?.message?.includes("ANCORA_PIU")) { passaPiu(error.message.replace(/^.*ANCORA_PIU:\s*/, "")); return true; }
   return false;
 }
+
+// pallino dei messaggi non letti sulla chat in basso (ogni 20 secondi, solo con l'app aperta)
+async function aggiornaBadgeChat() {
+  const b = document.getElementById("badge-chat");
+  if (!b || !state.io || document.hidden) return;
+  const { data: n } = await sb.rpc("chat_non_letti");
+  b.hidden = !n; b.textContent = n > 99 ? "99+" : String(n ?? "");
+}
+setInterval(aggiornaBadgeChat, 20_000);
+addEventListener("hashchange", () => setTimeout(aggiornaBadgeChat, 800));
+setTimeout(aggiornaBadgeChat, 2500);
