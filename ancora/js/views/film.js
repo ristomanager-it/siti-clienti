@@ -36,7 +36,7 @@ export default async function ({ params }) {
     <div id="sala" hidden style="padding:0 16px 24px;text-align:center">
       <canvas id="tela" width="${W}" height="${H}" style="width:min(100%,360px);aspect-ratio:9/16;border-radius:18px;background:#12302C;box-shadow:0 10px 30px rgba(0,0,0,.2)"></canvas>
       <p id="stato" class="tenue" role="status"></p>
-      <div id="azioni" hidden style="display:grid;gap:8px;max-width:420px;margin:0 auto">
+      <div id="azioni" hidden style="gap:8px;max-width:420px;margin:0 auto">
         <button class="btn ambra" id="condividi">Mandalo alla famiglia</button>
         <a class="btn chiaro" id="salva" download>Salva sul telefono</a>
         <button class="btn chiaro" id="rifai">Rifallo</button></div>
@@ -62,9 +62,21 @@ export default async function ({ params }) {
   crea.onclick = async () => {
     const max = state.piu ? MAX_PIU : MAX_ANTEPRIMA;
     const scelti = distribuisci(momenti, max);
+    // su iPhone l'audio si accende solo dentro il tocco: si crea qui, prima di qualsiasi attesa
+    const ac = new (window.AudioContext || window.webkitAudioContext)();
+    ac.resume().catch(() => {});
+    try { const b = ac.createBuffer(1, 1, 22050), x = ac.createBufferSource(); x.buffer = b; x.connect(ac.destination); x.start(0); } catch { /* niente */ }
     document.querySelector(".pad").hidden = true;
     document.getElementById("sala").hidden = false;
-    await gira(scelti, { titolo: document.getElementById("tit").value.trim(), musica: document.getElementById("mus").value, anteprima: !state.piu });
+    try {
+      await gira(scelti, { ac, titolo: document.getElementById("tit").value.trim(), musica: document.getElementById("mus").value, anteprima: !state.piu });
+    } catch (e) {
+      console.error(e);
+      document.getElementById("stato").innerHTML = `<span class="errore">Su questo telefono il film non è partito (${esc(e?.message ?? e)}). Aggiorna il telefono o prova da un altro.</span>`;
+      const az = document.getElementById("azioni"); az.hidden = false; az.style.display = "grid";
+      document.getElementById("condividi").hidden = true; document.getElementById("salva").hidden = true;
+      document.getElementById("rifai").onclick = () => location.reload();
+    }
   };
 }
 
@@ -100,9 +112,20 @@ const carica = (tipo, url) => new Promise((ok) => {
     v.onloadeddata = () => ok(v); v.onerror = () => ok(null); setTimeout(() => ok(v.readyState >= 2 ? v : null), 15000);
   } else {
     const i = new Image(); i.crossOrigin = "anonymous"; i.decoding = "async";
-    i.onload = () => ok(i); i.onerror = () => ok(null); i.src = url;
+    i.onload = () => ok(piccola(i)); i.onerror = () => ok(null); i.src = url;
   }
 });
+
+// foto da 12 megapixel: si portano a 1600 px, così il telefono non resta senza memoria
+function piccola(img) {
+  const lato = Math.max(img.naturalWidth, img.naturalHeight), max = 1600;
+  if (lato <= max) return img;
+  const k = max / lato, c = document.createElement("canvas");
+  c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
+  c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+  c.naturalWidth = c.width; c.naturalHeight = c.height;
+  return c;
+}
 
 function formatoVideo() {
   for (const t of ["video/mp4;codecs=avc1,mp4a.40.2", "video/mp4", "video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm"])
@@ -110,7 +133,7 @@ function formatoVideo() {
   return "";
 }
 
-async function gira(scelti, { titolo, musica, anteprima }) {
+async function gira(scelti, { ac, titolo, musica, anteprima }) {
   const tela = document.getElementById("tela"), ctx = tela.getContext("2d"), stato = document.getElementById("stato");
   stato.textContent = "Preparo foto e video…";
   const url = await urlMediaMolti(scelti.map((m) => m.path));
@@ -123,7 +146,6 @@ async function gira(scelti, { titolo, musica, anteprima }) {
   if (!media.length) { stato.textContent = "Non riesco ad aprire le foto. Riprova tra poco."; return; }
 
   // musica: si mixa dentro il video
-  const ac = new (window.AudioContext || window.webkitAudioContext)();
   const dest = ac.createMediaStreamDestination(), vol = ac.createGain(); vol.connect(dest); vol.connect(ac.destination);
   let sorgente = null;
   try {
@@ -134,15 +156,16 @@ async function gira(scelti, { titolo, musica, anteprima }) {
   const totale = TITOLO_SEC + media.reduce((s, m) => s + m.dur, 0) + FINE_SEC;
   const flusso = tela.captureStream(FPS);
   dest.stream.getAudioTracks().forEach((t) => flusso.addTrack(t));
+  if (!tela.captureStream || !window.MediaRecorder) throw new Error("registrazione video non disponibile");
   const tipo = formatoVideo();
   const rec = new MediaRecorder(flusso, { ...(tipo ? { mimeType: tipo } : {}), videoBitsPerSecond: 4_000_000 });
   const pezzi = []; rec.ondataavailable = (e) => e.data.size && pezzi.push(e.data);
   const finito = new Promise((ok) => rec.onstop = ok);
 
   let sveglia = null; try { sveglia = await navigator.wakeLock?.request("screen"); } catch { /* facoltativo */ }
-  await ac.resume();
+  await Promise.race([ac.resume().catch(() => {}), new Promise((r) => setTimeout(r, 800))]);
   rec.start(1000);
-  const t0 = ac.currentTime;
+  const t0 = ac.currentTime, p0 = performance.now();
   if (sorgente) { vol.gain.setValueAtTime(0, t0); vol.gain.linearRampToValueAtTime(0.9, t0 + 1.5); vol.gain.setValueAtTime(0.9, t0 + totale - 2.5); vol.gain.linearRampToValueAtTime(0, t0 + totale); sorgente.start(); }
 
   // tempi di inizio di ogni momento
@@ -150,7 +173,7 @@ async function gira(scelti, { titolo, musica, anteprima }) {
   let videoAcceso = null;
   await new Promise((fine) => {
     const disegna = () => {
-      const s = ac.currentTime - t0;
+      const s = (performance.now() - p0) / 1000;
       if (s >= totale) return fine();
       stato.textContent = `Sto creando il film… ${Math.min(99, Math.round(s / totale * 100))}%`;
       ctx.fillStyle = "#12302C"; ctx.fillRect(0, 0, W, H);
@@ -170,7 +193,7 @@ async function gira(scelti, { titolo, musica, anteprima }) {
     disegna();
   });
   videoAcceso?.pause();
-  rec.stop(); await finito; sorgente?.stop(); ac.close(); sveglia?.release?.();
+  rec.stop(); await Promise.race([finito, new Promise((r) => setTimeout(r, 4000))]); try { sorgente?.stop(); } catch { /* già fermo */ } ac.close().catch(() => {}); sveglia?.release?.();
 
   const est = (tipo || "video/webm").includes("mp4") ? "mp4" : "webm";
   const blob = new Blob(pezzi, { type: (tipo || "video/webm").split(";")[0] });
@@ -182,7 +205,7 @@ async function gira(scelti, { titolo, musica, anteprima }) {
   v.style.cssText = "width:min(100%,360px);aspect-ratio:9/16;border-radius:18px;background:#000";
   tela.after(v);
   stato.textContent = anteprima ? "Ecco l'anteprima. Il film intero, con tutte le foto e i video, è con Ancora+." : `Ecco il vostro film: ${Math.round(totale)} secondi.`;
-  const az = document.getElementById("azioni"); az.hidden = false;
+  const az = document.getElementById("azioni"); az.hidden = false; az.style.display = "grid";
   const salva = document.getElementById("salva"); salva.href = link; salva.download = nome;
   const file = new File([blob], nome, { type: blob.type });
   const cond = document.getElementById("condividi");
@@ -204,7 +227,8 @@ function quadro(ctx, m, loc, alfa) {
   } else {
     // orizzontale: sfondo sfocato e foto intera al centro
     const kb = Math.max(W / w, H / h);
-    ctx.filter = "blur(28px) brightness(.6)"; ctx.drawImage(el, (W - w * kb) / 2, (H - h * kb) / 2, w * kb, h * kb); ctx.filter = "none";
+    ctx.filter = "blur(28px)"; ctx.drawImage(el, (W - w * kb) / 2, (H - h * kb) / 2, w * kb, h * kb); ctx.filter = "none";
+    ctx.fillStyle = "rgba(18,30,28,.55)"; ctx.fillRect(0, 0, W, H);   // su iPhone il filtro può mancare: lo sfondo si scurisce comunque
     const k = (W / w) * (m.tipo === "foto" ? 1 + 0.06 * (loc / m.dur) : 1);
     ctx.drawImage(el, (W - w * k) / 2, (H - h * k) / 2, w * k, h * k);
   }
