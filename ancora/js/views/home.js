@@ -25,7 +25,7 @@ export default async function ({ params }) {
   else if (filtro) q = q.eq("cerchia_id", filtro);
   const { data: ricordi } = await q.order("creato_il", { ascending: false }).limit(30);
   const lista = ricordi ?? [];
-  let qs = sb.from("ricordi").select("id, testo, creato_il, autore_id, cerchia_id, persone:autore_id(id, nome, soprannome, foto_path), ricordi_media(path, tipo, ordine)")
+  let qs = sb.from("ricordi").select("id, testo, creato_il, autore_id, cerchia_id, dettagli, persone:autore_id(id, nome, soprannome, foto_path), ricordi_media(path, tipo, ordine, descrizione)")
     .eq("tipo", "storia").gt("creato_il", new Date(Date.now() - 86400_000).toISOString());
   if (filtro && filtro !== "diretti") qs = qs.eq("cerchia_id", filtro);
   const { data: storieDb } = await qs.order("creato_il", { ascending: true }).limit(100);
@@ -78,7 +78,7 @@ export default async function ({ params }) {
         <i style="position:absolute;right:-2px;bottom:-2px;width:24px;height:24px;border-radius:12px;background:var(--ambra);color:#fff;font-style:normal;font-weight:800;display:grid;place-items:center;border:2px solid var(--carta)">+</i></span>
         <small>La tua storia</small></button>
       ${perPersona.filter((g) => g.autore !== state.io.id).map((g) => {
-        const ultima = g.storie.at(-1).ricordi_media[0]; const sf = g.persona?.foto_path ? url[g.persona.foto_path] : (ultima.tipo === "foto" ? url[ultima.path] : "");
+        const ultima = visivo(g.storie.at(-1)); const sf = g.persona?.foto_path ? url[g.persona.foto_path] : (ultima.tipo === "foto" ? url[ultima.path] : "");
         return `<button class="storia" type="button" data-storie="${g.autore}"><span class="anello ${g.nuove ? "" : "visto"}"><span style="background-image:url('${sf}')"></span></span>
           <small>${esc(nomeDi(g.persona).replace(/^Nonn[oa] /, ""))}</small></button>`;
       }).join("")}
@@ -294,6 +294,9 @@ function collegaStorie(perPersona, url, filtro) {
     const cerchia = filtro && filtro !== "diretti" ? filtro : ordinaCerchie(state.cerchie)[0]?.id;
     if (!cerchia) { alert("Prima crea o entra in una famiglia."); return; }
     if (f.size > 50 * 1024 * 1024) { alert("Il file supera i 50 MB."); return; }
+    input.value = "";
+    const { apriEditor } = await import("./storia-editor.js");
+    return apriEditor(f, ordinaCerchie(state.cerchie), cerchia);
     const anello = document.querySelector("#nuova-storia .anello"); anello.style.opacity = .5;
     const tipo = f.type.startsWith("video") ? "video" : "foto";
     const { data: r, error } = await sb.from("ricordi").insert({ autore_id: state.io.id, tipo: "storia", visibilita: "cerchia", cerchia_id: cerchia, in_memoria: true }).select("id").single();
@@ -314,14 +317,16 @@ function guardaStorie(gruppi, gi, url, conAggiungi = false) {
   const v = document.createElement("div");
   v.style.cssText = "position:fixed;inset:0;z-index:60;background:#000;color:#fff;display:flex;flex-direction:column;touch-action:manipulation";
   document.body.appendChild(v);
-  const chiudi = () => { clearTimeout(timer); v.remove(); removeEventListener("hashchange", chiudi); document.querySelectorAll("[data-storie]").forEach((b) => {
+  let musica = null;
+  const chiudi = () => { clearTimeout(timer); musica?.pause(); v.remove(); removeEventListener("hashchange", chiudi); document.querySelectorAll("[data-storie]").forEach((b) => {
     const gr = gruppi.find((x) => x.autore === b.dataset.storie); if (gr && gr.storie.every((r) => segnata(r.id))) b.querySelector(".anello").classList.add("visto"); }); };
   addEventListener("hashchange", chiudi);
   const avanti = () => { const gr = gruppi[g]; if (i < gr.storie.length - 1) i++; else if (g < gruppi.length - 1 && !conAggiungi) { g++; i = 0; } else return chiudi(); mostra(); };
   const indietro = () => { if (i > 0) i--; else if (g > 0 && !conAggiungi) { g--; i = gruppi[g].storie.length - 1; } mostra(); };
   function mostra() {
     clearTimeout(timer);
-    const gr = gruppi[g], r = gr.storie[i], m = r.ricordi_media[0];
+    const gr = gruppi[g], r = gr.storie[i], m = visivo(r), mus = r.ricordi_media.find((x) => x.tipo === "audio");
+    musica?.pause(); musica = mus && url[mus.path] ? new Audio(url[mus.path]) : null;
     segna(r.id);
     const min = Math.floor((Date.now() - new Date(r.creato_il)) / 60_000);
     const fa = min < 1 ? "adesso" : min < 60 ? `${min} min` : `${Math.floor(min / 60)} h`;
@@ -333,15 +338,46 @@ function guardaStorie(gruppi, gi, url, conAggiungi = false) {
         ${gr.autore === state.io.id ? `<button id="st-agg" style="background:rgba(255,255,255,.15);color:#fff;border:0;border-radius:999px;padding:8px 12px;font-weight:700">+ Aggiungi</button>` : ""}
         <button id="st-x" aria-label="Chiudi" style="background:none;border:0;color:#fff;font-size:26px;width:44px;height:44px">✕</button></div>
       <div style="flex:1;position:relative;display:grid;place-items:center;overflow:hidden">
-        ${m.tipo === "video" ? `<video id="st-media" src="${url[m.path]}" autoplay playsinline style="max-width:100%;max-height:100%"></video>`
-                             : `<img id="st-media" src="${url[m.path]}" alt="" style="max-width:100%;max-height:100%;object-fit:contain">`}
+        <div style="position:relative;max-width:100%;max-height:100%">
+        ${m.tipo === "video" ? `<video id="st-media" src="${url[m.path]}" autoplay playsinline ${mus ? "muted" : ""} style="display:block;max-width:100vw;max-height:calc(100vh - 190px)"></video>`
+                             : `<img id="st-media" src="${url[m.path]}" alt="" style="display:block;max-width:100vw;max-height:calc(100vh - 190px)">`}
+        ${(r.dettagli?.sopra ?? []).map((o) => `<div style="position:absolute;left:${o.x * 100}%;top:${o.y * 100}%;transform:translate(-50%,-50%);font-size:${o.s}px;line-height:1.15;text-align:center;white-space:pre-wrap;max-width:90%;pointer-events:none;
+          ${o.tipo === "testo" ? `font-family:Manrope,sans-serif;font-weight:800;color:${o.c};${o.sfondo ? `background:${o.c === "#FFFFFF" ? "rgba(0,0,0,.55)" : "rgba(255,255,255,.85)"};padding:4px 10px;border-radius:10px;` : "text-shadow:0 1px 4px rgba(0,0,0,.5);"}` : ""}">${esc(o.t)}</div>`).join("")}
+        </div>
+        ${mus ? `<span style="position:absolute;top:8px;left:12px;z-index:2;background:rgba(0,0,0,.45);border-radius:14px;padding:5px 10px;font-size:13px;font-weight:700;max-width:70%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">♪ ${esc(mus.descrizione ?? "Musica")}</span>` : ""}
+        <div id="st-volo" style="position:absolute;inset:0;pointer-events:none;overflow:hidden"></div>
         <button id="st-ind" aria-label="Indietro" style="position:absolute;left:0;top:0;bottom:0;width:35%;background:none;border:0"></button>
         <button id="st-av" aria-label="Avanti" style="position:absolute;right:0;top:0;bottom:0;width:65%;background:none;border:0"></button>
       </div>
-      <div style="display:flex;align-items:center;gap:12px;padding:10px 16px calc(14px + env(safe-area-inset-bottom))">
-        <p style="flex:1;margin:0;font-size:17px">${esc(r.testo ?? "")}</p>
+      ${r.testo ? `<p style="margin:0;padding:8px 16px 0;font-size:17px">${esc(r.testo)}</p>` : ""}
+      ${gr.autore === state.io.id ? `<div id="st-reazioni" style="padding:8px 16px 0;font-size:15px;opacity:.9"></div>`
+        : `<div style="display:flex;justify-content:space-around;padding:8px 10px 0">${["❤️", "😂", "😍", "😮", "😢", "👏", "🔥"].map((e) => `<button data-emo="${e}" aria-label="Reagisci ${e}" style="background:none;border:0;font-size:30px;width:46px;height:46px">${e}</button>`).join("")}</div>`}
+      <div style="display:flex;align-items:center;gap:12px;padding:6px 16px calc(14px + env(safe-area-inset-bottom))">
+        ${gr.autore === state.io.id ? `<span style="flex:1"></span>` : `<input id="st-risp" placeholder="Rispondi a ${esc(nomeDi(gr.persona))}…" style="flex:1;min-height:44px;border-radius:22px;background:transparent;color:#fff;border:1px solid rgba(255,255,255,.5);padding:0 16px">`}
         <button id="st-cuore" aria-label="Mi piace" aria-pressed="false" style="background:none;border:0;color:#fff;display:flex;align-items:center;gap:6px;font-weight:800;font-size:16px;min-width:48px;min-height:48px;justify-content:center">
           <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg><span id="st-n"></span></button></div>`;
+    // reazioni con emoji e risposte: arrivano anche in chat a chi ha pubblicato
+    const vola = (e) => { const z = v.querySelector("#st-volo"); for (let n = 0; n < 6; n++) { const s = document.createElement("span"); s.textContent = e;
+      s.style.cssText = `position:absolute;bottom:0;left:${15 + Math.random() * 70}%;font-size:${34 + Math.random() * 20}px;transition:transform 1.4s ease-out,opacity 1.4s`; z.appendChild(s);
+      requestAnimationFrame(() => { s.style.transform = `translateY(-${55 + Math.random() * 30}vh)`; s.style.opacity = "0"; }); setTimeout(() => s.remove(), 1500); } };
+    const alChat = (testo) => sb.from("messaggi").insert({ a_id: gr.autore, autore_id: state.io.id, testo });
+    v.querySelectorAll("[data-emo]").forEach((b) => b.onclick = async (e) => {
+      e.stopPropagation(); vola(b.dataset.emo);
+      await sb.from("reazioni").insert({ ricordo_id: r.id, persona_id: state.io.id, tipo: "emoji", testo: b.dataset.emo });
+      alChat(`${b.dataset.emo} alla tua storia`);
+    });
+    const risp = v.querySelector("#st-risp");
+    if (risp) {
+      risp.onfocus = () => { clearTimeout(timer); musica?.pause(); v.querySelector("#st-media")?.pause?.(); };
+      risp.onkeydown = async (e) => { if (e.key !== "Enter" || !risp.value.trim()) return;
+        const t = risp.value.trim(); risp.value = ""; risp.blur();
+        await sb.from("reazioni").insert({ ricordo_id: r.id, persona_id: state.io.id, tipo: "commento", testo: t });
+        await alChat(`Ha risposto alla tua storia: ${t}`); risp.placeholder = "Inviato ✓"; };
+    }
+    if (gr.autore === state.io.id) sb.from("reazioni").select("tipo, testo, persone:persona_id(nome, soprannome)").eq("ricordo_id", r.id).in("tipo", ["emoji", "commento"]).then(({ data }) => {
+      const el = v.querySelector("#st-reazioni"); if (!el || !data?.length) return;
+      el.innerHTML = data.slice(-6).map((x) => `<div><b>${esc(nomeDi(x.persone))}</b> ${esc(x.testo ?? "")}</div>`).join("");
+    });
     v.querySelector("#st-x").onclick = chiudi;
     // ♥ anche sulle storie (chi l'ha pubblicata vede quanti)
     const cuore = v.querySelector("#st-cuore"), nCuori = v.querySelector("#st-n");
@@ -363,8 +399,9 @@ function guardaStorie(gruppi, gi, url, conAggiungi = false) {
     v.querySelector("#st-agg")?.addEventListener("click", () => { chiudi(); document.getElementById("file-storia").click(); });
     const barra = v.querySelector("#barra-ora"), media = v.querySelector("#st-media");
     const parti = (ms) => { barra.style.transition = `width ${ms}ms linear`; requestAnimationFrame(() => { barra.style.width = "100%"; }); timer = setTimeout(avanti, ms); };
+    if (musica) musica.play().catch(() => {});
     if (m.tipo === "video") media.onloadedmetadata = () => parti(Math.min(60, media.duration || 15) * 1000);
-    else parti(5000);
+    else parti(musica ? 15000 : 5000);
   }
   mostra();
 }
@@ -397,3 +434,6 @@ function controllaNovita(ultimo, filtro) {
     addEventListener("hashchange", () => b.remove(), { once: true });
   }, 45_000);
 }
+
+// la parte da guardare di una storia (la musica è un media in più)
+function visivo(r) { return (r.ricordi_media ?? []).find((m) => m.tipo === "foto" || m.tipo === "video") ?? r.ricordi_media?.[0]; }

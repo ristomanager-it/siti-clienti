@@ -6,6 +6,7 @@ import { $app, esc } from "../app.js";
 const AGGIORNATE = "22 novembre 2026";
 
 const NOVITA = [
+  ["22 novembre 2026 · sera", "Storie come su Instagram: testo (Aa) con colori, emoji da spostare e ingrandire, musica da un file del telefono. Guardando una storia: reazioni con le emoji e risposte, che arrivano anche in chat."],
   ["22 novembre 2026 · sera", "Foto dei post a scorrimento con doppio tocco per il cuore; ⋯ sui tuoi post per modificarli o eliminarli; le domande ora arrivano come notifica e stanno in Chat → Domande per te."],
   ["22 novembre 2026 · sera tardi", "Come mettere Ancora sulla schermata Home, con i passi giusti per il tuo telefono."],
   ["22 novembre 2026 · sera", "Risposte in automatico, con le parole e la voce di chi non può rispondere. Domande sul carattere: come ragioni, come decidi. Domande su misura (dal Profilo). Lettere da aprire più avanti. Il tuo filo nel Profilo."],
