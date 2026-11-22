@@ -51,8 +51,8 @@ export default async function ({ id, params }) {
              <p style="text-align:center;margin:10px 0 0"><a href="#/omaggio">Hai un codice omaggio?</a></p>`
         : `<div id="chiedi-a"></div><form id="chiedi" style="margin-top:10px">
             <label class="visually-hidden" for="q">Cosa vuoi chiedergli</label>
-            <input id="q" placeholder="Cosa vuoi chiedere a ${esc(nomeDi(p))}?" required>
-            <button class="btn ambra" style="margin-top:8px">Chiedi</button></form>`}
+            <input id="q" placeholder="Una domanda da fargli raccontare" required>
+            <button class="btn chiaro" style="margin-top:8px">Mandagli una domanda</button></form>`}
     </div>
     ${fm?.narratore ? `<div class="libro"><span class="copertina">Le storie di ${esc(p.nome)}</span>
       <div style="flex:1"><b>Il suo libro · volume ${volume}</b>
@@ -146,6 +146,7 @@ async function sezioneChiediAMe() {
   const [{ data: v }, persone] = await Promise.all([sb.rpc("mia_voce"), personeConosciute()]);
   const scelti = new Set(v?.chi ?? []);
   const min = Math.floor((v?.secondi ?? 0) / 60);
+  if (document.getElementById("chiedi-a-me") || !location.hash.startsWith("#/profilo")) return;   // pagina già ridisegnata
   $app().insertAdjacentHTML("beforeend", `<h2 id="chiedi-a-me">Chiedi a me</h2><div class="card">
     <p style="margin:0 0 10px;line-height:1.5">Le persone che scegli potranno chiederti consiglio, anche tra tanti anni: <i>"tu che faresti al posto mio?"</i>. Ti rispondono le tue parole e il tuo modo di pensare, da tutto quello che racconti, con la tua voce.</p>
     ${state.piu ? `
