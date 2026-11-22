@@ -20,7 +20,7 @@ export default async function ({ id }) {
     <div id="elenco">
       ${chats.map((c) => riga(`#/chat/${c.cerchia_id ? "c-" + c.cerchia_id : "d-" + c.persona_id}`, c.nome,
         avatar({ id: c.cerchia_id ?? c.persona_id, nome: c.nome }, 52, c.foto_path ? url[c.foto_path] : null), c.nome, anteprima(c.ultimo),
-        `<span style="text-align:right;flex-shrink:0"><span class="tenue" style="font-size:12px">${c.ultimo ? quando(c.ultimo.creato_il) : ""}</span>
+        `<span style="text-align:right;flex-shrink:0"><span class="tenue" style="font-size:12px">${c.ultimo ? ora(c.ultimo.creato_il) : ""}</span>
           ${c.non_letti ? `<span style="display:grid;place-items:center;margin:4px 0 0 auto;min-width:22px;height:22px;border-radius:11px;background:var(--ambra);color:#fff;font-size:12px;font-weight:800;padding:0 6px">${c.non_letti}</span>` : ""}</span>`,
         !!c.non_letti)).join("")}
       ${altre.length ? `<h2 data-titolo>Scrivi a</h2>${altre.map((p) => riga(`#/chat/d-${p.id}`, nomeDi(p), avatar(p, 44, p.foto_path ? url[p.foto_path] : null), nomeDi(p), esc(p.dove ?? ""))).join("")}` : ""}
@@ -144,4 +144,12 @@ async function conversazione(id) {
   const ferma = () => { if (rec?.state === "recording") rec.stop(); bv.style.transform = ""; bv.style.background = ""; };
   bv.addEventListener("pointerdown", parti); bv.addEventListener("pointerup", ferma); bv.addEventListener("pointerleave", ferma);
   addEventListener("hashchange", () => clearInterval(timer), { once: true });
+}
+
+// oggi → 14:32 · ieri → ieri · prima → 12 nov
+function ora(t) {
+  const d = new Date(t), oggi = new Date();
+  if (d.toDateString() === oggi.toDateString()) return d.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" });
+  if (new Date(oggi - 86400_000).toDateString() === d.toDateString()) return "ieri";
+  return d.toLocaleDateString("it-IT", { day: "numeric", month: "short" });
 }
