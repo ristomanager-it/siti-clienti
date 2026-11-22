@@ -159,7 +159,7 @@ export default async function ({ params } = {}) {
 
     ${sezione(`${etichetta("Come funziona")}
       <span id="come" style="display:block;scroll-margin-top:80px"></span>${titolo("Una domanda. Una risposta a voce. Un ricordo in più.")}
-      ${[["Regali Ancora", "A Natale o quando vuoi. Scrivi i nomi e i numeri di tutti: chi racconta e chi invitare."],
+      ${[["Regali la storia della famiglia", "Ricevi subito il biglietto con il codice: lo mandi su WhatsApp il giorno che vuoi o lo metti sotto l'albero. Chi lo riceve crea la sua famiglia e invita chi vuole."],
          ["Arriva la domanda", "Ogni settimana, a ognuno, una domanda nuova: «Qual è il tuo primo ricordo?». E una per tutta la famiglia. Si risponde a voce, con calma."],
          ["La famiglia si scopre", "Le risposte finiscono nell'album di famiglia. Si ascolta, si commenta, si chiede ancora: anche i nonni scoprono i nipoti."]]
         .map(([t, d], i) => `<div style="display:flex;gap:16px;padding:12px 0">
