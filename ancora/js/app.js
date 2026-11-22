@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "86";
+const VER = "87";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 const ROTTE = {
@@ -413,6 +413,10 @@ function apriMenu() {
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">${avatar(state.io, 40)}
         <b style="flex:1;font-size:17px">${esc(nomeDi(state.io))}</b>
         <button data-chiudi aria-label="Chiudi" style="width:40px;height:40px;border-radius:20px;border:0;background:#EFE8DC;font-size:18px;cursor:pointer">✕</button></div>
+      ${state.piu ? `<div style="display:inline-block;margin-top:2px;padding:5px 12px;border-radius:999px;background:#E3EDE2;color:#2F5A3A;font-weight:800;font-size:13px">Ancora<span style="color:#C9832E">+</span> attivo ✓</div>`
+        : `<button id="menu-piu" style="display:block;width:100%;text-align:left;margin-top:10px;border:0;cursor:pointer;border-radius:16px;padding:14px 16px;background:linear-gradient(135deg,#12302C,#2F5A55);color:#FBF3E2">
+          <b style="font-family:Fraunces,serif;font-size:20px">Scopri Ancora<span style="color:#E7C48A">+</span></b>
+          <span style="display:block;font-size:14px;opacity:.9;margin-top:2px">Il libro e il film della famiglia, l'albero senza limiti, le risposte quando qualcuno non può. Basta uno, e lo hanno tutti.</span></button>`}
       ${vociMenu().map(([gruppo, voci]) => `<div style="margin-top:18px;font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#8A5A17">${gruppo}</div>
         ${voci.map(([h, t]) => `<a href="${h}" style="display:block;padding:12px 10px;margin:2px -10px;border-radius:12px;text-decoration:none;font-size:17px;font-weight:700;
           color:#12302C;${attuale === h ? "background:#F3E6CF" : ""}">${t}</a>`).join("")}`).join("")}
@@ -421,6 +425,7 @@ function apriMenu() {
   document.body.appendChild(m);
   const chiudi = () => m.remove();
   m.querySelectorAll("[data-chiudi], nav a").forEach((x) => x.addEventListener("click", chiudi));
+  m.querySelector("#menu-piu")?.addEventListener("click", () => { chiudi(); passaPiu(); });
   m.querySelector("#esci-app").onclick = async () => { await sb.auth.signOut(); state.io = null; chiudi(); location.hash = "#/accesso"; };
   addEventListener("hashchange", chiudi, { once: true });
 }
@@ -512,7 +517,7 @@ export const VANTAGGI_PIU = [
   ["Il film dell'anno", "le foto e i video di tutti, montati con la musica"],
   ["Le domande sul telefono", "per i nonni che non usano l'app"],
   ["200 GB per tutta la famiglia", "invece di 2 GB a testa"],
-  ["In arrivo: la voce che resta", "un ricordo con cui parlare, solo con il consenso di chi l'ha registrato"],
+  ["Quando qualcuno non può rispondere", "risponde in automatico, con le sue parole e la sua voce: un consiglio, una storia"],
 ];
 /** Mostra Ancora+ quando qualcuno tocca una funzione in più. */
 export function passaPiu(motivo = "") {
