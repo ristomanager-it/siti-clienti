@@ -1,15 +1,20 @@
 // Istruzioni: tutte le spiegazioni in un posto solo (le pagine dell'app restano pulite).
 // Si aggiornano a ogni novità: aggiungere una voce in NOVITA e, se serve, una sezione.
+import { istruzioniSchermataHome } from "../app.js";
 import { $app, esc } from "../app.js";
 
 const AGGIORNATE = "22 novembre 2026";
 
 const NOVITA = [
+  ["22 novembre 2026 · sera tardi", "Come mettere Ancora sulla schermata Home, con i passi giusti per il tuo telefono."],
   ["22 novembre 2026 · sera", "Risposte in automatico, con le parole e la voce di chi non può rispondere. Domande sul carattere: come ragioni, come decidi. Domande su misura (dal Profilo). Lettere da aprire più avanti. Il tuo filo nel Profilo."],
   ["22 novembre 2026", "Menu laterale ☰ con tutte le voci. La domanda della settimana arriva a tutti, non solo ai nonni. Gli alberi di più famiglie si uniscono. Foto profilo e copertina per persone e famiglie."],
 ];
 
 const SEZIONI = [
+  ["schermata-home", "Metti Ancora sulla schermata Home", `
+    <p>Così si apre con un tocco, a tutto schermo, come le altre app. Sul tuo telefono:</p>
+    ${istruzioniSchermataHome()}`],
   ["primi-passi", "Primi passi", `
     <p>Apri il menu <b>☰</b> in alto a destra: lì trovi tutto. In alto vedi il nome della famiglia che stai guardando; per cambiarla, scegline un'altra dal menu.</p>
     <p>Il tasto arancione in basso serve a <b>raccontare</b>: tienilo premuto e parla.</p>

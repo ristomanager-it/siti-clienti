@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "67";
+const VER = "68";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 const ROTTE = {
@@ -202,9 +202,39 @@ async function render() {
     await vista.default({ id, params });
     if (!PUBBLICHE.has(nome) && state.io && state.io.modalita !== "semplice") aggiungiMenu();
     if (!PUBBLICHE.has(nome) && nome === "") setTimeout(bentornato, 1200);
+    if (!PUBBLICHE.has(nome) && nome === "") setTimeout(() => invitoSchermataHome(), 2500);
   }
   catch (e) { console.error(e); $app().innerHTML = `<p class="errore">Qualcosa non ha funzionato. Riprova tra poco.</p>`; }
   window.scrollTo(0, 0);
+}
+
+// --- Aggiungi alla schermata Home: istruzioni giuste per iPhone/Android, finché non l'ha fatto ---
+let promptInstalla = null;
+window.addEventListener("beforeinstallprompt", (e) => { e.preventDefault(); promptInstalla = e; });
+const giaInstallata = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+export function istruzioniSchermataHome() {
+  const ua = navigator.userAgent;
+  const ios = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const safari = ios && /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS|GSA|FBAN|FBAV|Instagram|WhatsApp/.test(ua);
+  if (ios && !safari) return `<p style="margin:0 0 8px"><b>Prima aprila in Safari:</b> tocca <b>⋯</b> o l'icona della bussola in basso e scegli <b>Apri in Safari</b>. Poi:</p>
+    <ol style="margin:0;padding-left:20px;line-height:1.6"><li>tocca <b>Condividi</b> <span aria-hidden="true">⬆︎</span> in basso</li><li>scorri e tocca <b>Aggiungi alla schermata Home</b></li><li>tocca <b>Aggiungi</b></li></ol>`;
+  if (ios) return `<ol style="margin:0;padding-left:20px;line-height:1.6"><li>tocca <b>Condividi</b> <span aria-hidden="true">⬆︎</span> in basso (o in alto su iPad)</li><li>scorri e tocca <b>Aggiungi alla schermata Home</b></li><li>tocca <b>Aggiungi</b></li></ol>`;
+  return `<ol style="margin:0;padding-left:20px;line-height:1.6"><li>tocca il menu <b>⋮</b> in alto a destra</li><li>tocca <b>Aggiungi a schermata Home</b> (o <b>Installa app</b>)</li><li>conferma</li></ol>`;
+}
+function invitoSchermataHome(forza = false) {
+  if (giaInstallata() || document.getElementById("schermata-home")) return;
+  let quando = 0; try { quando = Number(localStorage.getItem("ancora_home_chiuso") ?? 0); } catch { /* niente */ }
+  if (!forza && Date.now() - quando < 7 * 86400_000) return;
+  const el = document.createElement("div");
+  el.id = "schermata-home";
+  el.style.cssText = "position:fixed;left:12px;right:12px;bottom:calc(100px + env(safe-area-inset-bottom));max-width:520px;margin:0 auto;z-index:30;background:#fff;border-radius:20px;box-shadow:0 10px 40px rgba(0,0,0,.25);padding:16px 18px;animation:entra .3s ease";
+  el.innerHTML = `<button class="icona" aria-label="Chiudi" style="position:absolute;top:6px;right:6px;width:36px;height:36px">✕</button>
+    <div style="display:flex;gap:12px;align-items:center;margin-bottom:10px"><img src="icons/icon-192.png" alt="" width="44" height="44" style="border-radius:11px">
+      <b style="font-family:Fraunces,serif;font-size:19px;line-height:1.2">Metti Ancora sul telefono,<br>accanto alle altre app</b></div>
+    ${promptInstalla ? `<button class="btn ambra" id="installa">Aggiungi alla schermata Home</button>` : istruzioniSchermataHome()}`;
+  document.body.appendChild(el);
+  el.querySelector(".icona").onclick = () => { try { localStorage.setItem("ancora_home_chiuso", String(Date.now())); } catch { /* niente */ } el.remove(); };
+  el.querySelector("#installa")?.addEventListener("click", async () => { await promptInstalla.prompt(); promptInstalla = null; el.remove(); });
 }
 
 sb.auth.onAuthStateChange((evento) => { if (evento === "SIGNED_IN" && !state.io) render(); });
