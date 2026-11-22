@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "55";
+const VER = "56";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 const ROTTE = {
@@ -32,6 +32,8 @@ const ROTTE = {
   "calendario": () => import(`./views/calendario.js?v=${VER}`),
   "spese": () => import(`./views/spese.js?v=${VER}`),
   "liste": () => import(`./views/liste.js?v=${VER}`),
+  "album": () => import(`./views/album.js?v=${VER}`),
+  "evento": () => import(`./views/evento.js?v=${VER}`),
   "chisiamo": () => import(`./views/info.js?v=${VER}`).then((m) => ({ default: m.chisiamo })),
   "contatti": () => import(`./views/info.js?v=${VER}`).then((m) => ({ default: m.contatti })),
   "privacy": () => import(`./views/info.js?v=${VER}`).then((m) => ({ default: m.privacy })),
@@ -46,7 +48,7 @@ const ROTTE = {
   "settimana": () => import(`./views/settimana.js?v=${VER}`),
   "servizi": () => import(`./views/servizi.js?v=${VER}`),
 };
-const PUBBLICHE = new Set(["iscriviti", "chisiamo", "contatti", "privacy", "cookie", "condizioni", "scopri", "omaggio", "accesso", "regala", "perche", "prova", "rispondi", "ascolta", "biglietto"]);
+const PUBBLICHE = new Set(["evento", "iscriviti", "chisiamo", "contatti", "privacy", "cookie", "condizioni", "scopri", "omaggio", "accesso", "regala", "perche", "prova", "rispondi", "ascolta", "biglietto"]);
 
 export const $app = () => document.getElementById("app");
 export const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -315,7 +317,7 @@ function vociMenu() {
   return [
     ["Le mie famiglie e i gruppi", [...famiglie.map((c) => [`#/?c=${c.id}`, c.nome]),
       ...(famiglie.length > 1 ? [["#/?c=tutti", "Tutte insieme"]] : []), ["#/?c=diretti", "Messaggi per me"]]],
-    ["La famiglia", [["#/calendario", "Calendario"], ["#/liste", "Liste e desideri"], ["#/spese", "Spese"], ["#/settimana", "La domanda della settimana"], ["#/albero", "L'albero"], ["#/cerchie", "Famiglie e cerchie"]]],
+    ["La famiglia", [["#/calendario", "Calendario"], ["#/liste", "Liste e desideri"], ["#/spese", "Spese"], ["#/album", "Album degli eventi"], ["#/settimana", "La domanda della settimana"], ["#/albero", "L'albero"], ["#/cerchie", "Famiglie e cerchie"]]],
     ["I miei ricordi", [["#/archivio", "Il cloud dei ricordi"], ["#/racconta", "Racconta"], ["#/diario", "Il diario"], ["#/ricette", "Il ricettario"], [`#/libro/${state.io.id}`, "Il mio libro"]]],
     ["Agenda", [["vacanze", "Vacanze"], ["compiti", "Compiti"], ["esami", "Esami"]].filter(([k]) => attivi(k)).map(([k, t]) => [`#/agenda?t=${k}`, t])],
     ["Il mio account", [["#/invita", "Invita un amico · +1 GB"], ["#/profilo", "Profilo e impostazioni"], ["#/piano", "Il piano"], ["#/servizi", "Servizi"], ["#/omaggio", "Codice omaggio"], ["#/istruzioni", "Istruzioni"]]],
