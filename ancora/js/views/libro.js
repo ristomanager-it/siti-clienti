@@ -7,7 +7,14 @@ const qrSvg = (testo) => { const q = qrcode(0, "M"); q.addData(testo); q.make();
 const data = (d) => new Date(d).toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" });
 
 export default async function ({ id }) {
-  if (!state.piu) { history.back(); setTimeout(() => passaPiu("Il libro delle storie è una funzione di Ancora+."), 300); return; }
+  if (!state.piu) {
+    $app().innerHTML = `<header class="testa"><span class="logo" style="font-size:22px">Il libro delle storie</span><span style="flex:1"></span></header>
+      <div class="pad"><p style="font-size:17px">Il libro con tutte le storie raccontate, e il QR per ascoltare le voci, è una funzione di <b>Ancora+</b>.</p>
+      <button class="btn ambra" id="vedi-piu">Scopri Ancora+</button></div>`;
+    document.getElementById("vedi-piu").onclick = () => passaPiu();
+    passaPiu("Il libro delle storie è una funzione di Ancora+.");
+    return;
+  }
   const { data: p } = await sb.from("persone").select("id, nome, cognome, soprannome, data_nascita").eq("id", id).maybeSingle();
   if (!p) { $app().innerHTML = `<p class="pad">Libro non trovato.</p>`; return; }
   const { data: storie } = await sb.from("ricordi")
