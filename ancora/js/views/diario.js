@@ -24,8 +24,7 @@ export default async function () {
     </form>
     <div class="card"><label for="ora" style="margin-top:0">Il tuo momento per il diario</label>
       <div class="riga"><input id="ora" type="time" value="${esc(String(pref?.ora ?? "22:00").slice(0, 5))}" style="width:auto">
-        <label class="riga" style="margin:0"><input id="attivo" type="checkbox" ${pref?.attivo === false ? "" : "checked"} style="width:auto"> Promemoria</label></div>
-      <p class="tenue" style="margin-bottom:0">Se salti un giorno, niente sensi di colpa.</p></div>
+        <label class="riga" style="margin:0"><input id="attivo" type="checkbox" ${pref?.attivo === false ? "" : "checked"} style="width:auto"> Promemoria</label></div></div>
     ${(accadeva ?? []).length ? `<h2>Accadeva oggi, un anno fa</h2>` + accadeva.map((r) => {
       const f = (r.ricordi_media ?? []).find((m) => m.tipo === "foto");
       return f ? `<a class="foto" href="#/ricordo/${r.id}" style="background-image:url('${url[f.path]}');aspect-ratio:1/1;margin-bottom:10px" aria-label="Apri"></a>`

@@ -1,0 +1,69 @@
+// Istruzioni: tutte le spiegazioni in un posto solo (le pagine dell'app restano pulite).
+// Si aggiornano a ogni novità: aggiungere una voce in NOVITA e, se serve, una sezione.
+import { $app, esc } from "../app.js";
+
+const AGGIORNATE = "22 novembre 2026";
+
+const NOVITA = [
+  ["22 novembre 2026", "Menu laterale ☰ con tutte le voci. La domanda della settimana arriva a tutti, non solo ai nonni. Gli alberi di più famiglie si uniscono. Foto profilo e copertina per persone e famiglie."],
+];
+
+const SEZIONI = [
+  ["primi-passi", "Primi passi", `
+    <p>Apri il menu <b>☰</b> in alto a destra: lì trovi tutto. In alto vedi il nome della famiglia che stai guardando; per cambiarla, scegline un'altra dal menu.</p>
+    <p>Il tasto arancione in basso serve a <b>raccontare</b>: tienilo premuto e parla.</p>
+    <p>Metti la tua foto e una copertina dal <b>Profilo</b>, e scrivi come ti chiamano in famiglia.</p>`],
+  ["famiglie", "Famiglie e cerchie", `
+    <p>Puoi stare in più famiglie: la tua, quella dei tuoi genitori, quella di tua moglie o di tuo marito, e in gruppi di amici. Ognuna vede solo quello che condividi con lei.</p>
+    <p>Da <b>Famiglie e cerchie</b>: <b>Apri</b> per vedere la bacheca, <b>Invita</b> per mandare il link a qualcuno, <b>Rinomina</b> per cambiare nome. Chi ha creato la famiglia può mettere foto e copertina.</p>
+    <p>Quando racconti o carichi un ricordo, scegli con chi condividerlo: una famiglia, più famiglie, o solo te.</p>`],
+  ["domande", "Le domande", `
+    <p><b>La domanda di famiglia:</b> una a settimana, uguale per tutti. Rispondete come volete: a voce, con una foto, scrivendo. Le risposte restano nella pagina "La domanda della settimana".</p>
+    <p><b>La tua domanda:</b> in bacheca, ognuno ha la sua, dai nonni ai ragazzi. Premi <b>Rispondi a voce</b>; se non ti va, <b>Cambia</b>.</p>
+    <p><b>Fare una domanda a qualcuno:</b> apri il suo profilo e premi <b>Chiedi</b>. Gli arriva come prossima domanda, con il tuo nome.</p>
+    <p>Chi non usa l'app (per esempio un nonno) può ricevere le domande con un messaggio sul telefono e rispondere a voce: si imposta dal <b>Piano</b>.</p>`],
+  ["racconta", "Raccontare", `
+    <p>Tieni premuto il tasto arancione e parla: quando lasci, il racconto è registrato. Puoi riascoltarlo prima di condividerlo, aggiungere un titolo e una foto.</p>
+    <p>Puoi anche partire da una foto: "Chi c'è in questa foto? Dove eravate?".</p>`],
+  ["cloud", "Il cloud dei ricordi", `
+    <p>In <b>I miei ricordi</b> scatti o carichi foto, video e vocali. Li vedi solo tu finché non li condividi: selezionali e scegli con quale famiglia.</p>
+    <p>Lo spazio: 2 GB gratis, 50 GB con il Piano Famiglia, e se serve +100 GB dai Servizi. Quando sei vicino al limite te lo diciamo.</p>`],
+  ["albero", "L'albero", `
+    <p>Tocca una persona per aggiungere genitori, figli o coniuge. L'albero lo completa tutta la famiglia, anche con chi non c'è più.</p>
+    <p><b>Alberi uniti:</b> se una persona è in due alberi (per esempio tua moglie nel tuo e in quello dei suoceri), toccala e scegli <b>È anche in un altro albero? → Collega</b>. Con <b>🔗 Tutti uniti</b> vedi tutti gli alberi insieme.</p>
+    <p>Con tante persone usa <b>−</b>, <b>Tutto</b> e <b>+</b> per vedere l'albero intero.</p>`],
+  ["ricette", "Il ricettario", `
+    <p>Le ricette di casa, con la voce di chi le fa: ingredienti, dosi, passaggi, e il vocale. Si cercano per nome.</p>`],
+  ["diario", "Il diario", `
+    <p>È solo tuo: nessun altro lo vede. Ogni giorno una riga, a voce o scritta. Se salti un giorno, niente sensi di colpa. Ogni tanto ti ricorda cosa scrivevi lo stesso giorno di un anno fa.</p>`],
+  ["agenda", "L'agenda: vacanze, compiti, esami", `
+    <p>Si accende per famiglia: chi l'ha creata va in <b>Famiglie e cerchie → Agenda di questa cerchia</b> e spunta le voci. Le voci accese compaiono nel menu ☰ di tutti.</p>
+    <p>Ognuno può spegnerle per sé dal <b>Profilo → Le mie impostazioni</b>: se spegni una voce, non la vedi tu e nessuno vede la tua.</p>
+    <p><b>Vacanze:</b> date, posto, chi viene, chi porta cosa. <b>Compiti</b> ed <b>esami</b>: l'esito è facoltativo e puoi tenerlo privato.</p>`],
+  ["libro", "Il libro delle storie", `
+    <p>Dal profilo di una persona: <b>Il libro</b>. Ogni pagina ha il codice QR: chi lo inquadra con il telefono sente la voce del racconto.</p>
+    <p>Il libro digitale è incluso. Quello stampato si ordina dai <b>Servizi</b>.</p>`],
+  ["piano", "Il piano e i servizi", `
+    <p>Il Piano Famiglia dà lo spazio grande e le domande sul telefono per chi non usa l'app. Se ti hanno regalato Ancora o ti hanno invitato, sei già in un piano: apri il link dell'invito.</p>
+    <p>I ricordi restano gratis per sempre. I servizi (libro stampato, una persona in più con le domande sul telefono, spazio in più) li prendi solo se ti servono.</p>`],
+  ["privacy", "Chi vede cosa", `
+    <p>Ogni ricordo lo vedono solo le persone e le famiglie che scegli. Chi gestisce Ancora non vede i vostri contenuti. Il diario è solo tuo.</p>
+    <p>Le notifiche le accendi e spegni dal Profilo. <a href="#/privacy">Informativa privacy</a> · <a href="#/condizioni">Condizioni</a></p>`],
+];
+
+export default async function ({ params } = {}) {
+  $app().innerHTML = `
+    <header class="testa"><span class="logo" style="font-size:22px">Istruzioni</span><span style="flex:1"></span></header>
+    <div class="pad" style="padding-top:0">
+      <p class="tenue" style="margin:0 0 14px">Aggiornate il ${AGGIORNATE}</p>
+      <details class="card" style="margin:0 0 12px;border:2px solid var(--ambra)" ${params?.s ? "" : "open"}>
+        <summary style="font-weight:800;cursor:pointer;min-height:28px">✨ Novità</summary>
+        ${NOVITA.map(([d, t]) => `<p style="margin:10px 0 0"><b>${esc(d)}</b><br>${esc(t)}</p>`).join("")}
+      </details>
+      ${SEZIONI.map(([id, titolo, testo]) => `<details class="card" id="${id}" style="margin:0 0 10px" ${params?.s === id ? "open" : ""}>
+        <summary style="font-weight:800;font-size:17px;cursor:pointer;min-height:28px">${titolo}</summary>
+        <div style="line-height:1.55">${testo}</div></details>`).join("")}
+      <p style="margin:18px 0 30px">Non trovi la risposta? <a href="#/contatti">Scrivici</a>.</p>
+    </div>`;
+  if (params?.s) setTimeout(() => document.getElementById(params.s)?.scrollIntoView({ behavior: "smooth" }), 100);
+}

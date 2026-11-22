@@ -43,8 +43,7 @@ export default async function () {
         : `<div style="display:flex;gap:4px;margin-top:10px;flex-wrap:wrap">${lista.slice(0, 8).map((m) => avatar(m.persone, 28)).join("")}</div>`}
       ${mia ? `<details style="margin-top:12px"><summary class="tenue" style="cursor:pointer;font-weight:700">Agenda di questa cerchia</summary>
         ${[["vacanze", "Vacanze insieme"], ["compiti", "Compiti dei ragazzi"], ["esami", "Esami"]].map(([k, t]) =>
-          `<label class="riga" style="margin:10px 0;font-weight:700;color:var(--testo)"><input type="checkbox" data-modulo="${k}" data-c="${c.id}" ${c.moduli?.[k] ? "checked" : ""} style="width:22px;height:22px"> ${t}</label>`).join("")}
-        <p class="tenue" style="margin:0;font-size:13px">Le voci accese compaiono nel menu ☰ di tutti i membri.</p></details>` : ""}
+          `<label class="riga" style="margin:10px 0;font-weight:700;color:var(--testo)"><input type="checkbox" data-modulo="${k}" data-c="${c.id}" ${c.moduli?.[k] ? "checked" : ""} style="width:22px;height:22px"> ${t}</label>`).join("")}</details>` : ""}
       <div class="riga" style="margin-top:14px;gap:8px">
         <a class="btn" style="flex:1;min-height:46px" href="#/?c=${c.id}">Apri</a>
         ${mia ? `<button class="btn chiaro invita" data-c="${c.id}" style="flex:1;min-height:46px">Invita</button>` : ""}

@@ -22,7 +22,6 @@ export default async function ({ params }) {
     <header class="testa"><a class="icona" href="#/profilo" aria-label="Indietro">${ICONE.indietro}</a>
       <span class="logo" style="font-size:22px">Servizi</span><span style="width:44px"></span></header>
     ${params.ok && FATTO[params.ok] ? `<div class="card" style="background:#E2F0E7;border-color:#BFDCC9">${FATTO[params.ok]}</div>` : ""}
-    <p class="pad tenue" style="margin-top:0">L'app e i ricordi restano gratis per sempre. Questi servizi li prendi solo se ti servono.</p>
     ${SERVIZI.map((x) => `<div class="card">
       <div class="riga"><b style="flex:1;font-size:17px">${x.t}</b><b style="font-family:Fraunces,serif;font-size:20px">${x.p}</b></div>
       <p class="tenue" style="margin:4px 0 10px">${x.s}</p>

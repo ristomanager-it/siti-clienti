@@ -13,7 +13,7 @@ export default async function ({ params }) {
   $app().innerHTML = `
     <header class="testa"><a class="icona" href="#/profilo" aria-label="Indietro">${ICONE.indietro}</a>
       <span class="logo" style="font-size:22px">Ricettario</span><span style="width:44px"></span></header>
-    <div class="pad"><p class="tenue" style="margin-top:0">Le ricette della famiglia, con la voce di chi le fa. ${lista.length} in tutto.</p>
+    <div class="pad"><p class="tenue" style="margin-top:0">${lista.length} ricette</p>
       <input id="q" type="search" placeholder="Cerca: ragù, nonna, melanzane…" value="${esc(params.q ?? "")}">
       <a class="btn ambra" style="margin-top:10px" href="#/racconta?ricetta=1">Aggiungi una ricetta</a></div>
     <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding:0 12px">

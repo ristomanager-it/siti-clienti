@@ -37,9 +37,6 @@ export default async function ({ params }) {
       <button class="chip" id="adatta" style="margin:0">Tutto</button>
       <button class="chip" id="piu" style="margin:0" aria-label="Ingrandisci">+</button></div>
     <div id="tela" style="overflow:auto;-webkit-overflow-scrolling:touch;padding-bottom:20px"></div>
-    <p class="pad tenue">${uniti
-      ? "Qui vedi tutti i tuoi alberi uniti: la tua famiglia, quella dei tuoi genitori, quella dei suoceri. Si uniscono dove c'è la stessa persona (🔗). Per aggiungere parenti, apri il singolo albero."
-      : "Tocca una persona per aggiungere genitori, figli o coniuge. L'albero lo completa tutta la famiglia. Se una persona è anche in un altro albero (per esempio tua moglie in quello dei suoceri), collegala: così gli alberi si uniscono."}</p>
     <div id="foglio"></div>`;
 
   if (!nodi?.length && !uniti) {
@@ -294,8 +291,7 @@ function scheda(n, nodi, legami, cerchiaId, { tuttiN, altrove, nomeAlbero }) {
           ${altri.length ? `<div class="riga" style="gap:6px;margin-top:6px"><select id="colleg" style="flex:1" aria-label="Stessa persona in un altro albero">
               <option value="">${gia.length ? "Collega anche a…" : `${esc(n.nome)} è anche in un altro albero?`}</option>
               ${altri.map((x) => `<option value="${x.id}">${esc(x.nome)} ${esc(x.cognome ?? "")} · ${esc(nomeAlbero(x.cerchia_id))}</option>`).join("")}</select>
-            <button class="chip" id="colleg-ok" style="margin:0">Collega</button></div>
-            <p class="tenue" style="margin-top:4px">Es. tua moglie nel tuo albero e nell'albero dei suoceri: collegandola, i due alberi si uniscono.</p>` : ""}`;
+            <button class="chip" id="colleg-ok" style="margin:0">Collega</button></div>` : ""}`;
       })()}
       ${n.persona_id ? "" : `<button class="chip" id="elimina" style="margin-top:16px">Togli dall'albero</button>`}
     </div>`;

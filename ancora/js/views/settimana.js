@@ -20,7 +20,6 @@ export default async function ({ params }) {
   $app().innerHTML = `
     <header class="testa"><a class="icona" href="#/" aria-label="Indietro">${ICONE.indietro}</a>
       <b>${esc(cerchia.nome)}</b><span style="width:44px"></span></header>
-    <p class="pad tenue" style="margin-top:0">Ogni settimana una domanda per tutta la famiglia. Rispondete come volete: a voce, con una foto, scrivendo.</p>
     ${ordine.map((k) => {
       const rs = gruppi.get(k);
       return `<h2>${k === ora ? "Questa settimana" : esc(k.replace("-W", " · settimana "))}</h2>

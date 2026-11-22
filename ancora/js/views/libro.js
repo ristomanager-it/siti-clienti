@@ -35,7 +35,7 @@ export default async function ({ id }) {
     </style>
     <div class="pad noprint">
       <h1 style="font-size:24px">${esc(titolo)}</h1>
-      <p class="tenue">${lista.length} storie. Ogni pagina ha il codice per ascoltare la voce: chi ha l'app lo inquadra e la sente.</p>
+      <p class="tenue">${lista.length} storie</p>
       <button class="btn chiaro" id="stampa">Stampalo tu o salva il PDF (gratis)</button>
       <a class="btn ambra" style="margin-top:8px" href="#/servizi">Ordina il libro stampato · da 49 €</a>
       <a class="btn chiaro" style="margin-top:8px" href="#/profilo/${esc(id)}">Torna al profilo</a>

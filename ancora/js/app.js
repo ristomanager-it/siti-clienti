@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "42";
+const VER = "43";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 const ROTTE = {
@@ -25,6 +25,7 @@ const ROTTE = {
   "prova": () => import(`./views/prova.js?v=${VER}`),
   "omaggio": () => import(`./views/omaggio.js?v=${VER}`),
   "scopri": () => import(`./views/scopri.js?v=${VER}`),
+  "istruzioni": () => import(`./views/istruzioni.js?v=${VER}`),
   "chisiamo": () => import(`./views/info.js?v=${VER}`).then((m) => ({ default: m.chisiamo })),
   "contatti": () => import(`./views/info.js?v=${VER}`).then((m) => ({ default: m.contatti })),
   "privacy": () => import(`./views/info.js?v=${VER}`).then((m) => ({ default: m.privacy })),
@@ -310,7 +311,7 @@ function vociMenu() {
     ["La famiglia", [ ["#/settimana", "La domanda della settimana"], ["#/albero", "L'albero"], ["#/cerchie", "Famiglie e cerchie"]]],
     ["I miei ricordi", [["#/archivio", "Il cloud dei ricordi"], ["#/racconta", "Racconta"], ["#/diario", "Il diario"], ["#/ricette", "Il ricettario"], [`#/libro/${state.io.id}`, "Il mio libro"]]],
     ["Agenda", [["vacanze", "Vacanze"], ["compiti", "Compiti"], ["esami", "Esami"]].filter(([k]) => attivi(k)).map(([k, t]) => [`#/agenda?t=${k}`, t])],
-    ["Il mio account", [["#/profilo", "Profilo e impostazioni"], ["#/piano", "Il piano"], ["#/servizi", "Servizi"], ["#/omaggio", "Codice omaggio"]]],
+    ["Il mio account", [["#/profilo", "Profilo e impostazioni"], ["#/piano", "Il piano"], ["#/servizi", "Servizi"], ["#/omaggio", "Codice omaggio"], ["#/istruzioni", "Istruzioni"]]],
   ].filter(([, v]) => v.length);
 }
 

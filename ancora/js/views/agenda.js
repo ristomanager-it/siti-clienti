@@ -18,9 +18,7 @@ export default async function ({ params }) {
 
   if (!tipiVisibili.length) {
     $app().innerHTML = `<header class="testa"><span class="logo" style="font-size:22px">Agenda</span><span></span></header>
-      <div class="pad"><p>L'agenda è spenta in tutte le tue famiglie, oppure l'hai spenta tu.</p>
-      <p class="tenue">Chi ha creato una famiglia può accendere vacanze, compiti ed esami da <b>Famiglie e cerchie</b>. Tu puoi riaccenderli per te dal tuo profilo.</p>
-      <a class="btn chiaro" href="#/cerchie">Famiglie e cerchie</a></div>`;
+      <div class="pad"><p>L'agenda è spenta.</p><a class="btn chiaro" href="#/istruzioni?s=agenda">Come si accende</a></div>`;
     return;
   }
   const tipo = tipiVisibili.includes(params.t) ? params.t : tipiVisibili[0];

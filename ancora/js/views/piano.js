@@ -16,8 +16,7 @@ export default async function ({ params }) {
       <form id="crea" class="card"><label for="nf" style="margin-top:0">Come si chiama la tua famiglia?</label>
         <input id="nf" placeholder="Famiglia Rossi" required>
         <button class="btn ambra" style="margin-top:10px">Crea il piano</button>
-        <p id="es" role="status"></p></form>
-      <p class="pad tenue">Ti hanno regalato Ancora o ti hanno invitato? Allora sei già in un piano: apri il link dell'invito.</p>`;
+        <p id="es" role="status"></p></form>`;
     document.getElementById("crea").onsubmit = async (e) => {
       e.preventDefault();
       const { error } = await sb.rpc("crea_famiglia", { p_nome: document.getElementById("nf").value });
@@ -54,7 +53,7 @@ export default async function ({ params }) {
       ${paga ? `<button class="chip ${m.narratore ? "on" : ""}" data-narr="${m.id}" data-v="${m.narratore ? 0 : 1}">${m.narratore ? "✓ Racconta" : "Racconta"}</button>`
         : m.narratore ? `<span class="chip on">Racconta</span>` : ""}
     </div>`).join("")}
-    <p class="pad tenue" style="margin-top:0">"Racconta" = riceve le domande. ${narratori} su ${limite} narratori.${paga ? ` Ti serve un narratore in più? <a href="#/servizi">Servizi</a>.` : ""}</p>
+    <p class="pad tenue" style="margin-top:0">${narratori} su ${limite} con le domande sul telefono</p>
     ${paga && membri.length < 6 ? `<div class="pad"><button class="btn chiaro" id="invita">Invita nel piano</button></div>` : ""}
 
     ${p.io_narratore ? `<h2>Le mie domande</h2><div class="card">

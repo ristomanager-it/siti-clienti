@@ -79,7 +79,6 @@ export default async function ({ id }) {
         <label for="n-sopr">Come ti chiamano in famiglia (se vuoi)</label><input id="n-sopr" value="${esc(state.io.soprannome ?? "")}" maxlength="30" placeholder="Nonno Peppe, zia Lella">
         <button class="btn chiaro" style="margin-top:10px">Salva</button></form>
       <div class="riga" style="margin-bottom:12px"><b style="flex:1">Notifiche</b><button class="chip" id="notif" style="margin:0">…</button></div>
-      <p class="tenue" style="margin-top:0">Cosa vuoi vedere e condividere nell'agenda. Se spegni una voce, non la vedi tu e nessuno vede la tua.</p>
       ${[["vacanze", "Vacanze"], ["compiti", "Compiti"], ["esami", "Esami"]].map(([k, t]) =>
         `<label class="riga" style="margin:10px 0;font-weight:700;color:var(--testo)"><input type="checkbox" data-mio-modulo="${k}" ${spenti.has(k) ? "" : "checked"} style="width:22px;height:22px"> ${t}</label>`).join("")}
     </div>`);

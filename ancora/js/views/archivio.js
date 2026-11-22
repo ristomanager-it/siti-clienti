@@ -31,7 +31,6 @@ export default async function ({ params }) {
     <header class="testa"><span class="logo" style="font-size:22px">I miei ricordi</span>
       <button class="chip" id="scegli" style="margin:0">Seleziona</button></header>
     <div class="pad" style="padding-top:0">
-      <p class="tenue" style="margin:0 0 10px">Il cloud dei tuoi ricordi: foto, video e vocali qui, e poi le storie, le ricette, il diario. Al sicuro per sempre, li vedi solo tu finché non li condividi.</p>
       <div class="riga" style="gap:8px">
         <label class="btn ambra" style="flex:1;min-height:56px">Scatta<input id="scatta" type="file" accept="image/*,video/*" capture="environment" hidden></label>
         <label class="btn" style="flex:1;min-height:56px">Carica<input id="carica" type="file" accept="image/*,video/*,audio/*" multiple hidden></label>
