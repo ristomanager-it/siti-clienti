@@ -1,13 +1,21 @@
 // "Chiedi a…": parli con una persona della famiglia; risponde con le sue parole e, se l'ha fatta ricreare, con la sua voce.
-// Lo attiva la persona stessa dal suo profilo e sceglie chi può chiedere.
-import { sb, state, $app, esc, nomeDi, avatar, urlMediaMolti, ICONE } from "../app.js";
+// Solo quando la persona non può rispondere (non c'è più, o si è segnata "non posso rispondere"): altrimenti risponde lei, in chat.
+import { sb, state, $app, esc, nomeDi, avatar, urlMediaMolti, ICONE, passaPiu } from "../app.js";
 import { SUPABASE_URL } from "../config.js";
 
 export default async function ({ id }) {
-  const [{ data: p }, { data: posso }] = await Promise.all([
+  const [{ data: p }, { data: info }] = await Promise.all([
     sb.from("persone").select("id, nome, soprannome, foto_path").eq("id", id).maybeSingle(),
-    sb.rpc("posso_chiedere", { p_persona: id })]);
-  if (!p || !posso) { $app().innerHTML = `<p class="pad">Per scrivere a ${esc(nomeDi(p ?? {}))} e avere risposta in automatico serve stare nella stessa famiglia, con Ancora+.</p>`; return; }
+    sb.rpc("chiedi_info", { p_persona: id })]);
+  const fermo = (testo, azione = "") => { $app().innerHTML = `<header class="testa"><a class="icona" href="#/profilo/${id}" aria-label="Indietro">${ICONE.indietro}</a><b style="flex:1"></b></header>
+    <div class="pad"><p style="font-size:18px;line-height:1.5">${testo}</p>${azione}</div>`; };
+  if (!p || !info?.famiglia) return fermo("Si può scrivere solo a chi è nella tua stessa famiglia.");
+  if (!info.assente) return fermo(`${esc(nomeDi(p))} può risponderti di persona.`, `<a class="btn ambra" href="#/chat/d-${id}">Scrivigli in chat</a>`);
+  if (!info.piu) {
+    fermo(`Le risposte in automatico fanno parte di Ancora+. Puoi riattivarlo tu: vale per tutta la famiglia.`, `<button class="btn ambra" id="riattiva">Riattiva Ancora+</button>`);
+    document.getElementById("riattiva").onclick = () => passaPiu("Le risposte in automatico");
+    return;
+  }
   const { data: storia } = await sb.from("chiedi_messaggi").select("id, domanda, risposta, audio_path, creato_il")
     .eq("persona_id", id).order("creato_il").limit(60);
   const url = await urlMediaMolti([p.foto_path, ...(storia ?? []).map((m) => m.audio_path)].filter(Boolean));

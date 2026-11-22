@@ -125,10 +125,25 @@ export default async function ({ id, params }) {
     });
   }
 
-  if (!io) sb.rpc("posso_chiedere", { p_persona: pid }).then(({ data: ok }) => {
+  if (!io) sb.rpc("chiedi_info", { p_persona: pid }).then(async ({ data: i }) => {
     const el = document.getElementById("chiedi-a");
-    if (ok && el) el.innerHTML = `<a class="btn ambra" href="#/chiedi/${pid}" style="margin-top:10px">Chiedi a ${esc(nomeDi(p))}</a>
-      <p class="tenue" style="font-size:13px;margin:6px 0 0;text-align:center">Risponde in automatico, come risponderebbe lui</p>`;
+    if (!el || !i?.famiglia) return;
+    el.innerHTML = i.assente ? `<a class="btn ambra" href="#/chiedi/${pid}" style="margin-top:10px">Chiedi a ${esc(nomeDi(p))}</a>
+      <p class="tenue" style="font-size:13px;margin:6px 0 0;text-align:center">${i.in_memoria ? "Risponde in automatico, come risponderebbe lui" : "Ora non può rispondere: risponde in automatico, come farebbe lui"}</p>`
+      : `<a class="btn chiaro" href="#/chat/d-${pid}" style="margin-top:10px">Scrivigli in chat</a>`;
+    // chi ha creato la famiglia può segnare che non c'è più (e annullare)
+    const mie = state.cerchie.filter((c) => c.proprietario_id === state.io.id).map((c) => c.id);
+    if (!mie.length) return;
+    const { data: m } = await sb.from("cerchia_membri").select("cerchia_id").eq("persona_id", pid).in("cerchia_id", mie).limit(1);
+    if (!m?.length) return;
+    $app().insertAdjacentHTML("beforeend", `<p style="text-align:center;margin:26px 0 40px"><a href="#" id="in-memoria" class="tenue" style="font-size:14px">${i.in_memoria ? "Annulla: non è venuto a mancare" : "Segna che è venuto a mancare"}</a></p>`);
+    document.getElementById("in-memoria").onclick = async (e) => {
+      e.preventDefault();
+      if (!confirm(i.in_memoria ? "Annullare?" : `Segnare che ${nomeDi(p)} è venuto a mancare? Da quel momento la famiglia potrà scrivergli e avrà risposta in automatico, e si apriranno i ricordi che aveva lasciato per dopo.`)) return;
+      const { error } = await sb.rpc("segna_in_memoria", { p_persona: pid, p_annulla: !!i.in_memoria });
+      if (error) { alert(error.message); return; }
+      location.reload();
+    };
   });
 
   document.getElementById("chiedi")?.addEventListener("submit", async (e) => {
@@ -147,7 +162,8 @@ async function sezioneChiediAMe() {
   const min = Math.floor((v?.secondi ?? 0) / 60);
   if (document.getElementById("chiedi-a-me") || !location.hash.startsWith("#/profilo")) return;   // pagina già ridisegnata
   $app().insertAdjacentHTML("beforeend", `<h2 id="chiedi-a-me">Quando non posso rispondere</h2><div class="card">
-    <p style="margin:0 0 10px;line-height:1.5">Chi è nella tua famiglia può scriverti anche quando non puoi rispondere: <i>"mi racconti di quella volta…"</i>, <i>"tu che faresti al posto mio?"</i>. Risponde in automatico il tuo modo di essere, da tutto quello che racconti, con la tua voce se la crei qui.</p>
+    <p style="margin:0 0 10px;line-height:1.5">Di solito rispondi tu. Quando non puoi, chi è nella tua famiglia può scriverti lo stesso (<i>"mi racconti di quella volta…"</i>, <i>"tu che faresti al posto mio?"</i>) e risponde in automatico il tuo modo di essere, da tutto quello che racconti, con la tua voce se la crei qui.</p>
+    <div id="disp" style="margin:0 0 14px"></div>
     ${state.piu ? `
     <div>
       <b>La mia voce</b>
@@ -161,6 +177,25 @@ async function sezioneChiediAMe() {
     : `<button class="btn ambra" id="c-piu">Fa parte di Ancora+</button>`}</div>`);
 
   document.getElementById("c-piu")?.addEventListener("click", () => passaPiu("Rispondere quando non puoi"));
+  // non posso rispondere: per un po' rispondo in automatico
+  const disp = document.getElementById("disp");
+  const fino = state.io.non_disponibile_fino && new Date(state.io.non_disponibile_fino) > new Date() ? new Date(state.io.non_disponibile_fino) : null;
+  const imposta = async (valore) => {
+    const { error } = await sb.from("persone").update({ non_disponibile_fino: valore }).eq("id", state.io.id);
+    if (error) { alert("Non salvato: " + error.message); return; }
+    state.io.non_disponibile_fino = valore; location.replace("#/profilo?s=chiedi-a-me"); location.reload();
+  };
+  disp.innerHTML = fino
+    ? `<div class="card" style="margin:0;background:#FBF4E6"><b>Ora rispondi in automatico</b><div class="tenue">${fino.getFullYear() > 2100 ? "Finché non lo togli" : `Fino al ${fino.toLocaleDateString("it-IT", { day: "numeric", month: "long" })} alle ${fino.toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}`}</div>
+        <button class="btn chiaro" id="d-torno" style="margin-top:10px">Torno a rispondere io</button></div>`
+    : `<b>Non puoi rispondere?</b><div class="riga" style="gap:6px;flex-wrap:wrap;margin-top:8px">
+        ${[["oggi", "Per oggi"], ["7", "Una settimana"], ["sempre", "Finché non lo tolgo"]].map(([k, t]) => `<button class="chip" data-disp="${k}" style="margin:0">${t}</button>`).join("")}</div>`;
+  document.getElementById("d-torno")?.addEventListener("click", () => imposta(null));
+  disp.querySelectorAll("[data-disp]").forEach((b) => b.onclick = () => {
+    const d = new Date();
+    if (b.dataset.disp === "oggi") d.setHours(23, 59, 0, 0); else if (b.dataset.disp === "7") d.setDate(d.getDate() + 7); else d.setFullYear(2999);
+    imposta(d.toISOString());
+  });
 
   const voce = async (azione) => {
     const esito = document.getElementById("v-esito");

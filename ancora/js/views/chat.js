@@ -57,7 +57,7 @@ async function conversazione(id) {
     </form>`;
 
   // a chi non c'è più o non può rispondere si può scrivere e avere risposta in automatico
-  if (!gruppo) sb.rpc("posso_chiedere", { p_persona: altro }).then(({ data }) => { const a = document.getElementById("auto"); if (a && data) a.hidden = false; });
+  if (!gruppo) sb.rpc("chiedi_info", { p_persona: altro }).then(({ data: i }) => { const a = document.getElementById("auto"); if (a && i?.famiglia && i.assente) a.hidden = false; });
   const box = document.getElementById("msg"), testo = document.getElementById("testo");
   let ultimo = null; const visti = new Set(); const nomi = new Map();
 
