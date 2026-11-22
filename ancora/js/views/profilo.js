@@ -1,5 +1,6 @@
 // Profilo di una persona: numeri, "Chiedi", il suo libro che cresce, l'album a griglia.
-import { sb, state, $app, esc, nomeDi, avatar, urlMediaMolti, ICONE, attivaNotifiche, notificheAttive, cambiaImmagine, chiediSuMisura } from "../app.js";
+import { sb, state, $app, esc, nomeDi, avatar, urlMediaMolti, ICONE, attivaNotifiche, notificheAttive, cambiaImmagine, chiediSuMisura, personeConosciute, passaPiu } from "../app.js";
+import { SUPABASE_URL } from "../config.js";
 
 const STORIE_PER_VOLUME = 25;
 
@@ -48,7 +49,7 @@ export default async function ({ id, params }) {
                <a class="btn chiaro" href="#/ricette" style="flex:1">Ricettario</a>
                <a class="btn chiaro" href="#/servizi" style="flex:1">Servizi</a></div>
              <p style="text-align:center;margin:10px 0 0"><a href="#/omaggio">Hai un codice omaggio?</a></p>`
-        : `<form id="chiedi" style="margin-top:10px">
+        : `<div id="chiedi-a"></div><form id="chiedi" style="margin-top:10px">
             <label class="visually-hidden" for="q">Cosa vuoi chiedergli</label>
             <input id="q" placeholder="Cosa vuoi chiedere a ${esc(nomeDi(p))}?" required>
             <button class="btn ambra" style="margin-top:8px">Chiedi</button></form>`}
@@ -86,6 +87,7 @@ export default async function ({ id, params }) {
       ${[["vacanze", "Vacanze"], ["compiti", "Compiti"], ["esami", "Esami"]].map(([k, t]) =>
         `<label class="riga" style="margin:10px 0;font-weight:700;color:var(--testo)"><input type="checkbox" data-mio-modulo="${k}" ${spenti.has(k) ? "" : "checked"} style="width:22px;height:22px"> ${t}</label>`).join("")}
     </div>`);
+    sezioneChiediAMe();
     document.getElementById("mio-nome").onsubmit = async (e) => {
       e.preventDefault();
       const v = (id) => document.getElementById(id).value.trim();
@@ -123,6 +125,12 @@ export default async function ({ id, params }) {
     });
   }
 
+  if (!io) sb.rpc("posso_chiedere", { p_persona: pid }).then(({ data: ok }) => {
+    const el = document.getElementById("chiedi-a");
+    if (ok && el) el.innerHTML = `<a class="btn ambra" href="#/chiedi/${pid}" style="margin-top:10px">Chiedi a ${esc(nomeDi(p))}</a>
+      <p class="tenue" style="font-size:13px;margin:6px 0 0;text-align:center">Ti risponde con la sua voce e il suo modo di pensare</p>`;
+  });
+
   document.getElementById("chiedi")?.addEventListener("submit", async (e) => {
     e.preventDefault();
     const q = document.getElementById("q");
@@ -132,3 +140,57 @@ export default async function ({ id, params }) {
   });
 }
 
+
+// "Chiedi a me": la persona decide se la famiglia potrà chiederle consiglio, chi, e se ricreare la sua voce
+async function sezioneChiediAMe() {
+  const [{ data: v }, persone] = await Promise.all([sb.rpc("mia_voce"), personeConosciute()]);
+  const scelti = new Set(v?.chi ?? []);
+  const min = Math.floor((v?.secondi ?? 0) / 60);
+  $app().insertAdjacentHTML("beforeend", `<h2 id="chiedi-a-me">Chiedi a me</h2><div class="card">
+    <p style="margin:0 0 10px;line-height:1.5">Le persone che scegli potranno chiederti consiglio, anche tra tanti anni: <i>"tu che faresti al posto mio?"</i>. Ti rispondono le tue parole e il tuo modo di pensare, da tutto quello che racconti, con la tua voce.</p>
+    ${state.piu ? `
+    <label class="riga" style="font-weight:800;color:var(--testo)"><input type="checkbox" id="c-attivo" ${v?.attivo ? "checked" : ""} style="width:22px;height:22px"> Permetti di chiedermi consiglio</label>
+    <div id="c-chi" ${v?.attivo ? "" : "hidden"} style="margin:8px 0 4px">
+      <b style="font-size:14px">Chi può chiedere</b>
+      ${persone.map((x) => `<label class="riga" style="margin:8px 0;color:var(--testo)"><input type="checkbox" data-chi="${x.id}" ${scelti.has(x.id) ? "checked" : ""} style="width:22px;height:22px"> ${esc(nomeDi(x))}</label>`).join("") || `<p class="tenue">Invita prima qualcuno nella tua famiglia.</p>`}</div>
+    <div style="border-top:1px solid rgba(0,0,0,.08);margin-top:12px;padding-top:12px">
+      <b>La mia voce</b>
+      ${v?.pronta ? `<p class="tenue" style="margin:4px 0 8px">✓ Pronta. Più racconti a voce, più ti somiglia: puoi rifarla quando vuoi.</p>
+        <div class="riga" style="gap:8px"><button class="btn chiaro" id="v-rifai" style="flex:1">Rifalla</button><button class="btn chiaro" id="v-elimina" style="flex:1;color:#8A3B2E">Eliminala</button></div>`
+      : `<p class="tenue" style="margin:4px 0 8px">Hai registrato ${min} ${min === 1 ? "minuto" : "minuti"} di vocali. Ne serve almeno 1, meglio 5 o più.</p>`}
+      ${v?.pronta ? "" : `<label class="riga" style="color:var(--testo);align-items:flex-start;gap:10px"><input type="checkbox" id="v-ok" style="width:22px;height:22px;flex-shrink:0;margin-top:2px">
+        <span style="font-size:14px">Acconsento che la mia voce venga ricreata dai miei vocali, solo per rispondere alle persone che ho scelto. Posso eliminarla quando voglio.</span></label>
+        <button class="btn ambra" id="v-crea" style="margin-top:10px" ${min < 1 ? "disabled" : ""}>Crea la mia voce</button>`}
+      <p id="v-esito" class="tenue" role="status"></p></div>`
+    : `<button class="btn ambra" id="c-piu">Fa parte di Ancora+</button>`}</div>`);
+
+  document.getElementById("c-piu")?.addEventListener("click", () => passaPiu("Chiedi a me"));
+  const salva = async (campi) => {
+    const { error } = await sb.from("persone").update(campi).eq("id", state.io.id);
+    if (error) alert("Non salvato: " + error.message);
+  };
+  document.getElementById("c-attivo")?.addEventListener("change", (e) => {
+    document.getElementById("c-chi").hidden = !e.target.checked; salva({ chiedi_attivo: e.target.checked });
+  });
+  document.querySelectorAll("[data-chi]").forEach((c) => c.onchange = () =>
+    salva({ chiedi_chi: [...document.querySelectorAll("[data-chi]:checked")].map((x) => x.dataset.chi) }));
+
+  const voce = async (azione) => {
+    const esito = document.getElementById("v-esito");
+    esito.textContent = azione === "elimina" ? "Elimino…" : "Sto ricreando la tua voce, ci vuole un minuto…";
+    const { data: { session } } = await sb.auth.getSession();
+    const r = await fetch(`${SUPABASE_URL}/functions/v1/voce`, { method: "POST",
+      headers: { authorization: `Bearer ${session?.access_token}`, "content-type": "application/json" },
+      body: JSON.stringify({ azione, consenso: true }) }).catch(() => null);
+    const j = await r?.json().catch(() => ({}));
+    if (!r?.ok) { esito.textContent = j?.errore ?? "Non riuscito, riprova."; return; }
+    location.replace("#/profilo?s=chiedi-a-me"); location.reload();
+  };
+  document.getElementById("v-crea")?.addEventListener("click", () => {
+    if (!document.getElementById("v-ok").checked) { document.getElementById("v-esito").textContent = "Serve il tuo consenso."; return; }
+    voce("crea");
+  });
+  document.getElementById("v-rifai")?.addEventListener("click", () => confirm("Rifare la voce con tutti i vocali di adesso?") && voce("crea"));
+  document.getElementById("v-elimina")?.addEventListener("click", () => confirm("Eliminare la tua voce? Le risposte saranno solo scritte.") && voce("elimina"));
+  if (location.hash.includes("s=chiedi-a-me")) document.getElementById("chiedi-a-me")?.scrollIntoView();
+}

@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "61";
+const VER = "62";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 const ROTTE = {
@@ -30,6 +30,7 @@ const ROTTE = {
   "invita": () => import(`./views/invita.js?v=${VER}`),
   "chat": () => import(`./views/chat.js?v=${VER}`),
   "calendario": () => import(`./views/calendario.js?v=${VER}`),
+  "chiedi": () => import(`./views/chiedi.js?v=${VER}`),
   "spese": () => import(`./views/spese.js?v=${VER}`),
   "liste": () => import(`./views/liste.js?v=${VER}`),
   "album": () => import(`./views/album.js?v=${VER}`),
