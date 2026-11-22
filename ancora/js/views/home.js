@@ -94,12 +94,11 @@ export default async function ({ params }) {
       <button class="btn ambra" data-invita="${scelta.id}" style="margin-top:10px">③ Invita la famiglia</button></div>` : ""}
     ${(() => {
       // prima i post; la domanda della settimana e gli inviti a raccontare arrivano dopo i primi due
-      const extra = `${cardSettimana}<div id="mia-domanda"></div><div id="per-chi-conta"></div>`;
+      const extra = `<div id="mia-domanda" hidden></div><div id="per-chi-conta"></div>`;
       const posts = lista.map((r, i) => post(r, url, i));
       if (!posts.length) return extra + `<div class="pad"><h1>Ancora vuoto</h1><p class="tenue">Invita la famiglia dalle cerchie, o racconta tu per primo.</p></div>`;
       return posts.slice(0, 2).join("") + extra + posts.slice(2).join("");
     })()}`;
-  miaDomanda();
   perChiConta();
   collegaStorie(perPersona, url, filtro);
   document.querySelectorAll("[data-invita]").forEach((b) => b.onclick = () => invitaInCerchia(b.dataset.invita));
@@ -128,6 +127,40 @@ export default async function ({ params }) {
       }
       ultimo = ora;
     });
+  });
+
+  // ⋯ sui propri post: modifica il testo o elimina
+  document.querySelectorAll("[data-menu-post]").forEach((b) => b.onclick = () => {
+    const id = b.dataset.menuPost, r = lista.find((x) => x.id === id);
+    const f = document.createElement("div");
+    f.style.cssText = "position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.4);display:flex;align-items:flex-end";
+    f.innerHTML = `<div style="background:var(--carta);width:100%;border-radius:22px 22px 0 0;padding:10px 16px calc(18px + env(safe-area-inset-bottom));display:grid;gap:8px">
+      <span style="width:40px;height:5px;border-radius:3px;background:var(--bordo);margin:0 auto 6px"></span>
+      <button class="btn chiaro" data-a="modifica">Modifica il testo</button>
+      <button class="btn chiaro" data-a="elimina" style="color:#B3402F">Elimina</button>
+      <button class="btn chiaro" data-a="annulla" style="border:0">Annulla</button></div>`;
+    document.body.appendChild(f);
+    f.onclick = async (e) => {
+      const a = e.target.dataset?.a;
+      if (e.target === f || a === "annulla") return f.remove();
+      if (a === "modifica") {
+        const t = prompt("Il testo del post", r?.testo ?? "");
+        f.remove();
+        if (t === null) return;
+        const { error } = await sb.from("ricordi").update({ testo: t.trim() || null }).eq("id", id);
+        if (error) return alert("Non salvato: " + error.message);
+        aggiorna();
+      }
+      if (a === "elimina") {
+        f.remove();
+        if (!confirm("Eliminare questo post? Spariscono anche foto, vocale, cuori e commenti.")) return;
+        const paths = (r?.ricordi_media ?? []).map((m) => m.path);
+        const { error } = await sb.from("ricordi").delete().eq("id", id);
+        if (error) return alert("Non eliminato: " + error.message);
+        if (paths.length) sb.storage.from("ricordi").remove(paths);
+        b.closest("article")?.remove();
+      }
+    };
   });
 
   document.querySelectorAll("[data-cuore]").forEach((b) => b.onclick = async () => {
@@ -169,9 +202,10 @@ function post(r, url, i) {
         ${foto.length > 1 ? `<span class="conta">1/${foto.length}</span><div class="pallini">${foto.map((_, k) => `<i class="${k ? "" : "on"}"></i>`).join("")}</div>` : ""}
         ${voce}<span class="cuore-grande" aria-hidden="true">${ICONE.cuore}</span></div>`
     : `<div class="lettera">${esc(r.testo ?? "")}${voce ? `<div style="margin-top:14px">${voce.replace('class="voce"', 'class="voce" style="margin:0;background:rgba(18,48,44,.9)"')}</div>` : ""}</div>`;
-  return `<article class="post">
+  return `<article class="post" style="position:relative">
     <a class="post-testa" href="#/profilo/${r.autore_id}">${avatar(r.persone, 38, r.persone?.foto_path ? url[r.persone.foto_path] : null)}
       <div><b>${esc(nomeDi(r.persone))}</b><small>${quando(r.creato_il)}</small></div></a>
+    ${r.autore_id === state.io.id ? `<button class="icona" data-menu-post="${r.id}" aria-label="Modifica o elimina" style="position:absolute;top:4px;right:8px;width:44px;height:44px;font-size:22px;font-weight:800;letter-spacing:1px">⋯</button>` : ""}
     ${media}
     <div class="azioni">
       <button class="icona ${mio ? "on" : ""}" data-cuore="${r.id}" aria-label="Mi piace">${ICONE.cuore}</button>
@@ -215,7 +249,7 @@ async function miaDomanda(altra = false) {
 async function perChiConta() {
   const el = document.getElementById("per-chi-conta");
   if (!el) return;
-  const [{ data: lettere }, { data: filo }] = await Promise.all([sb.rpc("lettere_chiuse"), state.adulto ? sb.rpc("il_mio_filo") : Promise.resolve({ data: null })]);
+  const [{ data: lettere }, { data: filo }] = [await sb.rpc("lettere_chiuse"), { data: null }];   // l'invito a raccontare arriva come notifica
   const data = (d) => new Date(d + "T12:00").toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" });
   let html = (lettere ?? []).slice(0, 3).map((l) => `<div class="card" style="margin-bottom:14px;display:flex;gap:14px;align-items:center;background:#FBF4E6">
       <span style="font-size:34px" aria-hidden="true">✉️</span>

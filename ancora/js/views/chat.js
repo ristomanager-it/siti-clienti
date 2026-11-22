@@ -18,6 +18,11 @@ export default async function ({ id }) {
     <div style="padding:0 16px 8px;position:sticky;top:64px;z-index:4;background:var(--carta)">
       <input id="cerca" type="search" placeholder="🔍  Cerca una persona o una famiglia" aria-label="Cerca" style="border-radius:999px;padding:11px 16px;min-height:44px"></div>
     <div id="elenco">
+      <a href="#/domande" data-cerca="domande" style="display:flex;gap:12px;align-items:center;padding:9px 18px;text-decoration:none;color:inherit">
+        <span class="av" style="width:52px;height:52px;background:var(--ambra);font-size:24px">?</span>
+        <span style="flex:1;min-width:0"><b style="display:block;font-size:17px">Domande per te</b>
+        <span class="tenue" style="display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" id="anteprima-domanda">La domanda di questa settimana</span></span>
+        <span id="punto-domanda" hidden style="width:12px;height:12px;border-radius:6px;background:var(--ambra);flex-shrink:0"></span></a>
       ${chats.map((c) => riga(`#/chat/${c.cerchia_id ? "c-" + c.cerchia_id : "d-" + c.persona_id}`, c.nome,
         avatar({ id: c.cerchia_id ?? c.persona_id, nome: c.nome }, 52, c.foto_path ? url[c.foto_path] : null), c.nome, anteprima(c.ultimo),
         `<span style="text-align:right;flex-shrink:0"><span class="tenue" style="font-size:12px">${c.ultimo ? ora(c.ultimo.creato_il) : ""}</span>
@@ -26,6 +31,11 @@ export default async function ({ id }) {
       ${altre.length ? `<h2 data-titolo>Scrivi a</h2>${altre.map((p) => riga(`#/chat/d-${p.id}`, nomeDi(p), avatar(p, 44, p.foto_path ? url[p.foto_path] : null), nomeDi(p), esc(p.dove ?? ""))).join("")}` : ""}
       ${!chats.length && !altre.length ? `<p class="pad tenue">Ancora nessuno qui: <a href="#/cerchie">invita la famiglia</a>.</p>` : ""}
     </div>`;
+  sb.rpc("mia_domanda", { p_altra: false }).then(({ data: d }) => {
+    if (!d) return;
+    const a = document.getElementById("anteprima-domanda"); if (a) a.textContent = d.testo;
+    const p = document.getElementById("punto-domanda"); if (p && !d.fatta) p.hidden = false;
+  });
   document.getElementById("cerca").oninput = (e) => {
     const q = e.target.value.trim().toLowerCase();
     document.querySelectorAll("#elenco [data-cerca]").forEach((a) => { a.style.display = !q || a.dataset.cerca.includes(q) ? "" : "none"; });
