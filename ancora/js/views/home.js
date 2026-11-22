@@ -57,9 +57,9 @@ export default async function ({ params }) {
       const { data: risposte } = await sb.from("ricordi").select("id, autore_id, persone:autore_id(id, nome, soprannome)")
         .eq("cerchia_id", fam.id).eq("domanda_settimana", sett.codice);
       const io = (risposte ?? []).some((r) => r.autore_id === state.io.id);
-      cardSettimana = `<div class="lettera" style="margin-bottom:22px;font-size:18px">
-        <span style="display:block;font-family:Manrope,sans-serif;font-size:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:#8A5A17">La domanda della settimana · ${esc(fam.nome)}</span>
-        <b style="display:block;font-size:22px;line-height:1.25;margin:6px 0 10px">${esc(d.testo)}</b>
+      cardSettimana = `<div class="card" style="margin:6px 16px 22px;background:#F4E6CF">
+        <span style="display:block;font-size:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:#8A5A17">La domanda della settimana</span>
+        <b style="display:block;font-family:Fraunces,serif;font-size:19px;line-height:1.3;margin:6px 0 10px">${esc(d.testo)}</b>
         <div style="display:flex;align-items:center;gap:6px;font-family:Manrope,sans-serif;font-size:13px">
           ${(risposte ?? []).slice(0, 6).map((r) => avatar(r.persone, 26)).join("")}
           <span>${risposte?.length ? `${risposte.length} ${risposte.length === 1 ? "ha risposto" : "hanno risposto"}` : "Nessuno ha ancora risposto: comincia tu"}</span></div>
@@ -92,10 +92,13 @@ export default async function ({ params }) {
       <div style="padding:6px 0">${scelta.foto_path && scelta.copertina_path ? "✅" : "①"} <b>Foto e copertina</b> · tocca 📷 qui sopra</div>
       <div style="padding:6px 0">② <a href="#/racconta?c=${scelta.id}"><b>Scrivi il benvenuto</b></a> o metti una prima foto</div>
       <button class="btn ambra" data-invita="${scelta.id}" style="margin-top:10px">③ Invita la famiglia</button></div>` : ""}
-    ${cardSettimana}
-    <div id="mia-domanda"></div>
-    <div id="per-chi-conta"></div>
-    ${lista.map((r, i) => post(r, url, i)).join("") || `<div class="pad"><h1>Ancora vuoto</h1><p class="tenue">Invita la famiglia dalle cerchie, o racconta tu per primo.</p></div>`}`;
+    ${(() => {
+      // prima i post; la domanda della settimana e gli inviti a raccontare arrivano dopo i primi due
+      const extra = `${cardSettimana}<div id="mia-domanda"></div><div id="per-chi-conta"></div>`;
+      const posts = lista.map((r, i) => post(r, url, i));
+      if (!posts.length) return extra + `<div class="pad"><h1>Ancora vuoto</h1><p class="tenue">Invita la famiglia dalle cerchie, o racconta tu per primo.</p></div>`;
+      return posts.slice(0, 2).join("") + extra + posts.slice(2).join("");
+    })()}`;
   miaDomanda();
   perChiConta();
   collegaStorie(perPersona, url, filtro);
@@ -250,12 +253,13 @@ function guardaStorie(gruppi, gi, url, conAggiungi = false) {
     clearTimeout(timer);
     const gr = gruppi[g], r = gr.storie[i], m = r.ricordi_media[0];
     segna(r.id);
-    const ore = Math.max(1, Math.round((Date.now() - new Date(r.creato_il)) / 3600_000));
+    const min = Math.floor((Date.now() - new Date(r.creato_il)) / 60_000);
+    const fa = min < 1 ? "adesso" : min < 60 ? `${min} min` : `${Math.floor(min / 60)} h`;
     v.innerHTML = `
       <div style="display:flex;gap:4px;padding:calc(10px + env(safe-area-inset-top)) 10px 8px">${gr.storie.map((_, k) =>
         `<span style="flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,.35);overflow:hidden"><i style="display:block;height:100%;background:#fff;width:${k < i ? 100 : 0}%" ${k === i ? 'id="barra-ora"' : ""}></i></span>`).join("")}</div>
       <div style="display:flex;align-items:center;gap:10px;padding:0 12px 10px">${avatar(gr.persona ?? {}, 34, gr.persona?.foto_path ? url[gr.persona.foto_path] : null)}
-        <b style="flex:1">${esc(nomeDi(gr.persona))} <span style="opacity:.7;font-weight:500">· ${ore} h</span></b>
+        <b style="flex:1">${esc(nomeDi(gr.persona))} <span style="opacity:.7;font-weight:500">· ${fa}</span></b>
         ${gr.autore === state.io.id ? `<button id="st-agg" style="background:rgba(255,255,255,.15);color:#fff;border:0;border-radius:999px;padding:8px 12px;font-weight:700">+ Aggiungi</button>` : ""}
         <button id="st-x" aria-label="Chiudi" style="background:none;border:0;color:#fff;font-size:26px;width:44px;height:44px">✕</button></div>
       <div style="flex:1;position:relative;display:grid;place-items:center;overflow:hidden">
@@ -264,8 +268,26 @@ function guardaStorie(gruppi, gi, url, conAggiungi = false) {
         <button id="st-ind" aria-label="Indietro" style="position:absolute;left:0;top:0;bottom:0;width:35%;background:none;border:0"></button>
         <button id="st-av" aria-label="Avanti" style="position:absolute;right:0;top:0;bottom:0;width:65%;background:none;border:0"></button>
       </div>
-      ${r.testo ? `<p style="padding:12px 16px calc(16px + env(safe-area-inset-bottom));margin:0;font-size:17px">${esc(r.testo)}</p>` : `<div style="height:calc(14px + env(safe-area-inset-bottom))"></div>`}`;
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 16px calc(14px + env(safe-area-inset-bottom))">
+        <p style="flex:1;margin:0;font-size:17px">${esc(r.testo ?? "")}</p>
+        <button id="st-cuore" aria-label="Mi piace" aria-pressed="false" style="background:none;border:0;color:#fff;display:flex;align-items:center;gap:6px;font-weight:800;font-size:16px;min-width:48px;min-height:48px;justify-content:center">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg><span id="st-n"></span></button></div>`;
     v.querySelector("#st-x").onclick = chiudi;
+    // ♥ anche sulle storie (chi l'ha pubblicata vede quanti)
+    const cuore = v.querySelector("#st-cuore"), nCuori = v.querySelector("#st-n");
+    const disegna = (on, n) => { cuore.setAttribute("aria-pressed", on); cuore.querySelector("svg").setAttribute("fill", on ? "#E0533F" : "none"); cuore.style.color = on ? "#E0533F" : "#fff"; nCuori.textContent = n ? n : ""; };
+    sb.from("reazioni").select("persona_id").eq("ricordo_id", r.id).eq("tipo", "cuore").then(({ data }) => {
+      const mio = (data ?? []).some((x) => x.persona_id === state.io.id);
+      disegna(mio, gr.autore === state.io.id ? data?.length : 0);
+    });
+    cuore.onclick = async (e) => {
+      e.stopPropagation();
+      const on = cuore.getAttribute("aria-pressed") !== "true";
+      disegna(on, 0);
+      cuore.animate([{ transform: "scale(1)" }, { transform: "scale(1.35)" }, { transform: "scale(1)" }], { duration: 300 });
+      if (on) await sb.from("reazioni").insert({ ricordo_id: r.id, persona_id: state.io.id, tipo: "cuore" });
+      else await sb.from("reazioni").delete().eq("ricordo_id", r.id).eq("persona_id", state.io.id).eq("tipo", "cuore");
+    };
     v.querySelector("#st-av").onclick = avanti;
     v.querySelector("#st-ind").onclick = indietro;
     v.querySelector("#st-agg")?.addEventListener("click", () => { chiudi(); document.getElementById("file-storia").click(); });
