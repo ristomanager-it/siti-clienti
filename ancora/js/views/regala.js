@@ -52,7 +52,7 @@ export function montaModulo(el, params = {}) {
       <label for="dd">Quando parte il primo messaggio</label><input id="dd" type="date" value="${natale}" required>
       <label for="an">Il tuo nome</label><input id="an" required>
       <label for="ae">La tua email</label><input id="ae" type="email" required>
-      <label for="at">Il tuo cellulare</label><input id="at" type="tel" inputmode="tel" placeholder="+39 …" required>
+      <label for="at">Il tuo cellulare</label><input id="at" type="tel" inputmode="tel" placeholder="+39 … (estero: +44…)" required>
       <div style="display:flex;align-items:baseline;justify-content:space-between;margin:18px 0 8px">
         <span class="tenue">12 mesi + il libro stampato<br>valore 168 €</span><span style="font-family:Fraunces,serif;font-size:34px;font-weight:700">129 €</span></div>
       <div class="card" style="margin:0 0 14px;background:var(--ambra-chiaro);border-color:#EAD2AA">
@@ -105,7 +105,8 @@ export function montaModulo(el, params = {}) {
   });
   aggiorna();
 
-  const norm = (t) => { t = t.replace(/[\s.-]/g, ""); return t && !t.startsWith("+") ? "+39" + t : t; };
+  // numeri esteri: "+44…" o "0044…" restano esteri; senza prefisso si intende italiano
+  const norm = (t) => { t = t.replace(/[\s.()-]/g, "").replace(/^00/, "+"); return t && !t.startsWith("+") ? "+39" + t : t; };
   document.getElementById("f").onsubmit = async (e) => {
     e.preventDefault();
     const v = (id) => document.getElementById(id).value.trim();

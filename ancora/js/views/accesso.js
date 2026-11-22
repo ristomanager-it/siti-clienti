@@ -61,7 +61,7 @@ export default async function ({ params }) {
   document.getElementById("f").onsubmit = async (e) => {
     e.preventDefault();
     let tel = document.getElementById("tel").value.replace(/[\s.-]/g, "");
-    if (!tel.startsWith("+")) tel = "+39" + tel.replace(/^0039/, "");
+    tel = tel.replace(/^00/, "+"); if (!tel.startsWith("+")) tel = "+39" + tel;   // dall'estero: +44…, 001…
     const esito = document.getElementById("esito");
     esito.textContent = "Invio in corso…";
     const res = await fetch(`${SUPABASE_URL}/functions/v1/accesso-link`, {
