@@ -2,7 +2,7 @@
 // Perché, come, cosa; più di una chat di gruppo; prezzi; modulo d'acquisto. Toni leggeri e vivi: si racconta adesso, insieme.
 // Foto: Unsplash (licenza Unsplash, uso libero).
 import { $app } from "../app.js";
-import { montaModulo } from "./regala.js";
+import { NEL_REGALO, montaModulo } from "./regala.js";
 import { testataPubblica, collegaMenu, piePubblico, collegaPie } from "./info.js";
 
 // palette di Natale: rosso, oro, panna + verde salvia e verde notte del brand
@@ -50,7 +50,7 @@ const CONTRO = [
 const DOMANDE = [
   ["Le domande arrivano solo ai nonni?", "No, a tutti: ognuno ha la sua domanda della settimana, dai nonni ai ragazzi. E chiunque può farne una a un familiare dal suo profilo."],
   ["È facile per i nonni?", "Sì: si usa come le app di messaggi che conoscono già. Di solito sono i nipoti a fargliela vedere la prima volta. E chi proprio non vuole l'app può rispondere anche da un messaggio sul telefono."],
-  ["Chi può entrare?", "Tutta la famiglia, senza pagare: figli, nipoti, cugini, anche chi vive all'estero. Nel regalo scrivi i nomi e i numeri di tutti, e ognuno riceve il suo invito."],
+  ["Chi può entrare?", "Tutta la famiglia, senza pagare: figli, nipoti, cugini, anche chi vive all'estero. Chi riceve il regalo crea la sua famiglia e invita chi vuole: basta uno, e Ancora+ ce l'hanno tutti."],
   ["Posso stare in più famiglie?", "Sì: la tua, quella dei tuoi genitori, quella di tua moglie o di tuo marito, gli amici. Gli alberi si collegano tra loro."],
   ["Cosa succede dopo 12 mesi?", "Si continua solo se volete, a 99 € l'anno o 9,99 € al mese. I ricordi restano gratis per sempre."],
   ["Chi vede i miei ricordi?", "Solo chi scegli tu. Ogni ricordo può essere per tutti, per una famiglia o solo per te. Noi non li leggiamo."],
@@ -66,7 +66,7 @@ const foto = (src, alt, alta = 300, posizione = "center") =>
 export default async function ({ params } = {}) {
   $app().innerHTML = `
     <a href="#acquista" class="vai-acquista" style="display:block;background:${C.rosso};color:${C.panna};text-align:center;font-weight:800;font-size:14px;padding:10px 14px;text-decoration:none;letter-spacing:.02em">
-      🎄 Promo Natale · 129 € tutta la famiglia · <u>Regala</u></a>
+      🎄 La storia della tua famiglia · <s>129 €</s> 99 € fino a Natale · <u>Regala</u></a>
     <div style="position:relative">
     ${testataPubblica({ trasparente: true })}
 
@@ -74,9 +74,9 @@ export default async function ({ params } = {}) {
       background:linear-gradient(180deg,rgba(18,48,44,.15) 0%,rgba(18,10,8,.25) 40%,rgba(60,14,10,.92) 100%),url('img/nonna-nipote.jpg') 42% center/cover">
       <div style="padding:0 20px 34px">
         <span style="display:inline-block;background:${C.oro};color:${C.notte};font-weight:800;font-size:13px;padding:6px 12px;border-radius:999px;margin-bottom:14px">Natale 2026 · il regalo che resta</span>
-        <h1 style="font-family:Fraunces,serif;font-size:44px;line-height:1.02;margin:0 0 12px;color:${C.panna}">Il cloud dei tuoi ricordi.</h1>
-        <p style="font-size:18px;line-height:1.45;margin:0 0 20px;color:#F3E6D2">Non solo foto e video: le voci, le storie, le ricette e l'albero della tua famiglia. Al sicuro, solo per voi.</p>
-        <a class="btn vai-acquista" href="#acquista" style="background:${C.oro};color:${C.notte}">Regala Ancora · 129 €</a>
+        <h1 style="font-family:Fraunces,serif;font-size:44px;line-height:1.02;margin:0 0 12px;color:${C.panna}">La storia della tua famiglia.</h1>
+        <p style="font-size:18px;line-height:1.45;margin:0 0 20px;color:#F3E6D2">Un posto solo vostro per raccontarla insieme: foto, voci, storie e l'albero. E a fine anno, un libro da tenere in mano.</p>
+        <a class="btn vai-acquista" href="#acquista" style="background:${C.oro};color:${C.notte}">Regalala · 99 € <s style="opacity:.6;font-weight:600">129 €</s></a>
         <a class="btn" href="#/iscriviti" style="margin-top:10px;background:transparent;color:${C.panna};border:2px solid rgba(251,243,226,.6)">Inizia gratis</a>
         <a href="#come" id="vai-come" style="display:block;text-align:center;margin-top:12px;color:#F3E6D2;font-weight:700">Scopri come funziona ↓</a>
       </div>
@@ -128,26 +128,16 @@ export default async function ({ params } = {}) {
         <div style="background:${C.rosso};color:${C.panna};padding:18px 20px;display:flex;align-items:center;gap:12px">
           <span style="font-size:34px" aria-hidden="true">🎁</span>
           <div style="flex:1"><div style="font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#F4D39B">Il regalo di Natale</div>
-            <b style="font-family:Fraunces,serif;font-size:22px;line-height:1.15">Un anno di Ancora e il libro delle vostre storie</b></div>
-          <div style="text-align:right"><small style="display:block;font-size:12px;color:#F4D39B">valore 168 €</small><b style="font-family:Fraunces,serif;font-size:32px">129 €</b></div></div>
+            <b style="font-family:Fraunces,serif;font-size:22px;line-height:1.15">La storia della tua famiglia</b></div>
+          <div style="text-align:right"><small style="display:block;font-size:13px;color:#F4D39B"><s>129 €</s></small><b style="font-family:Fraunces,serif;font-size:32px">99 €</b></div></div>
         <ul style="list-style:none;margin:0;padding:16px 20px 6px">
-          ${[["Il libro stampato a colori", "a fine anno arriva a casa con le storie dei 12 mesi e il QR per ascoltare le voci"],
-             ["L'album del pranzo di Natale", "tutti i parenti caricano le foto con un QR, senza scaricare niente"],
-             ["Tutta la famiglia dentro", "senza limiti di persone: ognuno con il suo invito"],
-             ["La domanda della settimana per tutti", "ognuno la sua, più una per tutta la famiglia"],
-             ["Racconti a voce", "si parla, non si scrive: la voce resta nell'album"],
-             ["200 GB per tutta la famiglia", "foto, video e vocali in qualità originale: non solo foto e video"],
-             ["Gli alberi di famiglia uniti", "la tua, dei tuoi genitori, dei suoceri"],
-             ["Il ricettario di casa", "con la voce di chi cucina e le dosi giuste"],
-             ["Agenda e diario", "vacanze insieme, compiti, esami: solo se volete"],
-             ["Il biglietto da mettere sotto l'albero", "con il tuo messaggio, da stampare"]]
-            .map(([t, d]) => `<li style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #F1E7D6">
+          ${NEL_REGALO.map(([t, d]) => `<li style="display:flex;gap:10px;padding:9px 0;border-bottom:1px solid #F1E7D6">
               <span style="flex-shrink:0;width:22px;height:22px;border-radius:11px;background:${C.salvia};color:#fff;display:grid;place-items:center;font-size:13px;font-weight:800">✓</span>
               <span><b>${t}</b><br><span class="tenue" style="font-size:14px">${d}</span></span></li>`).join("")}
         </ul>
         <div style="padding:10px 20px 20px">
-          <a href="#acquista" class="btn vai-acquista" style="background:${C.oro};color:${C.notte}">Regala Ancora · 129 €</a>
-          <p class="tenue" style="margin:10px 0 0;text-align:center;font-size:13px">Parte il giorno che scegli. Dopo 12 mesi si continua solo se volete. Se non accetta, ti rimborsiamo.</p>
+          <a href="#acquista" class="btn vai-acquista" style="background:${C.oro};color:${C.notte}">Regalala · 99 €</a>
+          <p class="tenue" style="margin:10px 0 0;text-align:center;font-size:13px">Chi la riceve crea la sua famiglia e la costruisce come vuole. Arriva il giorno che scegli. Prezzo di lancio fino al 25 dicembre, poi 129 €.</p>
         </div>
       </div>
     </section>
@@ -205,8 +195,8 @@ export default async function ({ params } = {}) {
 
     ${sezione(`${etichetta("Pacchetti")}
       <div style="border-radius:22px;padding:20px;background:${C.rosso};color:${C.panna};margin-bottom:12px">
-        <div class="riga"><b style="flex:1;font-size:19px">Regalo di Natale</b><b style="font-family:Fraunces,serif;font-size:36px">129 €</b></div>
-        <div style="color:#F1DCCB;margin-top:4px;line-height:1.45">12 mesi di Ancora+, <b>il libro stampato a colori</b> a fine anno, l'album del pranzo di Natale e il biglietto sotto l'albero. Valore 168 €.</div></div>
+        <div class="riga"><b style="flex:1;font-size:19px">La storia della tua famiglia</b><b style="font-family:Fraunces,serif;font-size:36px">99 €</b></div>
+        <div style="color:#F1DCCB;margin-top:4px;line-height:1.45">Un anno di Ancora+ per tutti, <b>il libro a colori</b> con i QR delle voci e il PDF, <b>il film dell'anno</b> e il biglietto regalo. Prezzo di lancio fino a Natale, poi 129 €.</div></div>
       <div style="border-radius:22px;padding:20px;background:#fff;border:1px solid var(--bordo);margin-bottom:12px">
         <div class="riga"><b style="flex:1;font-size:18px">Ancora<span style="color:${C.oro}">+</span></b><b style="font-family:Fraunces,serif;font-size:26px;color:${C.salvia}">99 € <small style="font-size:14px">l'anno</small></b></div>
         <div class="tenue" style="margin-top:4px">Oppure 9,99 € al mese. Basta che paghi uno e lo ha tutta la famiglia: <b>albero senza limiti</b> e <b>alberi uniti</b> tra famiglie, <b>album degli eventi</b> con il QR, <b>il libro delle storie</b>, le domande sul telefono per i nonni, <b>200 GB</b>. E quando qualcuno non può rispondere, <b>risponde in automatico</b>: un consiglio, una storia di famiglia, con le sue parole e la sua voce.</div></div>
@@ -232,7 +222,7 @@ export default async function ({ params } = {}) {
     ${piePubblico()}
     <div id="barra-acquisto" style="position:fixed;left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom));max-width:540px;margin:0 auto;z-index:20;
       display:none;align-items:center;gap:10px;background:${C.notte};color:${C.panna};border-radius:999px;padding:8px 8px 8px 18px;box-shadow:0 10px 30px rgba(0,0,0,.3)">
-      <span style="flex:1;font-weight:700;font-size:14px;line-height:1.2">Regalo di Natale<br><span style="color:#F4D39B">129 € · 12 mesi</span></span>
+      <span style="flex:1;font-weight:700;font-size:14px;line-height:1.2">Regalo di Natale<br><span style="color:#F4D39B">99 € · la storia della famiglia</span></span>
       <a href="#acquista" class="vai-acquista btn" style="width:auto;margin:0;min-height:44px;padding:0 20px;background:${C.oro};color:${C.notte}">Regala</a></div>`;
 
   montaModulo(document.getElementById("modulo-regalo"));

@@ -124,7 +124,7 @@ export async function privacy() {
     ${h("Quali dati trattiamo")}
     <p><b>Dati dell'account:</b> nome, email, numero di cellulare, data di nascita se la inserisci, foto profilo.<br>
     <b>Contenuti che carichi:</b> racconti, registrazioni vocali, foto, video, ricette, diario, albero genealogico (anche di persone che non usano Ancora, inseriti dai familiari).<br>
-    <b>Dati di acquisto:</b> nome e contatti di chi compra e di chi riceve il regalo; i dati di pagamento li gestisce Stripe, noi non vediamo la carta.<br>
+    <b>Dati di acquisto:</b> nome ed email di chi compra, il nome di chi riceve il regalo e il messaggio del biglietto; i dati di pagamento li gestisce Stripe, noi non vediamo la carta.<br>
     <b>Dati tecnici:</b> quelli necessari a farti entrare e a far funzionare il servizio. Con il tuo consenso, la campagna da cui arrivi (parametri UTM).</p>
     ${h("Perché e su quale base")}
     <p>Per fornirti il servizio che hai scelto (esecuzione del contratto); per gli obblighi fiscali e contabili (obbligo di legge); per rispondere ai messaggi che ci mandi (tua richiesta); per misurare le campagne, solo se acconsenti (consenso, revocabile quando vuoi dalle preferenze cookie).</p>
@@ -159,14 +159,14 @@ export async function condizioni() {
     ${h("1. Chi vende")}
     <p>${esc(AZIENDA.nome)}, ${esc(AZIENDA.sede)}, P.IVA ${esc(AZIENDA.piva)} («Ancora»).</p>
     ${h("2. Cosa compri")}
-    <p><b>Regalo di Natale (129 €):</b> 12 mesi di Ancora+ per la famiglia di chi riceve il regalo, a partire dalla data scelta.<br>
+    <p><b>«La storia della tua famiglia» (129 €, prezzo di lancio 99 € fino al 25 dicembre 2026):</b> un biglietto con un codice personale. Chi lo riceve crea il suo account e la sua famiglia e attiva il codice: 12 mesi di Ancora+ per la sua famiglia dal giorno dell'attivazione, un libro a colori con copertina rigida delle storie dell'anno (con i QR per ascoltare le voci e la versione PDF), spedito in Italia a fine anno, e il film dell'anno da creare nell'app. Il codice si attiva una sola volta.<br>
     <b>Ancora+:</b> 99 € l'anno o 9,99 € al mese, con rinnovo automatico finché non lo disdici.<br>
     <b>Servizi:</b> libro stampato (49 € b/n, 69 € a colori), narratore in più (1,99 €/mese), spazio +100 GB (2,99 €/mese).<br>
     Prezzi IVA inclusa.</p>
     ${h("3. Pagamento")}
     <p>Con carta tramite Stripe. Il contratto si conclude quando il pagamento è confermato; ricevi la conferma per email.</p>
     ${h("4. Recesso")}
-    <p>Hai 14 giorni dall'acquisto per recedere senza motivo, scrivendo a ${esc(AZIENDA.email)}. Se il servizio è già stato attivato su tua richiesta prima della fine dei 14 giorni, ti rimborsiamo la parte non goduta. Il libro stampato è personalizzato e non può essere reso, salvo difetti. Se chi riceve il regalo non lo accetta, ti rimborsiamo per intero.</p>
+    <p>Hai 14 giorni dall'acquisto per recedere senza motivo, scrivendo a ${esc(AZIENDA.email)}. Se il servizio è già stato attivato su tua richiesta prima della fine dei 14 giorni, ti rimborsiamo la parte non goduta. Il libro stampato è personalizzato e non può essere reso, salvo difetti. Se il codice del regalo non viene attivato entro 30 giorni dalla data scelta, ti rimborsiamo per intero.</p>
     ${h("5. Disdetta e rinnovi")}
     <p>Gli abbonamenti si disdicono quando vuoi, dall'app o scrivendoci: restano attivi fino alla fine del periodo pagato. Il regalo non si rinnova da solo.</p>
     ${h("6. Cosa succede ai ricordi")}

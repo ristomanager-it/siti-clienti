@@ -1,26 +1,24 @@
 // Biglietto regalo da stampare (A5): da mettere sotto l'albero o dentro un biglietto d'auguri.
-// #/biglietto/<id regalo>   (si apre dalla pagina di conferma dopo il pagamento)
+// #/biglietto?r=<id regalo>   (si apre dopo il pagamento) — dentro c'è il codice che chi riceve attiva su #/omaggio
 import { sb, $app, esc } from "../app.js";
 import qrcode from "https://esm.sh/qrcode-generator@1.4.4";
 
-const COME = {
-  genitori: (b) => [`Il ${b.data} ti arriva un messaggio su WhatsApp, da Ancora.`, "Ogni settimana una domanda sulla tua vita.", "Rispondi con un vocale, come fai sempre. La famiglia ascolta."],
-  altri: (b) => [`Dal ${b.data} siete su Ancora, tutta la famiglia.`, "Foto, vocali, ricordi: in uno spazio solo vostro.", "Ti arriva il link su WhatsApp: toccalo ed entri."],
-};
-
-export default async function ({ id }) {
-  const { data: b } = await sb.rpc("biglietto", { p_id: id });
-  if (!b) {
+export default async function ({ id, params }) {
+  const rid = id ?? params?.r;
+  const { data: b } = rid ? await sb.rpc("regalo_biglietto", { p_id: rid }) : { data: null };
+  if (!b || !b.codice) {
+    // il pagamento si conferma in pochi secondi: il biglietto compare da solo
     $app().innerHTML = `<div class="pad" style="padding-top:60px"><h1>Un attimo…</h1>
       <p>Stiamo confermando il pagamento. Il biglietto compare qui da solo tra pochi secondi.</p></div>`;
-    setTimeout(() => { if (location.hash.includes(id)) location.reload(); }, 8000);
+    const giri = Number(sessionStorage.getItem("ancora_attesa_biglietto") ?? 0);
+    if (giri < 20) { sessionStorage.setItem("ancora_attesa_biglietto", String(giri + 1)); setTimeout(() => { if (location.hash.includes(rid)) location.reload(); }, 3000); }
     return;
   }
-  const data = new Date(b.data + "T12:00").toLocaleDateString("it-IT", { day: "numeric", month: "long" });
-  const righe = (b.tipo === "genitori" ? COME.genitori : COME.altri)({ ...b, data });
-  const link = `${location.origin}${location.pathname}#/perche`;
+  sessionStorage.removeItem("ancora_attesa_biglietto");
+  const quando = new Date(b.quando + "T12:00").toLocaleDateString("it-IT", { day: "numeric", month: "long" });
+  const link = `${location.origin}${location.pathname}#/omaggio/${b.codice}`;
   const qr = qrcode(0, "M"); qr.addData(link); qr.make();
-
+  const testoWa = `🎁 ${b.a}, questo è per te: *La storia della tua famiglia* su Ancora.${b.messaggio ? `\n\n«${b.messaggio}»` : ""}\n\nUn anno per raccontarla insieme, e alla fine il libro da tenere in mano. Apri qui, crea la tua famiglia e attiva il regalo:\n${link}\n\n${b.da}`;
   document.getElementById("barra").hidden = true;
   $app().innerHTML = `
     <style>
@@ -41,21 +39,25 @@ export default async function ({ id }) {
       @media print{ @page{size:A5;margin:0} body{background:#fff} .noprint{display:none!important}
         .bg{margin:0;border-radius:0;box-shadow:none;width:148mm;height:210mm;-webkit-print-color-adjust:exact;print-color-adjust:exact} main{padding:0} }
     </style>
-    <div class="pad noprint" style="display:flex;gap:8px">
-      <button class="btn ambra" id="stampa">Stampa o salva PDF</button>
-      <a class="btn chiaro" href="#/regala?ok=1">Fatto</a>
+    <div class="pad noprint">
+      <h1 style="margin-bottom:4px">Grazie! Ecco il regalo 🎁</h1>
+      <p style="margin-top:0">Mandalo a ${esc(b.a)} ${b.quando > new Date().toISOString().slice(0, 10) ? `il <b>${quando}</b>` : "quando vuoi"}, oppure stampalo e mettilo sotto l'albero.${b.usato ? " <b>✓ Il regalo è già stato attivato.</b>" : ""}</p>
+      <div style="display:grid;gap:8px">
+        <a class="btn ambra" id="wa" href="https://wa.me/?text=${encodeURIComponent(testoWa)}" target="_blank" rel="noopener">Mandalo su WhatsApp</a>
+        <div class="riga" style="gap:8px"><button class="btn chiaro" id="copia" style="flex:1">Copia il link</button><button class="btn chiaro" id="stampa" style="flex:1">Stampa o PDF</button></div></div>
     </div>
     <div class="bg">
       <div class="marchio"><img src="icons/apple-touch-icon.png" alt=""><b>Ancora</b></div>
-      <span class="codice">REGALO ${esc(b.codice)}</span>
-      <h1>Per ${esc(b.per)}</h1>
-      <p class="sotto">Un anno di ricordi, con la tua voce.<br>Le radici che restano.</p>
+      <span class="codice">REGALO</span>
+      <h1>Per ${esc(b.a)}</h1>
+      <p class="sotto"><b>La storia della tua famiglia.</b><br>Un anno per raccontarla insieme, e alla fine il libro da tenere in mano.</p>
       ${b.messaggio ? `<div class="msg">${esc(b.messaggio)}</div>` : ""}
-      <ol>${righe.map((r) => `<li>${esc(r)}</li>`).join("")}</ol>
+      <ol><li>Inquadra il codice o apri il link.</li><li>Crea il tuo account e la tua famiglia, come vuoi tu.</li><li>Il regalo attiva un anno di Ancora+ per tutti e il libro di fine anno.</li></ol>
       <div class="piede">
         <div class="qr">${qr.createSvgTag({ cellSize: 4, margin: 0, scalable: true })}</div>
-        <div class="firma">Con amore,<b>${esc(b.da)}</b><span style="opacity:.8">Inquadra il codice per scoprire come funziona.</span></div>
+        <div class="firma">Con amore,<b>${esc(b.da)}</b><span style="opacity:.8">Codice: ${esc(b.codice)}</span></div>
       </div>
     </div>`;
   document.getElementById("stampa").onclick = () => window.print();
+  document.getElementById("copia").onclick = async (e) => { try { await navigator.clipboard.writeText(link); e.target.textContent = "Copiato ✓"; } catch { prompt("Copia il link", link); } };
 }
