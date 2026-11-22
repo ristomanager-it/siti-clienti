@@ -31,7 +31,7 @@ export function apriEditor(file, cerchie, cerchiaIniziale) {
       <select data-chi style="flex:1;min-height:46px;border-radius:23px;background:#222;color:#fff;border:1px solid #444;padding:0 14px">
         ${cerchie.map((c) => `<option value="${c.id}" ${c.id === cerchiaIniziale ? "selected" : ""}>${esc(c.nome)}</option>`).join("")}</select>
       <button data-ok class="btn ambra" style="width:auto;min-height:46px;padding:0 20px">Condividi</button></div>
-    <input type="file" data-file-mu accept="audio/*" hidden>`;
+    <input type="file" data-file-mu accept="audio/*,video/*,.mp3,.m4a,.aac,.wav" hidden>`;
   document.body.appendChild(v);
   const $ = (q) => v.querySelector(q);
   const strati = $("[data-sopra]"), strumenti = $("[data-strumenti]");
@@ -105,9 +105,25 @@ export function apriEditor(file, cerchie, cerchiaIniziale) {
 
   // --- musica: un file audio del telefono ---
   const fm = $("[data-file-mu]");
-  $("[data-mu]").onclick = () => fm.click();
-  fm.onchange = () => { const f = fm.files?.[0]; if (!f) return; if (f.size > 20 * 1024 * 1024) { alert("La musica supera i 20 MB."); return; } musica = f; barra();
-    const a = new Audio(URL.createObjectURL(f)); a.play().catch(() => {}); setTimeout(() => a.pause(), 4000); };
+  // iPhone: da "Libreria foto" si sceglie un video e se ne usa l'audio; da "Scegli file" un mp3/m4a salvato in File
+  $("[data-mu]").onclick = () => {
+    const p = document.createElement("div");
+    p.style.cssText = "position:absolute;left:0;right:0;bottom:0;z-index:10;background:rgba(20,20,20,.97);border-radius:22px 22px 0 0;padding:18px 18px calc(18px + env(safe-area-inset-bottom));display:grid;gap:10px";
+    p.innerHTML = `<b style="font-size:18px">♪ Musica per la storia</b>
+      <span style="opacity:.8;font-size:15px;line-height:1.4">Scegli un <b>video</b> dalla Libreria foto (usiamo solo il suo audio) oppure, con <b>Scegli file</b>, una canzone o un vocale salvati nell'app File.</span>
+      <button class="btn ambra" data-sc>Scegli</button><button class="btn chiaro" data-no style="background:transparent;color:#fff">Annulla</button>`;
+    v.appendChild(p);
+    p.querySelector("[data-sc]").onclick = () => { p.remove(); fm.click(); };
+    p.querySelector("[data-no]").onclick = () => p.remove();
+  };
+  fm.onchange = () => {
+    const f = fm.files?.[0]; fm.value = ""; if (!f) return;
+    if (f.size > 50 * 1024 * 1024) { alert("Il file supera i 50 MB: scegline uno più corto."); return; }
+    const a = new Audio(URL.createObjectURL(f));
+    a.onerror = () => alert("Questo file non si riesce a leggere come musica. Prova con un altro.");
+    a.oncanplay = () => { musica = f; barra(); };
+    a.play().then(() => setTimeout(() => a.pause(), 4000)).catch(() => { musica = f; barra(); });
+  };
 
   const chiudi = () => { URL.revokeObjectURL(src); v.remove(); };
   $("[data-x]").onclick = () => { if (!sopra.length && !musica || confirm("Annullare la storia?")) chiudi(); };
