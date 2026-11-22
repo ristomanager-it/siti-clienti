@@ -5,7 +5,7 @@ import { $app, esc } from "../app.js";
 const AGGIORNATE = "22 novembre 2026";
 
 const NOVITA = [
-  ["22 novembre 2026 · sera", "Chiedi a me: consigli con le parole e la voce di chi te l'ha permesso. Domande sul carattere: come ragioni, come decidi. Domande su misura (dal Profilo). Lettere da aprire più avanti. Il tuo filo nel Profilo."],
+  ["22 novembre 2026 · sera", "Risposte in automatico, con le parole e la voce di chi non può rispondere. Domande sul carattere: come ragioni, come decidi. Domande su misura (dal Profilo). Lettere da aprire più avanti. Il tuo filo nel Profilo."],
   ["22 novembre 2026", "Menu laterale ☰ con tutte le voci. La domanda della settimana arriva a tutti, non solo ai nonni. Gli alberi di più famiglie si uniscono. Foto profilo e copertina per persone e famiglie."],
 ];
 
@@ -28,7 +28,7 @@ const SEZIONI = [
     <p>Per questo le domande per i grandi parlano di scelte: il lavoro, i soldi, gli amici, i litigi, i figli. Ai ragazzi arrivano domande più leggere.</p>
     <p><b>Domande su misura:</b> se le attivi dal <b>Profilo</b>, le prossime domande partono da quello che hai raccontato. I testi li legge solo un programma, in automatico; nessuna persona li vede. Puoi toglierle quando vuoi.</p>
     <p><b>Una lettera per più avanti:</b> dal menu, scrivi a una persona o alla famiglia e scegli quando si apre (tra un anno, ai suoi 18 anni, un giorno preciso). Fino ad allora chi la riceve vede solo che c'è.</p>
-    <p><b>Chiedi a me (Ancora+):</b> dal tuo <b>Profilo</b> scegli chi potrà chiederti consiglio, anche tra tanti anni. Risponde come risponderesti tu: con le tue parole e il tuo modo di pensare, da tutto quello che hai raccontato (mai il diario privato). Se acconsenti, con la tua voce, ricreata dai tuoi vocali: serve almeno un minuto, meglio cinque. Sul profilo di chi te l'ha permesso trovi <b>Chiedi a…</b>.</p>
+    <p><b>Quando qualcuno non può rispondere (Ancora+):</b> a chi è nella tua famiglia puoi scrivere anche se non c'è o non può rispondere in quel momento: <i>"mi racconti di quella volta a…"</i>, <i>"tu che faresti al posto mio?"</i>. Risponde in automatico, come risponderebbe lui, da tutto quello che ha raccontato (mai il diario privato). Lo trovi sul suo profilo e nella chat con lui: <b>Risponde in automatico</b>. Se ha creato la sua voce dal suo Profilo, la risposta arriva anche a voce.</p>
     <p><b>Il tuo filo:</b> nel Profilo vedi quante cose hai raccontato, con la tua voce, le ricette e le lettere.</p>`],
   ["racconta", "Raccontare", `
     <p>Tieni premuto il tasto arancione e parla: quando lasci, il racconto è registrato. Puoi riascoltarlo prima di condividerlo, aggiungere un titolo e una foto.</p>

@@ -46,7 +46,8 @@ async function conversazione(id) {
 
   $app().innerHTML = `
     <header class="testa" style="gap:10px"><a class="icona" href="#/chat" aria-label="Indietro" style="font-size:24px;text-decoration:none;color:inherit">‹</a>
-      ${avatar({ id: altro, nome: titolo }, 36, urlFoto)}<b style="flex:1;font-size:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(titolo)}</b></header>
+      ${avatar({ id: altro, nome: titolo }, 36, urlFoto)}<b style="flex:1;font-size:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(titolo)}</b>
+      ${gruppo ? "" : `<a id="auto" class="chip" href="#/chiedi/${altro}" hidden style="margin:0;font-size:13px;white-space:nowrap">Risponde in automatico</a>`}</header>
     <div id="msg" style="padding:8px 12px 150px;display:flex;flex-direction:column;gap:6px"></div>
     <form id="scrivi" style="position:fixed;left:0;right:0;bottom:calc(84px + env(safe-area-inset-bottom));z-index:15;display:flex;gap:8px;align-items:flex-end;padding:8px 10px;background:rgba(251,248,242,.97);border-top:1px solid var(--bordo)">
       <label aria-label="Foto o video" style="width:44px;height:44px;border-radius:22px;display:grid;place-items:center;font-size:20px;cursor:pointer;flex-shrink:0">📷<input type="file" id="file" accept="image/*,video/*" hidden></label>
@@ -55,6 +56,8 @@ async function conversazione(id) {
       <button id="invia" aria-label="Invia" style="width:44px;height:44px;border-radius:22px;border:0;background:var(--notte);color:#fff;font-size:18px;flex-shrink:0;display:none">➤</button>
     </form>`;
 
+  // a chi non c'è più o non può rispondere si può scrivere e avere risposta in automatico
+  if (!gruppo) sb.rpc("posso_chiedere", { p_persona: altro }).then(({ data }) => { const a = document.getElementById("auto"); if (a && data) a.hidden = false; });
   const box = document.getElementById("msg"), testo = document.getElementById("testo");
   let ultimo = null; const visti = new Set(); const nomi = new Map();
 

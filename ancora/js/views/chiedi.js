@@ -7,7 +7,7 @@ export default async function ({ id }) {
   const [{ data: p }, { data: posso }] = await Promise.all([
     sb.from("persone").select("id, nome, soprannome, foto_path").eq("id", id).maybeSingle(),
     sb.rpc("posso_chiedere", { p_persona: id })]);
-  if (!p || !posso) { $app().innerHTML = `<p class="pad">Non è attivo per te.</p>`; return; }
+  if (!p || !posso) { $app().innerHTML = `<p class="pad">Per scrivere a ${esc(nomeDi(p ?? {}))} e avere risposta in automatico serve stare nella stessa famiglia, con Ancora+.</p>`; return; }
   const { data: storia } = await sb.from("chiedi_messaggi").select("id, domanda, risposta, audio_path, creato_il")
     .eq("persona_id", id).order("creato_il").limit(60);
   const url = await urlMediaMolti([p.foto_path, ...(storia ?? []).map((m) => m.audio_path)].filter(Boolean));
@@ -33,7 +33,7 @@ export default async function ({ id }) {
     </div>
     <form id="chiedi" style="position:fixed;left:0;right:0;bottom:92px;padding:10px 14px;background:var(--carta);display:flex;gap:8px;border-top:1px solid rgba(0,0,0,.06)">
       <label class="visually-hidden" for="q">La tua domanda</label>
-      <textarea id="q" rows="1" placeholder="Tu che faresti al posto mio?" style="flex:1;resize:none;min-height:46px" required maxlength="1500"></textarea>
+      <textarea id="q" rows="1" placeholder="Mi racconti di quella volta che…" style="flex:1;resize:none;min-height:46px" required maxlength="1500"></textarea>
       <button class="btn ambra" style="width:auto;min-height:46px;padding:0 18px">Chiedi</button></form>`;
   scrollTo(0, document.body.scrollHeight);
 

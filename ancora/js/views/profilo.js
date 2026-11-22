@@ -1,5 +1,5 @@
 // Profilo di una persona: numeri, "Chiedi", il suo libro che cresce, l'album a griglia.
-import { sb, state, $app, esc, nomeDi, avatar, urlMediaMolti, ICONE, attivaNotifiche, notificheAttive, cambiaImmagine, chiediSuMisura, personeConosciute, passaPiu } from "../app.js";
+import { sb, state, $app, esc, nomeDi, avatar, urlMediaMolti, ICONE, attivaNotifiche, notificheAttive, cambiaImmagine, chiediSuMisura, passaPiu } from "../app.js";
 import { SUPABASE_URL } from "../config.js";
 
 const STORIE_PER_VOLUME = 25;
@@ -128,7 +128,7 @@ export default async function ({ id, params }) {
   if (!io) sb.rpc("posso_chiedere", { p_persona: pid }).then(({ data: ok }) => {
     const el = document.getElementById("chiedi-a");
     if (ok && el) el.innerHTML = `<a class="btn ambra" href="#/chiedi/${pid}" style="margin-top:10px">Chiedi a ${esc(nomeDi(p))}</a>
-      <p class="tenue" style="font-size:13px;margin:6px 0 0;text-align:center">Ti risponde con la sua voce e il suo modo di pensare</p>`;
+      <p class="tenue" style="font-size:13px;margin:6px 0 0;text-align:center">Risponde in automatico, come risponderebbe lui</p>`;
   });
 
   document.getElementById("chiedi")?.addEventListener("submit", async (e) => {
@@ -141,40 +141,26 @@ export default async function ({ id, params }) {
 }
 
 
-// "Chiedi a me": la persona decide se la famiglia potrà chiederle consiglio, chi, e se ricreare la sua voce
+// "Quando non posso rispondere": la persona può ricreare la sua voce per le risposte in automatico
 async function sezioneChiediAMe() {
-  const [{ data: v }, persone] = await Promise.all([sb.rpc("mia_voce"), personeConosciute()]);
-  const scelti = new Set(v?.chi ?? []);
+  const { data: v } = await sb.rpc("mia_voce");
   const min = Math.floor((v?.secondi ?? 0) / 60);
   if (document.getElementById("chiedi-a-me") || !location.hash.startsWith("#/profilo")) return;   // pagina già ridisegnata
-  $app().insertAdjacentHTML("beforeend", `<h2 id="chiedi-a-me">Chiedi a me</h2><div class="card">
-    <p style="margin:0 0 10px;line-height:1.5">Le persone che scegli potranno chiederti consiglio, anche tra tanti anni: <i>"tu che faresti al posto mio?"</i>. Ti rispondono le tue parole e il tuo modo di pensare, da tutto quello che racconti, con la tua voce.</p>
+  $app().insertAdjacentHTML("beforeend", `<h2 id="chiedi-a-me">Quando non posso rispondere</h2><div class="card">
+    <p style="margin:0 0 10px;line-height:1.5">Chi è nella tua famiglia può scriverti anche quando non puoi rispondere: <i>"mi racconti di quella volta…"</i>, <i>"tu che faresti al posto mio?"</i>. Risponde in automatico il tuo modo di essere, da tutto quello che racconti, con la tua voce se la crei qui.</p>
     ${state.piu ? `
-    <label class="riga" style="font-weight:800;color:var(--testo)"><input type="checkbox" id="c-attivo" ${v?.attivo ? "checked" : ""} style="width:22px;height:22px"> Permetti di chiedermi consiglio</label>
-    <div id="c-chi" ${v?.attivo ? "" : "hidden"} style="margin:8px 0 4px">
-      <b style="font-size:14px">Chi può chiedere</b>
-      ${persone.map((x) => `<label class="riga" style="margin:8px 0;color:var(--testo)"><input type="checkbox" data-chi="${x.id}" ${scelti.has(x.id) ? "checked" : ""} style="width:22px;height:22px"> ${esc(nomeDi(x))}</label>`).join("") || `<p class="tenue">Invita prima qualcuno nella tua famiglia.</p>`}</div>
-    <div style="border-top:1px solid rgba(0,0,0,.08);margin-top:12px;padding-top:12px">
+    <div>
       <b>La mia voce</b>
       ${v?.pronta ? `<p class="tenue" style="margin:4px 0 8px">✓ Pronta. Più racconti a voce, più ti somiglia: puoi rifarla quando vuoi.</p>
         <div class="riga" style="gap:8px"><button class="btn chiaro" id="v-rifai" style="flex:1">Rifalla</button><button class="btn chiaro" id="v-elimina" style="flex:1;color:#8A3B2E">Eliminala</button></div>`
       : `<p class="tenue" style="margin:4px 0 8px">Hai registrato ${min} ${min === 1 ? "minuto" : "minuti"} di vocali. Ne serve almeno 1, meglio 5 o più.</p>`}
       ${v?.pronta ? "" : `<label class="riga" style="color:var(--testo);align-items:flex-start;gap:10px"><input type="checkbox" id="v-ok" style="width:22px;height:22px;flex-shrink:0;margin-top:2px">
-        <span style="font-size:14px">Acconsento che la mia voce venga ricreata dai miei vocali, solo per rispondere alle persone che ho scelto. Posso eliminarla quando voglio.</span></label>
+        <span style="font-size:14px">Acconsento che la mia voce venga ricreata dai miei vocali, solo per rispondere alla mia famiglia dentro Ancora. Posso eliminarla quando voglio.</span></label>
         <button class="btn ambra" id="v-crea" style="margin-top:10px" ${min < 1 ? "disabled" : ""}>Crea la mia voce</button>`}
       <p id="v-esito" class="tenue" role="status"></p></div>`
     : `<button class="btn ambra" id="c-piu">Fa parte di Ancora+</button>`}</div>`);
 
-  document.getElementById("c-piu")?.addEventListener("click", () => passaPiu("Chiedi a me"));
-  const salva = async (campi) => {
-    const { error } = await sb.from("persone").update(campi).eq("id", state.io.id);
-    if (error) alert("Non salvato: " + error.message);
-  };
-  document.getElementById("c-attivo")?.addEventListener("change", (e) => {
-    document.getElementById("c-chi").hidden = !e.target.checked; salva({ chiedi_attivo: e.target.checked });
-  });
-  document.querySelectorAll("[data-chi]").forEach((c) => c.onchange = () =>
-    salva({ chiedi_chi: [...document.querySelectorAll("[data-chi]:checked")].map((x) => x.dataset.chi) }));
+  document.getElementById("c-piu")?.addEventListener("click", () => passaPiu("Rispondere quando non puoi"));
 
   const voce = async (azione) => {
     const esito = document.getElementById("v-esito");
