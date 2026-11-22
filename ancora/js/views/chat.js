@@ -4,40 +4,45 @@ import { sb, state, $app, esc, avatar, nomeDi, urlMediaMolti, quando } from "../
 
 export default async function ({ id }) {
   if (id) return conversazione(id);
-  const { data: lista } = await sb.rpc("mie_chat");
+  const [{ data: lista }, persone] = await Promise.all([sb.rpc("mie_chat"), personeConosciute()]);
   const chats = lista ?? [];
-  const url = await urlMediaMolti(chats.map((c) => c.foto_path).filter(Boolean));
-  const anteprima = (u) => !u ? "Nessun messaggio" : `${u.autore ? `${esc(u.autore)}: ` : ""}${u.testo ? esc(u.testo.slice(0, 60)) : u.media_tipo === "audio" ? "🎙 Vocale" : u.media_tipo === "video" ? "🎬 Video" : "📷 Foto"}`;
+  const conChat = new Set(chats.map((c) => c.persona_id).filter(Boolean));
+  const altre = persone.filter((p) => !conChat.has(p.id));
+  const url = await urlMediaMolti([...chats.map((c) => c.foto_path), ...altre.map((p) => p.foto_path)].filter(Boolean));
+  const anteprima = (u) => !u ? "Scrivi il primo messaggio" : `${u.autore ? `${esc(u.autore)}: ` : ""}${u.testo ? esc(u.testo.slice(0, 60)) : u.media_tipo === "audio" ? "🎙 Vocale" : u.media_tipo === "video" ? "🎬 Video" : "📷 Foto"}`;
+  const riga = (href, chiave, ava, nome, sotto, destra = "", grassetto = false) => `<a href="${href}" data-cerca="${esc(chiave.toLowerCase())}" style="display:flex;gap:12px;align-items:center;padding:9px 18px;text-decoration:none;color:inherit">
+      ${ava}<span style="flex:1;min-width:0"><b style="display:block;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(nome)}</b>
+      <span class="tenue" style="display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;${grassetto ? "color:var(--testo);font-weight:700" : ""}">${sotto}</span></span>${destra}</a>`;
   $app().innerHTML = `
-    <header class="testa"><b style="font-family:Fraunces,serif;font-size:24px;flex:1">Chat</b>
-      <button class="icona" id="nuova" aria-label="Nuovo messaggio" style="border:0;background:transparent;font-size:26px;color:inherit">✎</button></header>
-    <div>${chats.map((c) => `<a href="#/chat/${c.cerchia_id ? "c-" + c.cerchia_id : "d-" + c.persona_id}" style="display:flex;gap:12px;align-items:center;padding:10px 18px;text-decoration:none;color:inherit">
-        ${avatar({ id: c.cerchia_id ?? c.persona_id, nome: c.nome }, 52, c.foto_path ? url[c.foto_path] : null)}
-        <span style="flex:1;min-width:0"><b style="display:block;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(c.nome)}</b>
-          <span class="tenue" style="display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;${c.non_letti ? "color:var(--testo);font-weight:700" : ""}">${anteprima(c.ultimo)}</span></span>
-        <span style="text-align:right;flex-shrink:0"><span class="tenue" style="font-size:12px">${c.ultimo ? quando(c.ultimo.creato_il) : ""}</span>
-          ${c.non_letti ? `<span style="display:block;margin:4px 0 0 auto;min-width:22px;height:22px;border-radius:11px;background:var(--ambra);color:#fff;font-size:12px;font-weight:800;display:grid;place-items:center;padding:0 6px">${c.non_letti}</span>` : ""}</span>
-      </a>`).join("") || `<p class="pad tenue">Ancora nessuna famiglia: creane una da Famiglie e cerchie.</p>`}</div>`;
-  document.getElementById("nuova").onclick = scegliPersona;
+    <header class="testa"><b style="font-family:Fraunces,serif;font-size:24px;flex:1">Chat</b></header>
+    <div style="padding:0 16px 8px;position:sticky;top:64px;z-index:4;background:var(--carta)">
+      <input id="cerca" type="search" placeholder="🔍  Cerca una persona o una famiglia" aria-label="Cerca" style="border-radius:999px;padding:11px 16px;min-height:44px"></div>
+    <div id="elenco">
+      ${chats.map((c) => riga(`#/chat/${c.cerchia_id ? "c-" + c.cerchia_id : "d-" + c.persona_id}`, c.nome,
+        avatar({ id: c.cerchia_id ?? c.persona_id, nome: c.nome }, 52, c.foto_path ? url[c.foto_path] : null), c.nome, anteprima(c.ultimo),
+        `<span style="text-align:right;flex-shrink:0"><span class="tenue" style="font-size:12px">${c.ultimo ? quando(c.ultimo.creato_il) : ""}</span>
+          ${c.non_letti ? `<span style="display:grid;place-items:center;margin:4px 0 0 auto;min-width:22px;height:22px;border-radius:11px;background:var(--ambra);color:#fff;font-size:12px;font-weight:800;padding:0 6px">${c.non_letti}</span>` : ""}</span>`,
+        !!c.non_letti)).join("")}
+      ${altre.length ? `<h2 data-titolo>Scrivi a</h2>${altre.map((p) => riga(`#/chat/d-${p.id}`, nomeDi(p), avatar(p, 44, p.foto_path ? url[p.foto_path] : null), nomeDi(p), esc(p.dove ?? ""))).join("")}` : ""}
+      ${!chats.length && !altre.length ? `<p class="pad tenue">Ancora nessuno qui: <a href="#/cerchie">invita la famiglia</a>.</p>` : ""}
+    </div>`;
+  document.getElementById("cerca").oninput = (e) => {
+    const q = e.target.value.trim().toLowerCase();
+    document.querySelectorAll("#elenco [data-cerca]").forEach((a) => { a.style.display = !q || a.dataset.cerca.includes(q) ? "" : "none"; });
+    document.querySelector("#elenco [data-titolo]")?.style.setProperty("display", q ? "none" : "");
+  };
 }
 
-async function scegliPersona() {
-  // le persone delle mie famiglie e cerchie
+// tutte le persone delle mie famiglie e cerchie (con il nome della prima famiglia in comune)
+async function personeConosciute() {
   const ids = state.cerchie.map((c) => c.id);
-  const { data: m } = await sb.from("cerchia_membri").select("persona_id, persone(id, nome, cognome, soprannome, foto_path)").in("cerchia_id", ids).eq("stato", "attivo");
-  const { data: prop } = await sb.from("cerchie").select("proprietario_id, persone:proprietario_id(id, nome, cognome, soprannome, foto_path)").in("id", ids);
-  const persone = [...new Map([...(m ?? []).map((x) => x.persone), ...(prop ?? []).map((x) => x.persone)].filter((p) => p && p.id !== state.io.id).map((p) => [p.id, p])).values()]
-    .sort((a, b) => nomeDi(a).localeCompare(nomeDi(b)));
-  const url = await urlMediaMolti(persone.map((p) => p.foto_path).filter(Boolean));
-  const f = document.createElement("div");
-  f.innerHTML = `<div data-chiudi style="position:fixed;inset:0;background:rgba(18,48,44,.45);z-index:40"></div>
-    <div style="position:fixed;left:0;right:0;bottom:0;max-height:75vh;overflow:auto;z-index:41;background:#FBF8F2;border-radius:24px 24px 0 0;padding:18px 0 calc(18px + env(safe-area-inset-bottom))">
-      <b style="display:block;padding:0 18px 8px;font-size:18px">Scrivi a…</b>
-      ${persone.map((p) => `<a href="#/chat/d-${p.id}" style="display:flex;gap:12px;align-items:center;padding:8px 18px;color:inherit;text-decoration:none">${avatar(p, 40, p.foto_path ? url[p.foto_path] : null)}<b>${esc(nomeDi(p))}</b></a>`).join("")
-        || `<p class="pad tenue">Invita qualcuno in famiglia per scrivergli.</p>`}
-    </div>`;
-  document.body.appendChild(f);
-  f.querySelectorAll("[data-chiudi], a").forEach((x) => x.addEventListener("click", () => f.remove()));
+  if (!ids.length) return [];
+  const [{ data: m }, { data: prop }] = await Promise.all([
+    sb.from("cerchia_membri").select("cerchia_id, persone(id, nome, cognome, soprannome, foto_path)").in("cerchia_id", ids).eq("stato", "attivo"),
+    sb.from("cerchie").select("id, persone:proprietario_id(id, nome, cognome, soprannome, foto_path)").in("id", ids)]);
+  const nomeCerchia = (id) => state.cerchie.find((c) => c.id === id)?.nome ?? "";
+  const tutte = [...(m ?? []).map((x) => ({ ...x.persone, dove: nomeCerchia(x.cerchia_id) })), ...(prop ?? []).map((x) => ({ ...x.persone, dove: nomeCerchia(x.id) }))];
+  return [...new Map(tutte.filter((p) => p?.id && p.id !== state.io.id).map((p) => [p.id, p])).values()].sort((a, b) => nomeDi(a).localeCompare(nomeDi(b)));
 }
 
 let timer = null;
