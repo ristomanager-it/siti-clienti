@@ -6,9 +6,8 @@ export default async function ({ params } = {}) {
   const invito = params?.invito ?? "", amico = params?.amico ?? "";
   const ant = invito ? await fetch(`${SUPABASE_URL}/functions/v1/invito?codice=${encodeURIComponent(invito)}`).then((r) => r.json()).catch(() => null) : null;
   $app().innerHTML = `${ant && !ant.errore ? anteprima(ant) : ""}
-    <div class="pad" style="padding-top:${ant && !ant.errore ? 18 : 48}px">${ant && !ant.errore ? "" : `<span class="logo" style="font-size:40px">Ancora</span>`}
-      <div class="tenue" style="font-weight:700;margin:-4px 0 18px">Il cloud dei tuoi ricordi</div>
-      <h1 style="font-size:28px;line-height:1.2">${ant && !ant.errore ? "Crea il tuo account ed entra." : invito ? "Ti aspettano in famiglia." : "Crea il tuo account gratis."}</h1>
+    <div class="pad" style="padding-top:${ant && !ant.errore ? 18 : 48}px">${ant && !ant.errore ? "" : `<span class="logo" style="font-size:40px">Ancora</span><div class="tenue" style="font-weight:700;margin:-4px 0 18px">Il cloud dei tuoi ricordi</div>`}
+      <h1 style="font-size:28px;line-height:1.2">${ant && !ant.errore ? "Ti hanno preparato un posto." : invito ? "Ti aspettano in famiglia." : "Crea il tuo account gratis."}</h1>
       <p style="font-size:16px;margin:0">${invito ? "Crea il tuo account e sei dentro." : "La tua famiglia, i tuoi gruppi, i tuoi ricordi. Gratis, senza carta di credito."}</p></div>
     <form id="f" class="card">
       <div class="riga" style="gap:8px">
