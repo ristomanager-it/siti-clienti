@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "54";
+const VER = "55";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 const ROTTE = {
@@ -30,6 +30,8 @@ const ROTTE = {
   "invita": () => import(`./views/invita.js?v=${VER}`),
   "chat": () => import(`./views/chat.js?v=${VER}`),
   "calendario": () => import(`./views/calendario.js?v=${VER}`),
+  "spese": () => import(`./views/spese.js?v=${VER}`),
+  "liste": () => import(`./views/liste.js?v=${VER}`),
   "chisiamo": () => import(`./views/info.js?v=${VER}`).then((m) => ({ default: m.chisiamo })),
   "contatti": () => import(`./views/info.js?v=${VER}`).then((m) => ({ default: m.contatti })),
   "privacy": () => import(`./views/info.js?v=${VER}`).then((m) => ({ default: m.privacy })),
@@ -313,7 +315,7 @@ function vociMenu() {
   return [
     ["Le mie famiglie e i gruppi", [...famiglie.map((c) => [`#/?c=${c.id}`, c.nome]),
       ...(famiglie.length > 1 ? [["#/?c=tutti", "Tutte insieme"]] : []), ["#/?c=diretti", "Messaggi per me"]]],
-    ["La famiglia", [["#/calendario", "Calendario"], ["#/settimana", "La domanda della settimana"], ["#/albero", "L'albero"], ["#/cerchie", "Famiglie e cerchie"]]],
+    ["La famiglia", [["#/calendario", "Calendario"], ["#/liste", "Liste e desideri"], ["#/spese", "Spese"], ["#/settimana", "La domanda della settimana"], ["#/albero", "L'albero"], ["#/cerchie", "Famiglie e cerchie"]]],
     ["I miei ricordi", [["#/archivio", "Il cloud dei ricordi"], ["#/racconta", "Racconta"], ["#/diario", "Il diario"], ["#/ricette", "Il ricettario"], [`#/libro/${state.io.id}`, "Il mio libro"]]],
     ["Agenda", [["vacanze", "Vacanze"], ["compiti", "Compiti"], ["esami", "Esami"]].filter(([k]) => attivi(k)).map(([k, t]) => [`#/agenda?t=${k}`, t])],
     ["Il mio account", [["#/invita", "Invita un amico · +1 GB"], ["#/profilo", "Profilo e impostazioni"], ["#/piano", "Il piano"], ["#/servizi", "Servizi"], ["#/omaggio", "Codice omaggio"], ["#/istruzioni", "Istruzioni"]]],
@@ -355,7 +357,7 @@ function apriMenu() {
 }
 
 // --- Aggiornamento: tira giù per aggiornare, e aggiornamento da solo quando riapri l'app ---
-const PAGINE_VIVE = new Set(["", "calendario", "chat", "settimana", "archivio", "cerchie", "albero", "agenda", "ricette", "profilo", "ricordo", "racconti"]);
+const PAGINE_VIVE = new Set(["", "calendario", "chat", "spese", "liste", "settimana", "archivio", "cerchie", "albero", "agenda", "ricette", "profilo", "ricordo", "racconti"]);
 const paginaAttuale = () => (location.hash.replace(/^#\/?/, "").split(/[/?]/)[0] || "");
 const occupato = () => document.querySelector("#menu-app, #banner-cookie, input:focus, textarea:focus")
   || [...document.querySelectorAll("video")].some((v) => !v.paused)
