@@ -100,7 +100,7 @@ export function apriEditor(file, cerchie, cerchiaIniziale) {
     p.style.cssText = "position:absolute;left:0;right:0;bottom:0;z-index:10;background:rgba(20,20,20,.97);border-radius:22px 22px 0 0;padding:14px 10px calc(14px + env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(8,1fr);gap:4px;max-height:50vh;overflow:auto";
     p.innerHTML = EMOJI.map((e) => `<button data-e="${e}" style="background:none;border:0;font-size:32px;height:52px">${e}</button>`).join("");
     v.appendChild(p);
-    p.onclick = (e) => { const x = e.target.closest("[data-e]"); if (!x) return; sopra.push({ tipo: "emoji", t: x.dataset.e, x: .5, y: .5, s: 72 }); scelto = sopra.length - 1; p.remove(); disegna(); };
+    p.onclick = (e) => { const x = e.target.closest("[data-e]"); if (!x) return; sopra.push({ tipo: "emoji", t: x.dataset.e, x: .5 + (Math.random() - .5) * .3, y: .62 + (Math.random() - .5) * .2, s: 72 }); scelto = sopra.length - 1; p.remove(); disegna(); };
   };
 
   // --- musica: un file audio del telefono ---
