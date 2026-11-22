@@ -70,5 +70,83 @@
   "nome": "Domenica in famiglia",
   "umore": "Allegro",
   "origine": "Originale per Ancora"
+ },
+ {
+  "id": "atmosfera",
+  "nome": "Atmosfera",
+  "umore": "Rock",
+  "origine": "Originale per Ancora"
+ },
+ {
+  "id": "rock",
+  "nome": "Rock",
+  "umore": "Rock",
+  "origine": "Originale per Ancora"
+ },
+ {
+  "id": "lunga-strada",
+  "nome": "Lunga strada",
+  "umore": "Rock",
+  "origine": "Originale per Ancora"
+ },
+ {
+  "id": "boom-bap",
+  "nome": "Boom bap",
+  "umore": "Rap",
+  "origine": "Originale per Ancora"
+ },
+ {
+  "id": "trap",
+  "nome": "Trap",
+  "umore": "Rap",
+  "origine": "Originale per Ancora"
+ },
+ {
+  "id": "lofi",
+  "nome": "Lo-fi",
+  "umore": "Rap",
+  "origine": "Originale per Ancora"
+ },
+ {
+  "id": "ballo",
+  "nome": "Ballo",
+  "umore": "Allegro",
+  "origine": "Originale per Ancora"
+ },
+ {
+  "id": "bossa",
+  "nome": "Mare d'estate",
+  "umore": "Viaggio",
+  "origine": "Originale per Ancora"
+ },
+ {
+  "id": "tu-scendi",
+  "nome": "Tu scendi dalle stelle",
+  "umore": "Natale",
+  "origine": "Tradizionale (pubblico dominio)"
+ },
+ {
+  "id": "astro-del-ciel",
+  "nome": "Astro del ciel",
+  "umore": "Natale",
+  "origine": "Tradizionale (pubblico dominio)"
+ },
+ {
+  "id": "marcia-nuziale",
+  "nome": "Marcia nuziale",
+  "umore": "Emozionante",
+  "origine": "Classico (pubblico dominio)"
+ },
+ {
+  "id": "tarantella",
+  "nome": "Tarantella",
+  "umore": "Allegro",
+  "origine": "Tradizionale (pubblico dominio)"
+ },
+ {
+  "id": "danubio",
+  "nome": "Bel Danubio blu",
+  "umore": "Dolce",
+  "origine": "Classico (pubblico dominio)"
  }
 ]

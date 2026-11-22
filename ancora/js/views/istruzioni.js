@@ -6,7 +6,7 @@ import { $app, esc } from "../app.js";
 const AGGIORNATE = "22 novembre 2026";
 
 const NOVITA = [
-  ["22 novembre 2026 · sera tardi", "Libreria musicale per le storie: 12 brani (allegri, di Natale, compleanno, dolci, emozionanti, viaggio). Si ascoltano prima di sceglierli."],
+  ["22 novembre 2026 · sera tardi", "Libreria musicale per le storie: 25 brani, anche rock e rap (allegri, di Natale, compleanno, dolci, emozionanti, viaggio). Si ascoltano prima di sceglierli."],
   ["22 novembre 2026 · sera", "Storie come su Instagram: testo (Aa) con colori, emoji da spostare e ingrandire, musica da un file del telefono. Guardando una storia: reazioni con le emoji e risposte, che arrivano anche in chat."],
   ["22 novembre 2026 · sera", "Foto dei post a scorrimento con doppio tocco per il cuore; ⋯ sui tuoi post per modificarli o eliminarli; le domande ora arrivano come notifica e stanno in Chat → Domande per te."],
   ["22 novembre 2026 · sera tardi", "Come mettere Ancora sulla schermata Home, con i passi giusti per il tuo telefono."],
@@ -17,7 +17,7 @@ const NOVITA = [
 const SEZIONI = [
   ["musica", "La musica delle storie", `
     <p>Quando crei una storia tocca <b>♪</b>: puoi scegliere un brano della libreria di Ancora (tocca ▶ per ascoltarlo, poi <b>Usa</b>) oppure, con <b>Dal mio telefono</b>, l'audio di un video o un file audio salvato nell'app File.</p>
-    <p class="tenue">Le musiche della libreria sono brani originali di Ancora e melodie tradizionali e classiche di pubblico dominio (Jingle Bells, Tanti auguri, la Ninna nanna di Brahms, l'Inno alla gioia, Per Elisa, il Canone di Pachelbel), suonate per Ancora. Le canzoni di Apple Music e Spotify non si possono usare: sono protette.</p>`],
+    <p class="tenue">Le musiche della libreria sono brani originali di Ancora e melodie tradizionali e classiche di pubblico dominio (Jingle Bells, Tu scendi dalle stelle, Astro del ciel, Tanti auguri, la Ninna nanna di Brahms, l'Inno alla gioia, Per Elisa, il Canone di Pachelbel, il Bel Danubio blu, la Marcia nuziale, la Tarantella), suonate per Ancora. Le canzoni di Apple Music e Spotify non si possono usare: sono protette.</p>`],
   ["schermata-home", "Metti Ancora sulla schermata Home", `
     <p>Così si apre con un tocco, a tutto schermo, come le altre app. Sul tuo telefono:</p>
     ${istruzioniSchermataHome()}`],
