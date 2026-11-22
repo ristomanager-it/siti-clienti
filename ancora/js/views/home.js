@@ -144,12 +144,26 @@ export default async function ({ params }) {
       const a = e.target.dataset?.a;
       if (e.target === f || a === "annulla") return f.remove();
       if (a === "modifica") {
-        const t = prompt("Il testo del post", r?.testo ?? "");
         f.remove();
-        if (t === null) return;
-        const { error } = await sb.from("ricordi").update({ testo: t.trim() || null }).eq("id", id);
-        if (error) return alert("Non salvato: " + error.message);
-        aggiorna();
+        // si modifica direttamente lì, sul testo del post
+        const el = document.querySelector(`[data-testo="${id}"]`);
+        if (!el) return;
+        const prima = r?.testo ?? "";
+        el.innerHTML = `<textarea rows="3" style="width:100%;font:inherit;font-size:17px;line-height:1.4;border:2px solid var(--ambra);border-radius:14px;padding:10px 12px;background:#fff;color:var(--testo);resize:none">${esc(prima)}</textarea>
+          <span class="riga" style="gap:8px;margin-top:8px;font-family:Manrope,sans-serif"><button class="btn ambra" data-salva style="flex:1;min-height:44px">Salva</button><button class="btn chiaro" data-annulla style="flex:1;min-height:44px">Annulla</button></span>`;
+        el.style.display = "block";
+        const ta = el.querySelector("textarea");
+        const alto = () => { ta.style.height = "auto"; ta.style.height = ta.scrollHeight + "px"; };
+        ta.oninput = alto; alto(); ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length);
+        const ripristina = (t) => { el.style.display = ""; el.textContent = t; };
+        el.querySelector("[data-annulla]").onclick = (ev) => { ev.preventDefault(); ripristina(prima); };
+        el.querySelector("[data-salva]").onclick = async (ev) => {
+          ev.preventDefault();
+          const t = ta.value.trim();
+          const { error } = await sb.from("ricordi").update({ testo: t || null }).eq("id", id);
+          if (error) return alert("Non salvato: " + error.message);
+          if (r) r.testo = t; ripristina(t);
+        };
       }
       if (a === "elimina") {
         f.remove();
@@ -201,7 +215,7 @@ function post(r, url, i) {
         <div class="carosello">${foto.map((f, k) => `<img src="${esc(url[f.path] ?? "")}" alt="" ${k ? 'loading="lazy"' : ""} draggable="false">`).join("")}</div>
         ${foto.length > 1 ? `<span class="conta">1/${foto.length}</span><div class="pallini">${foto.map((_, k) => `<i class="${k ? "" : "on"}"></i>`).join("")}</div>` : ""}
         ${voce}<span class="cuore-grande" aria-hidden="true">${ICONE.cuore}</span></div>`
-    : `<div class="lettera">${esc(r.testo ?? "")}${voce ? `<div style="margin-top:14px">${voce.replace('class="voce"', 'class="voce" style="margin:0;background:rgba(18,48,44,.9)"')}</div>` : ""}</div>`;
+    : `<div class="lettera"><span data-testo="${r.id}">${esc(r.testo ?? "")}</span>${voce ? `<div style="margin-top:14px">${voce.replace('class="voce"', 'class="voce" style="margin:0;background:rgba(18,48,44,.9)"')}</div>` : ""}</div>`;
   return `<article class="post" style="position:relative">
     <a class="post-testa" href="#/profilo/${r.autore_id}">${avatar(r.persone, 38, r.persone?.foto_path ? url[r.persone.foto_path] : null)}
       <div><b>${esc(nomeDi(r.persone))}</b><small>${quando(r.creato_il)}</small></div></a>
@@ -214,7 +228,7 @@ function post(r, url, i) {
     </div>
     <div class="didascalia"><b style="font-size:14px" id="n-${r.id}" data-n="${cuori.length}" data-mio="${mio ? 1 : 0}">${cuori.length} cuori</b>
       ${r.titolo ? `<span class="q">${esc(r.titolo)}</span>` : ""}
-      ${foto.length && r.testo ? `<span>${esc(r.testo)}</span>` : ""}
+      ${foto.length || video ? `<span data-testo="${r.id}">${esc(r.testo ?? "")}</span>` : ""}
     </div></article>`;
 }
 
