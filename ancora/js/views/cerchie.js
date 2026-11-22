@@ -57,7 +57,6 @@ export default async function () {
 
   $app().innerHTML = `
     <header class="testa"><span class="logo" style="font-size:22px">Famiglie e cerchie</span><span></span></header>
-    <p class="pad tenue" style="margin:0">Puoi stare in più famiglie: la tua, quella di tua moglie o di tuo marito, e con gli amici. Ognuna vede solo quello che condividi con lei.</p>
     <h2>Le famiglie</h2>
     ${famiglie.map(scheda).join("") || `<p class="pad tenue">Ancora nessuna famiglia. Creane una qui sotto.</p>`}
     ${gruppi.length ? `<h2>Amici e gruppi</h2>` + gruppi.map(scheda).join("") : ""}
