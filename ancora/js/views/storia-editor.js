@@ -63,7 +63,7 @@ export function apriEditor(file, cerchie, cerchiaIniziale) {
       if (sopra[scelto].tipo === "testo") h += `<button data-modifica style="${b};padding:0 12px">Modifica</button>`;
       h += `<button data-via style="${b}">🗑</button>`;
     }
-    if (musica) h += `<span style="background:rgba(255,255,255,.15);border-radius:20px;padding:9px 14px;font-weight:700;max-width:50vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">♪ ${esc(musica.name.replace(/\.[^.]+$/, ""))}</span><button data-togli-mu style="${b}">✕</button>`;
+    if (musica) h += `<span style="background:rgba(255,255,255,.15);border-radius:20px;padding:9px 14px;font-weight:700;max-width:50vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">♪ ${esc(String(musica.name).replace(/\.[^.]+$/, ""))}</span><button data-togli-mu style="${b}">✕</button>`;
     strumenti.innerHTML = h;
     strumenti.querySelector("[data-meno]")?.addEventListener("click", () => { sopra[scelto].s = Math.max(14, sopra[scelto].s * .85); disegna(); });
     strumenti.querySelector("[data-piu]")?.addEventListener("click", () => { sopra[scelto].s = Math.min(160, sopra[scelto].s * 1.18); disegna(); });
@@ -105,16 +105,33 @@ export function apriEditor(file, cerchie, cerchiaIniziale) {
 
   // --- musica: un file audio del telefono ---
   const fm = $("[data-file-mu]");
-  // iPhone: da "Libreria foto" si sceglie un video e se ne usa l'audio; da "Scegli file" un mp3/m4a salvato in File
-  $("[data-mu]").onclick = () => {
+  // musica: la libreria di Ancora (brani nostri, senza diritti) oppure un file del telefono
+  let anteprima = null;
+  $("[data-mu]").onclick = async () => {
+    const elenco = await (await fetch("musica/elenco.json")).json().catch(() => []);
+    const umori = [...new Set(elenco.map((b) => b.umore))];
     const p = document.createElement("div");
-    p.style.cssText = "position:absolute;left:0;right:0;bottom:0;z-index:10;background:rgba(20,20,20,.97);border-radius:22px 22px 0 0;padding:18px 18px calc(18px + env(safe-area-inset-bottom));display:grid;gap:10px";
-    p.innerHTML = `<b style="font-size:18px">♪ Musica per la storia</b>
-      <span style="opacity:.8;font-size:15px;line-height:1.4">Scegli un <b>video</b> dalla Libreria foto (usiamo solo il suo audio) oppure, con <b>Scegli file</b>, una canzone o un vocale salvati nell'app File.</span>
-      <button class="btn ambra" data-sc>Scegli</button><button class="btn chiaro" data-no style="background:transparent;color:#fff">Annulla</button>`;
+    p.style.cssText = "position:absolute;left:0;right:0;bottom:0;z-index:10;background:rgba(20,20,20,.98);border-radius:22px 22px 0 0;padding:16px 14px calc(16px + env(safe-area-inset-bottom));max-height:70vh;overflow:auto";
+    p.innerHTML = `<div style="display:flex;align-items:center;margin-bottom:6px"><b style="flex:1;font-size:18px">♪ Musica</b><button data-no style="${bt}">✕</button></div>
+      ${umori.map((u) => `<div style="font-size:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;opacity:.6;margin:12px 0 4px">${esc(u)}</div>
+        ${elenco.filter((b) => b.umore === u).map((b) => `<div style="display:flex;align-items:center;gap:10px;padding:6px 0">
+          <button data-prova="${b.id}" aria-label="Ascolta" style="width:42px;height:42px;border-radius:21px;border:0;background:rgba(255,255,255,.15);color:#fff;font-size:16px">▶</button>
+          <span style="flex:1"><b>${esc(b.nome)}</b></span>
+          <button data-usa="${b.id}" style="border:0;border-radius:18px;background:var(--ambra);color:#fff;font-weight:800;padding:9px 14px">Usa</button></div>`).join("")}`).join("")}
+      <button class="btn chiaro" data-tel style="margin-top:14px;background:transparent;color:#fff">Dal mio telefono (un video o un file audio)</button>`;
     v.appendChild(p);
-    p.querySelector("[data-sc]").onclick = () => { p.remove(); fm.click(); };
-    p.querySelector("[data-no]").onclick = () => p.remove();
+    const ferma = () => { anteprima?.pause(); anteprima = null; p.querySelectorAll("[data-prova]").forEach((x) => x.textContent = "▶"); };
+    p.querySelector("[data-no]").onclick = () => { ferma(); p.remove(); };
+    p.querySelectorAll("[data-prova]").forEach((x) => x.onclick = () => {
+      const era = x.textContent === "■"; ferma(); if (era) return;
+      anteprima = new Audio(`musica/${x.dataset.prova}.m4a`); anteprima.play().catch(() => {}); x.textContent = "■";
+    });
+    p.querySelectorAll("[data-usa]").forEach((x) => x.onclick = () => {
+      const b = elenco.find((y) => y.id === x.dataset.usa); ferma(); p.remove();
+      musica = { libreria: true, id: b.id, name: b.nome }; barra();
+      const a = new Audio(`musica/${b.id}.m4a`); a.play().then(() => setTimeout(() => a.pause(), 3000)).catch(() => {});
+    });
+    p.querySelector("[data-tel]").onclick = () => { ferma(); p.remove(); fm.click(); };
   };
   fm.onchange = () => {
     const f = fm.files?.[0]; fm.value = ""; if (!f) return;
@@ -135,14 +152,14 @@ export function apriEditor(file, cerchie, cerchiaIniziale) {
       const media = $("[data-media]");
       let blob = file, tipoMedia = video ? "video" : "foto", ext = (file.name.split(".").pop() || (video ? "mp4" : "jpg")).toLowerCase().slice(0, 5);
       if (!video) { blob = await cuoci(media, sopra, strati.getBoundingClientRect()); ext = "jpg"; }
-      const dettagli = video && sopra.length ? { sopra } : null;
+      const dettagli = (video && sopra.length) || musica?.libreria ? { ...(video && sopra.length ? { sopra } : {}), ...(musica?.libreria ? { musica: { id: musica.id, nome: musica.name } } : {}) } : null;
       const { data: r, error } = await sb.from("ricordi").insert({ autore_id: state.io.id, tipo: "storia", visibilita: "cerchia", cerchia_id: $("[data-chi]").value, in_memoria: true, dettagli }).select("id").single();
       if (error) throw error;
       const path = `${state.io.id}/${r.id}/${tipoMedia}.${ext}`;
       const up = await sb.storage.from("ricordi").upload(path, blob, { contentType: video ? file.type || undefined : "image/jpeg" });
       if (up.error) { await sb.from("ricordi").delete().eq("id", r.id); throw up.error; }
       await sb.from("ricordi_media").insert({ ricordo_id: r.id, path, tipo: tipoMedia, byte: blob.size, mime: video ? file.type || null : "image/jpeg", ordine: 0 });
-      if (musica) {
+      if (musica && !musica.libreria) {
         const mp = `${state.io.id}/${r.id}/musica.${(musica.name.split(".").pop() || "m4a").toLowerCase().slice(0, 5)}`;
         const um = await sb.storage.from("ricordi").upload(mp, musica, { contentType: musica.type || undefined });
         if (!um.error) await sb.from("ricordi_media").insert({ ricordo_id: r.id, path: mp, tipo: "audio", byte: musica.size, mime: musica.type || null, ordine: 1, descrizione: musica.name.replace(/\.[^.]+$/, "").slice(0, 80) });

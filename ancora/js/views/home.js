@@ -325,8 +325,10 @@ function guardaStorie(gruppi, gi, url, conAggiungi = false) {
   const indietro = () => { if (i > 0) i--; else if (g > 0 && !conAggiungi) { g--; i = gruppi[g].storie.length - 1; } mostra(); };
   function mostra() {
     clearTimeout(timer);
-    const gr = gruppi[g], r = gr.storie[i], m = visivo(r), mus = r.ricordi_media.find((x) => x.tipo === "audio");
-    musica?.pause(); musica = mus && url[mus.path] ? new Audio(url[mus.path]) : null;
+    const gr = gruppi[g], r = gr.storie[i], m = visivo(r);
+    const lib = r.dettagli?.musica;   // brano della libreria di Ancora
+    const mus = lib ? { descrizione: lib.nome } : r.ricordi_media.find((x) => x.tipo === "audio");
+    musica?.pause(); musica = lib ? new Audio(`musica/${lib.id}.m4a`) : mus && url[mus.path] ? new Audio(url[mus.path]) : null;
     segna(r.id);
     const min = Math.floor((Date.now() - new Date(r.creato_il)) / 60_000);
     const fa = min < 1 ? "adesso" : min < 60 ? `${min} min` : `${Math.floor(min / 60)} h`;
