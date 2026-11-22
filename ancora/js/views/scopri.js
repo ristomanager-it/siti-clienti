@@ -197,6 +197,12 @@ export default async function ({ params } = {}) {
         <b style="font-family:Fraunces,serif;font-size:26px;line-height:1.15">Una famiglia, tante famiglie.</b>
         <p style="margin:6px 0 0;color:#E8DCC8;line-height:1.45">La tua, quella dei tuoi genitori, quella dei suoceri. E gli amici di sempre. Stai in tutte, e gli alberi si uniscono dove c'è la stessa persona.</p></div></div>
 
+    ${sezione(`${etichetta("Per chi conta davvero")}
+      <h2 style="font-family:Fraunces,serif;font-size:30px;line-height:1.15;margin:6px 0 14px;color:${C.panna}">«Papà, tu che avresti fatto al posto mio?»</h2>
+      <p style="font-size:17px;line-height:1.55;color:#E6EFEC;margin:0 0 12px">Un giorno qualcuno te lo chiederà. Ancora ti aiuta a lasciare la risposta, un poco alla volta: domande sul lavoro, sui soldi, sull'amicizia, sulle scelte difficili. Non cosa hai fatto, ma <b style="color:${C.panna}">come ragioni e come decidi</b>.</p>
+      <p style="font-size:17px;line-height:1.55;color:#E6EFEC;margin:0 0 12px">Le domande imparano da quello che racconti, e ogni risposta resta a chi scegli tu. Puoi anche scrivere <b style="color:${C.panna}">una lettera da aprire più avanti</b>: per i 18 anni di tua figlia, o tra dieci anni. Fino a quel giorno resta chiusa.</p>
+      <p style="font-size:15px;color:#B9CCC7;margin:0">Ai ragazzi basta usarla come un social. Ai grandi dà qualcosa in più: un posto per quello che sanno e per quello che sono.</p>`, C.notte, C.panna, "per-chi-conta")}
+
     ${sezione(`${etichetta("Pacchetti")}
       <div style="border-radius:22px;padding:20px;background:${C.rosso};color:${C.panna};margin-bottom:12px">
         <div class="riga"><b style="flex:1;font-size:19px">Regalo di Natale</b><b style="font-family:Fraunces,serif;font-size:36px">129 €</b></div>

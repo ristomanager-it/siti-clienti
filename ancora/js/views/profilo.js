@@ -1,9 +1,9 @@
 // Profilo di una persona: numeri, "Chiedi", il suo libro che cresce, l'album a griglia.
-import { sb, state, $app, esc, nomeDi, avatar, urlMediaMolti, ICONE, attivaNotifiche, notificheAttive, cambiaImmagine } from "../app.js";
+import { sb, state, $app, esc, nomeDi, avatar, urlMediaMolti, ICONE, attivaNotifiche, notificheAttive, cambiaImmagine, chiediSuMisura } from "../app.js";
 
 const STORIE_PER_VOLUME = 25;
 
-export default async function ({ id }) {
+export default async function ({ id, params }) {
   const pid = id ?? state.io.id;
   const io = pid === state.io.id;
   const { data: p } = await sb.from("persone").select("id, nome, soprannome, foto_path, copertina_path, bio, data_nascita").eq("id", pid).maybeSingle();
@@ -43,7 +43,7 @@ export default async function ({ id }) {
     </div>
     <div class="pad"><h1 style="font-size:24px">${esc(p.nome)}${anno}</h1>
       ${p.bio ? `<p class="tenue" style="margin:4px 0 12px;font-size:15px">${esc(p.bio)}</p>` : ""}
-      ${io ? `<a class="btn chiaro" href="#/racconta" style="margin-top:10px">Racconta qualcosa</a>
+      ${io ? `<div id="filo"></div><a class="btn chiaro" href="#/racconta" style="margin-top:10px">Racconta qualcosa</a>
              <div class="riga" style="margin-top:8px;gap:8px"><a class="btn chiaro" href="#/piano" style="flex:1">Il piano</a>
                <a class="btn chiaro" href="#/ricette" style="flex:1">Ricettario</a>
                <a class="btn chiaro" href="#/servizi" style="flex:1">Servizi</a></div>
@@ -77,7 +77,11 @@ export default async function ({ id }) {
         <div class="riga" style="gap:8px"><div style="flex:1"><label for="n-nome" style="margin-top:0">Nome</label><input id="n-nome" value="${esc(state.io.nome ?? "")}" required maxlength="40"></div>
           <div style="flex:1"><label for="n-cogn" style="margin-top:0">Cognome</label><input id="n-cogn" value="${esc(state.io.cognome ?? "")}" maxlength="40"></div></div>
         <label for="n-sopr">Come ti chiamano in famiglia (se vuoi)</label><input id="n-sopr" value="${esc(state.io.soprannome ?? "")}" maxlength="30" placeholder="Nonno Peppe, zia Lella">
+        <label for="n-nasc">Data di nascita</label><input id="n-nasc" type="date" value="${esc(state.io.data_nascita ?? "")}" style="width:auto">
         <button class="btn chiaro" style="margin-top:10px">Salva</button></form>
+      <div id="su-misura" style="padding:12px 0;border-top:1px solid rgba(0,0,0,.08);border-bottom:1px solid rgba(0,0,0,.08);margin-bottom:12px">
+        <label class="riga" style="font-weight:800;color:var(--testo);margin:0"><input type="checkbox" id="c-misura" ${state.io.domande_su_misura ? "checked" : ""} style="width:22px;height:22px"> Domande su misura</label>
+        <p class="tenue" style="margin:6px 0 0;font-size:14px">Le prossime domande partono da quello che racconti, per far venire fuori come la pensi e come decidi. I tuoi testi li legge solo un programma, in automatico, per scrivere la domanda: nessuna persona li vede. Puoi toglierle quando vuoi.</p></div>
       <div class="riga" style="margin-bottom:12px"><b style="flex:1">Notifiche</b><button class="chip" id="notif" style="margin:0">…</button></div>
       ${[["vacanze", "Vacanze"], ["compiti", "Compiti"], ["esami", "Esami"]].map(([k, t]) =>
         `<label class="riga" style="margin:10px 0;font-weight:700;color:var(--testo)"><input type="checkbox" data-mio-modulo="${k}" ${spenti.has(k) ? "" : "checked"} style="width:22px;height:22px"> ${t}</label>`).join("")}
@@ -85,11 +89,28 @@ export default async function ({ id }) {
     document.getElementById("mio-nome").onsubmit = async (e) => {
       e.preventDefault();
       const v = (id) => document.getElementById(id).value.trim();
-      const dati = { nome: v("n-nome"), cognome: v("n-cogn") || null, soprannome: v("n-sopr") || null };
+      const dati = { nome: v("n-nome"), cognome: v("n-cogn") || null, soprannome: v("n-sopr") || null, data_nascita: v("n-nasc") || null };
       const { error } = await sb.from("persone").update(dati).eq("id", state.io.id);
       if (error) { alert("Non salvato: " + error.message); return; }
       Object.assign(state.io, dati); location.reload();
     };
+    document.getElementById("c-misura").onchange = async (e) => {
+      const on = e.target.checked;
+      const { error } = await sb.from("persone").update({ domande_su_misura: on }).eq("id", state.io.id);
+      if (error) { e.target.checked = !on; alert("Non salvato: " + error.message); return; }
+      state.io.domande_su_misura = on;
+      if (on) chiediSuMisura();
+    };
+    if (params?.s) document.getElementById(params.s)?.scrollIntoView({ block: "center" });
+    // il filo: quello che hai raccontato, per chi conta
+    sb.rpc("il_mio_filo").then(({ data: f }) => {
+      const el = document.getElementById("filo"); if (!el || !f) return;
+      const voci = [[f.storie, "racconti"], [f.risposte, "risposte alle domande"], [f.voci, "con la tua voce"], [f.ricette, "ricette"], [f.lettere, "lettere per più avanti"]].filter(([n]) => n);
+      el.innerHTML = `<div class="card" style="margin:10px 0 0;background:#FBF4E6">
+        <span style="font-size:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:#8A5A17">Il tuo filo</span>
+        <p style="margin:6px 0 8px;font-family:Fraunces,serif;font-size:18px;line-height:1.35">${voci.length ? "Quello che hai raccontato a chi conta davvero:" : "Ogni cosa che racconti aiuta chi ti vuole bene a capire come la pensi."}</p>
+        ${voci.length ? `<div style="display:flex;flex-wrap:wrap;gap:8px 18px">${voci.map(([n, t]) => `<div><b style="font-size:20px">${n}</b> <span class="tenue">${t}</span></div>`).join("")}</div>` : ""}</div>`;
+    });
     const bN = document.getElementById("notif");
     const aggiornaN = async () => { const on = await notificheAttive(); bN.textContent = on ? "✓ Attive" : "Attiva"; bN.classList.toggle("on", on); };
     aggiornaN();

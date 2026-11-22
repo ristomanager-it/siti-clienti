@@ -5,6 +5,7 @@ import { $app, esc } from "../app.js";
 const AGGIORNATE = "22 novembre 2026";
 
 const NOVITA = [
+  ["22 novembre 2026 · sera", "Domande sul carattere: come ragioni, come decidi. Domande su misura (dal Profilo). Lettere da aprire più avanti. Il tuo filo nel Profilo."],
   ["22 novembre 2026", "Menu laterale ☰ con tutte le voci. La domanda della settimana arriva a tutti, non solo ai nonni. Gli alberi di più famiglie si uniscono. Foto profilo e copertina per persone e famiglie."],
 ];
 
@@ -22,6 +23,12 @@ const SEZIONI = [
     <p><b>La tua domanda:</b> in bacheca, ognuno ha la sua, dai nonni ai ragazzi. Premi <b>Rispondi a voce</b>; se non ti va, <b>Cambia</b>.</p>
     <p><b>Fare una domanda a qualcuno:</b> apri il suo profilo e premi <b>Chiedi</b>. Gli arriva come prossima domanda, con il tuo nome.</p>
     <p>Chi non usa l'app (per esempio un nonno) può ricevere le domande con un messaggio sul telefono e rispondere a voce: si imposta dal <b>Piano</b>.</p>`],
+  ["perche", "Perché raccontare", `
+    <p>Un giorno qualcuno che ami potrebbe chiedersi: <i>"Lui, al posto mio, cosa avrebbe fatto?"</i>. Ogni cosa che racconti è una risposta in più: non solo cosa è successo, ma come la pensi e come decidi.</p>
+    <p>Per questo le domande per i grandi parlano di scelte: il lavoro, i soldi, gli amici, i litigi, i figli. Ai ragazzi arrivano domande più leggere.</p>
+    <p><b>Domande su misura:</b> se le attivi dal <b>Profilo</b>, le prossime domande partono da quello che hai raccontato. I testi li legge solo un programma, in automatico; nessuna persona li vede. Puoi toglierle quando vuoi.</p>
+    <p><b>Una lettera per più avanti:</b> dal menu, scrivi a una persona o alla famiglia e scegli quando si apre (tra un anno, ai suoi 18 anni, un giorno preciso). Fino ad allora chi la riceve vede solo che c'è.</p>
+    <p><b>Il tuo filo:</b> nel Profilo vedi quante cose hai raccontato, con la tua voce, le ricette e le lettere.</p>`],
   ["racconta", "Raccontare", `
     <p>Tieni premuto il tasto arancione e parla: quando lasci, il racconto è registrato. Puoi riascoltarlo prima di condividerlo, aggiungere un titolo e una foto.</p>
     <p>Puoi anche partire da una foto: "Chi c'è in questa foto? Dove eravate?".</p>`],

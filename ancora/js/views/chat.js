@@ -1,6 +1,6 @@
 // Chat di famiglia: #/chat = elenco (gruppi delle famiglie + messaggi a due); #/chat/c-<cerchia> o #/chat/d-<persona> = conversazione.
 // Si aggiorna da sola ogni pochi secondi mentre è aperta. Foto, video e vocali come in ogni chat.
-import { sb, state, $app, esc, avatar, nomeDi, urlMediaMolti, quando } from "../app.js";
+import { sb, state, $app, esc, avatar, nomeDi, urlMediaMolti, quando, personeConosciute } from "../app.js";
 
 export default async function ({ id }) {
   if (id) return conversazione(id);
@@ -34,17 +34,6 @@ export default async function ({ id }) {
 }
 
 // tutte le persone delle mie famiglie e cerchie (con il nome della prima famiglia in comune)
-async function personeConosciute() {
-  const ids = state.cerchie.map((c) => c.id);
-  if (!ids.length) return [];
-  const [{ data: m }, { data: prop }] = await Promise.all([
-    sb.from("cerchia_membri").select("cerchia_id, persone(id, nome, cognome, soprannome, foto_path)").in("cerchia_id", ids).eq("stato", "attivo"),
-    sb.from("cerchie").select("id, persone:proprietario_id(id, nome, cognome, soprannome, foto_path)").in("id", ids)]);
-  const nomeCerchia = (id) => state.cerchie.find((c) => c.id === id)?.nome ?? "";
-  const tutte = [...(m ?? []).map((x) => ({ ...x.persone, dove: nomeCerchia(x.cerchia_id) })), ...(prop ?? []).map((x) => ({ ...x.persone, dove: nomeCerchia(x.id) }))];
-  return [...new Map(tutte.filter((p) => p?.id && p.id !== state.io.id).map((p) => [p.id, p])).values()].sort((a, b) => nomeDi(a).localeCompare(nomeDi(b)));
-}
-
 let timer = null;
 async function conversazione(id) {
   clearInterval(timer);

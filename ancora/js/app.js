@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "58";
+const VER = "59";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 const ROTTE = {
@@ -111,8 +111,8 @@ async function caricaIo() {
   if (!io) return null;
   const { data: fm } = await sb.from("famiglia_membri").select("famiglia_id, ruolo, narratore, famiglie(nome)").eq("persona_id", io.id).maybeSingle();
   const { data: cerchie } = await sb.from("cerchie").select("id, nome, tipo, proprietario_id, moduli, foto_path, copertina_path").order("creata_il");
-  const { data: piu } = await sb.rpc("sono_piu");
-  state.io = io; state.famiglia = fm; state.cerchie = cerchie ?? []; state.piu = !!piu;
+  const [{ data: piu }, { data: adulto }] = await Promise.all([sb.rpc("sono_piu"), sb.rpc("sono_adulto")]);
+  state.io = io; state.famiglia = fm; state.cerchie = cerchie ?? []; state.piu = !!piu; state.adulto = adulto !== false;
   state.accessoPrima = io.ultimo_accesso_app;   // per il "bentornato" (prima di aggiornarlo)
   sb.from("persone").update({ ultimo_accesso_app: new Date().toISOString() }).eq("id", io.id).then(() => {});
   return io;
@@ -208,7 +208,20 @@ async function render() {
 
 sb.auth.onAuthStateChange((evento) => { if (evento === "SIGNED_IN" && !state.io) render(); });
 window.addEventListener("hashchange", render);
-if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js");
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").then((r) => r.update()).catch(() => {});
+// se è uscita una versione nuova, il telefono la prende da solo (all'apertura e quando si torna sull'app)
+async function controllaVersione() {
+  try {
+    const v = (await (await fetch(`versione.txt?t=${Date.now()}`, { cache: "no-store" })).text()).trim();
+    if (v && v !== VER && sessionStorage.getItem("ancora_ricaricata") !== v) {
+      sessionStorage.setItem("ancora_ricaricata", v);
+      (await navigator.serviceWorker?.getRegistration())?.update();
+      location.reload();
+    }
+  } catch { /* offline */ }
+}
+controllaVersione();
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") controllaVersione(); });
 render();
 
 // Foto profilo e copertine (persone e cerchie): rimpicciolite sul telefono, poi caricate.
@@ -266,6 +279,27 @@ function utmDaUrl() {
 }
 
 /** La campagna da cui è arrivata la persona (prima visita degli ultimi 30 giorni), o null. */
+// le persone che conosco, dalle mie famiglie e cerchie (per chat, lettere, ecc.)
+export async function personeConosciute() {
+  const ids = state.cerchie.map((c) => c.id);
+  if (!ids.length) return [];
+  const [{ data: m }, { data: prop }] = await Promise.all([
+    sb.from("cerchia_membri").select("cerchia_id, persone(id, nome, cognome, soprannome, foto_path, data_nascita)").in("cerchia_id", ids).eq("stato", "attivo"),
+    sb.from("cerchie").select("id, persone:proprietario_id(id, nome, cognome, soprannome, foto_path, data_nascita)").in("id", ids)]);
+  const nomeCerchia = (id) => state.cerchie.find((c) => c.id === id)?.nome ?? "";
+  const tutte = [...(m ?? []).map((x) => ({ ...x.persone, dove: nomeCerchia(x.cerchia_id) })), ...(prop ?? []).map((x) => ({ ...x.persone, dove: nomeCerchia(x.id) }))];
+  return [...new Map(tutte.filter((p) => p?.id && p.id !== state.io.id).map((p) => [p.id, p])).values()].sort((a, b) => nomeDi(a).localeCompare(nomeDi(b)));
+}
+
+// domande su misura: chiede una nuova domanda partendo dai racconti (solo se attive; il server decide se serve)
+export async function chiediSuMisura() {
+  if (!state.io?.domande_su_misura) return;
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    fetch(`${SUPABASE_URL}/functions/v1/domanda-su-misura`, { method: "POST", headers: { authorization: `Bearer ${session?.access_token}`, "content-type": "application/json" }, body: "{}" }).catch(() => {});
+  } catch { /* niente */ }
+}
+
 export function utm() {
   if (leggi(CHIAVE_CONSENSO)?.statistiche) {
     const s = leggi(CHIAVE_UTM);
@@ -318,7 +352,7 @@ function vociMenu() {
     ["Le mie famiglie e i gruppi", [...famiglie.map((c) => [`#/?c=${c.id}`, c.nome]),
       ...(famiglie.length > 1 ? [["#/?c=tutti", "Tutte insieme"]] : []), ["#/?c=diretti", "Messaggi per me"]]],
     ["La famiglia", [["#/calendario", "Calendario"], ["#/liste", "Liste e desideri"], ["#/spese", "Spese"], ["#/album", "Album degli eventi"], ["#/settimana", "La domanda della settimana"], ["#/albero", "L'albero"], ["#/cerchie", "Famiglie e cerchie"]]],
-    ["I miei ricordi", [["#/archivio", "Il cloud dei ricordi"], ["#/racconta", "Racconta"], ["#/diario", "Il diario"], ["#/ricette", "Il ricettario"], [`#/libro/${state.io.id}`, "Il mio libro"]]],
+    ["I miei ricordi", [["#/archivio", "Il cloud dei ricordi"], ["#/racconta", "Racconta"], ["#/racconta?lettera=1", "Una lettera per più avanti"], ["#/diario", "Il diario"], ["#/ricette", "Il ricettario"], [`#/libro/${state.io.id}`, "Il mio libro"]]],
     ["Agenda", [["vacanze", "Vacanze"], ["compiti", "Compiti"], ["esami", "Esami"]].filter(([k]) => attivi(k)).map(([k, t]) => [`#/agenda?t=${k}`, t])],
     ["Il mio account", [["#/invita", "Invita un amico · +1 GB"], ["#/profilo", "Profilo e impostazioni"], ["#/piano", "Il piano"], ["#/servizi", "Servizi"], ["#/omaggio", "Codice omaggio"], ["#/istruzioni", "Istruzioni"]]],
   ].filter(([, v]) => v.length);

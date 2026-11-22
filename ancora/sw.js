@@ -1,14 +1,15 @@
 // Service worker: cache dell'app e notifiche push (gratuite, a differenza di WhatsApp)
-const CACHE = "ancora-v58";
+const CACHE = "ancora-v59";
 const FILE = ["./", "index.html", "css/app.css", "js/app.js", "manifest.webmanifest"];
 
-self.addEventListener("install", (e) => e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILE))));
+self.addEventListener("install", (e) => { self.skipWaiting(); e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILE))); });
 self.addEventListener("activate", (e) => e.waitUntil(
-  caches.keys().then((k) => Promise.all(k.filter((x) => x !== CACHE).map((x) => caches.delete(x)))),
+  caches.keys().then((k) => Promise.all(k.filter((x) => x !== CACHE).map((x) => caches.delete(x)))).then(() => self.clients.claim()),
 ));
 self.addEventListener("fetch", (e) => {
   if (e.request.method !== "GET" || new URL(e.request.url).origin !== location.origin) return;
-  e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+  // sempre la versione più nuova (il telefono non tiene file vecchi); offline, quella salvata
+  e.respondWith(fetch(e.request, { cache: "no-cache" }).catch(() => caches.match(e.request)));
 });
 
 self.addEventListener("push", (e) => {

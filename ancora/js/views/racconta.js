@@ -1,5 +1,5 @@
 // Racconta: un grande pulsante da tenere premuto, foto, e la cerchia con cui condividere.
-import { sb, state, $app, esc, ICONE } from "../app.js";
+import { sb, state, $app, esc, ICONE, nomeDi, personeConosciute, chiediSuMisura } from "../app.js";
 
 export default async function ({ params }) {
   let domanda = null, rispostaA = null;
@@ -17,14 +17,17 @@ export default async function ({ params }) {
     domandaSett = data?.testo ?? null;
   }
   const cerchie = state.cerchie;
-  let scelta = params.c || rispostaA?.cerchia_id || cerchie.find((c) => c.tipo === "famiglia")?.id || "solo_io";
-  const invito = domandaSett ?? domanda?.testo
+  const lettera = !!params.lettera;
+  const persone = await personeConosciute();
+  let scelta = lettera ? "persona" : params.c || rispostaA?.cerchia_id || cerchie.find((c) => c.tipo === "famiglia")?.id || "solo_io";
+  let quando = lettera ? "1" : "subito";
+  const invito = lettera ? "Scrivi una lettera a chi vuoi tu. Resta chiusa fino al giorno che scegli: prima, vede solo che c'è." : domandaSett ?? domanda?.testo
     ?? (rispostaA ? `Rispondi a ${rispostaA.persone?.soprannome ?? rispostaA.persone?.nome}` : null)
     ?? (params.ricetta ? "La ricetta di famiglia: racconta come si fa, e chi te l'ha insegnata."
       : params.foto ? "Chi c'è in questa foto? Dove eravate?" : "Racconta una cosa che vuoi ricordare.");
 
   $app().innerHTML = `
-    <header class="testa"><span class="logo" style="font-size:22px">Racconta</span><span></span></header>
+    <header class="testa"><span class="logo" style="font-size:22px">${lettera ? "Una lettera" : "Racconta"}</span><span></span></header>
     <div class="pad">
       <div class="lettera" style="margin:0;font-size:19px">${esc(invito)}</div>
       <button id="rec" class="rec" type="button" aria-label="Tieni premuto e parla">${ICONE.mic.replace('width="26" height="26"', 'width="48" height="48"')}</button>
@@ -41,11 +44,19 @@ export default async function ({ params }) {
       <textarea id="testo" rows="3"></textarea>
       <label for="foto">Foto o video</label>
       <input id="foto" type="file" accept="image/*,video/*" multiple>
-      <label>Con chi lo condividi</label>
-      <div id="cerchie">${[{ id: "solo_io", nome: "Solo io" }, ...cerchie].map((c) =>
+      <label>Per chi lo scrivi</label>
+      <div id="cerchie">${[{ id: "solo_io", nome: "Solo io" }, ...cerchie, ...(persone.length ? [{ id: "persona", nome: "Una persona" }] : [])].map((c) =>
         `<button type="button" class="chip ${c.id === scelta ? "on" : ""}" data-c="${c.id}">${esc(c.nome)}</button>`).join("")}</div>
+      <div id="chi" ${scelta === "persona" ? "" : "hidden"}><label for="dest">A chi</label>
+        <select id="dest"><option value="">Scegli…</option>${persone.map((p) => `<option value="${p.id}" data-nasc="${p.data_nascita ?? ""}">${esc(nomeDi(p))}${p.dove ? ` · ${esc(p.dove)}` : ""}</option>`).join("")}</select></div>
+      <details id="dopo" ${lettera ? "open" : ""} style="margin-top:14px"><summary style="font-weight:800;cursor:pointer">✉️ Da aprire più avanti</summary>
+        <p class="tenue" style="margin:6px 0">Fino a quel giorno resta chiusa: chi la riceve vede solo che c'è e quando si apre.</p>
+        <div id="quando">${[["subito", "Subito"], ["1", "Tra 1 anno"], ["5", "Tra 5 anni"], ["10", "Tra 10 anni"], ["18", "Ai suoi 18 anni"], ["data", "Scegli il giorno"]].map(([k, t]) =>
+          `<button type="button" class="chip ${k === quando ? "on" : ""}" data-q="${k}" ${k === "18" ? "hidden" : ""}>${t}</button>`).join("")}</div>
+        <input id="qdata" type="date" hidden style="width:auto" min="${new Date(Date.now() + 86400_000).toISOString().slice(0, 10)}">
+      </details>
       <label class="riga" style="font-weight:700"><input id="memoria" type="checkbox" checked style="width:auto"> Entra nella memoria</label>
-      <button id="salva" class="btn" style="margin-top:16px">Condividi</button>
+      <button id="salva" class="btn" style="margin-top:16px">${lettera ? "Chiudi la lettera" : "Condividi"}</button>
       <p id="esito" role="status"></p>
     </div>`;
 
@@ -54,7 +65,33 @@ export default async function ({ params }) {
   document.querySelectorAll("#cerchie .chip").forEach((b) => b.onclick = () => {
     scelta = b.dataset.c;
     document.querySelectorAll("#cerchie .chip").forEach((x) => x.classList.toggle("on", x === b));
+    document.getElementById("chi").hidden = scelta !== "persona";
+    aggiorna18();
   });
+  const dest = document.getElementById("dest");
+  // "ai suoi 18 anni" solo se scrivo a una persona di cui so la data e che non li ha ancora compiuti
+  const diciotto = () => {
+    const n = scelta === "persona" ? dest.selectedOptions[0]?.dataset.nasc : "";
+    if (!n) return null;
+    const d = new Date(n + "T12:00"); d.setFullYear(d.getFullYear() + 18);
+    return d > new Date() ? d.toISOString().slice(0, 10) : null;
+  };
+  const aggiorna18 = () => {
+    const b = document.querySelector('#quando [data-q="18"]'); b.hidden = !diciotto();
+    if (b.hidden && quando === "18") document.querySelector('#quando [data-q="subito"]').click();
+  };
+  dest.onchange = aggiorna18;
+  document.querySelectorAll("#quando .chip").forEach((b) => b.onclick = () => {
+    quando = b.dataset.q;
+    document.querySelectorAll("#quando .chip").forEach((x) => x.classList.toggle("on", x === b));
+    document.getElementById("qdata").hidden = quando !== "data";
+  });
+  const dataApertura = () => {
+    if (quando === "subito") return null;
+    if (quando === "18") return diciotto();
+    if (quando === "data") return document.getElementById("qdata").value || "";
+    const d = new Date(); d.setFullYear(d.getFullYear() + Number(quando)); return d.toISOString().slice(0, 10);
+  };
 
   // --- registrazione: tieni premuto ---
   let blob = null, secondi = 0, inizio = 0;
@@ -94,6 +131,11 @@ export default async function ({ params }) {
       procedimento: document.getElementById("rpro").value.trim() || null,
     } : null;
     if (!blob && !testo && !files.length && !ricetta?.ingredienti.length && !ricetta?.procedimento) { esito.textContent = "Registra, scrivi o aggiungi una foto."; return; }
+    const destinatario = scelta === "persona" ? dest.value : null;
+    if (scelta === "persona" && !destinatario) { esito.textContent = "Scegli a chi è destinata."; return; }
+    const apre = dataApertura();
+    if (apre === "") { esito.textContent = "Scegli il giorno in cui si apre."; return; }
+    if (apre && scelta === "solo_io") { esito.textContent = "Una lettera da aprire più avanti va a qualcuno: scegli la famiglia o una persona."; return; }
     esito.textContent = "Salvataggio…";
 
     const { data: r, error } = await sb.from("ricordi").insert({
@@ -102,8 +144,10 @@ export default async function ({ params }) {
       titolo: ricetta ? ricetta.nome : domandaSett ?? domanda?.testo ?? null, testo: testo || null,
       domanda_settimana: domandaSett ? params.settimana : null,
       dettagli: ricetta ? { porzioni: ricetta.porzioni, ingredienti: ricetta.ingredienti, procedimento: ricetta.procedimento } : null,
-      visibilita: scelta === "solo_io" ? "solo_io" : "cerchia",
-      cerchia_id: scelta === "solo_io" ? null : scelta,
+      visibilita: scelta === "solo_io" ? "solo_io" : destinatario ? "diretto" : "cerchia",
+      cerchia_id: scelta === "solo_io" || destinatario ? null : scelta,
+      destinatario_id: destinatario,
+      sblocco: apre ? "da_data" : "subito", sblocco_data: apre,
       in_memoria: document.getElementById("memoria").checked,
       domanda_inviata_id: domanda?.id ?? null,
       in_risposta_a: rispostaA?.id ?? null,
@@ -126,6 +170,8 @@ export default async function ({ params }) {
         scattato_il: f.lastModified ? new Date(f.lastModified).toISOString() : null });
     }
     if (domanda) await sb.from("domande_inviate").update({ stato: "risposta", risposta_il: new Date().toISOString() }).eq("id", domanda.id);
+    if (testo || domanda || domandaSett) chiediSuMisura();
+    if (apre) { alert(`Lettera chiusa. Si aprirà il ${new Date(apre + "T12:00").toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" })}.`); location.hash = "#/archivio"; return; }
     location.hash = rispostaA ? `#/ricordo/${rispostaA.id}` : "#/";
   };
 }

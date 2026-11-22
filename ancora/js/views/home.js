@@ -19,7 +19,8 @@ export default async function ({ params }) {
   const filtro = filtroScelto === "tutti" ? null : filtroScelto;
   let q = sb.from("ricordi")
     .select("id, tipo, titolo, testo, dettagli, creato_il, autore_id, cerchia_id, persone:autore_id(id, nome, soprannome, foto_path), ricordi_media(path, tipo, durata_sec, ordine), reazioni(persona_id, tipo)")
-    .neq("visibilita", "solo_io").neq("tipo", "storia");
+    .neq("visibilita", "solo_io").neq("tipo", "storia")
+    .or(`sblocco.eq.subito,sblocco.eq.dopo_scomparsa,and(sblocco.eq.da_data,sblocco_data.lte.${new Date().toISOString().slice(0, 10)})`);   // le lettere chiuse non stanno nel feed
   if (filtro === "diretti") q = q.in("visibilita", ["diretto", "segreto"]);
   else if (filtro) q = q.eq("cerchia_id", filtro);
   const { data: ricordi } = await q.order("creato_il", { ascending: false }).limit(30);
@@ -93,8 +94,10 @@ export default async function ({ params }) {
       <button class="btn ambra" data-invita="${scelta.id}" style="margin-top:10px">③ Invita la famiglia</button></div>` : ""}
     ${cardSettimana}
     <div id="mia-domanda"></div>
+    <div id="per-chi-conta"></div>
     ${lista.map((r, i) => post(r, url, i)).join("") || `<div class="pad"><h1>Ancora vuoto</h1><p class="tenue">Invita la famiglia dalle cerchie, o racconta tu per primo.</p></div>`}`;
   miaDomanda();
+  perChiConta();
   collegaStorie(perPersona, url, filtro);
   document.querySelectorAll("[data-invita]").forEach((b) => b.onclick = () => invitaInCerchia(b.dataset.invita));
   document.querySelectorAll("input[data-img]").forEach((i) => i.onchange = async () => {
@@ -178,8 +181,34 @@ async function miaDomanda(altra = false) {
       ? `<div class="riga" style="gap:8px"><span class="tenue" style="flex:1">✓ Hai risposto. La prossima arriva la settimana prossima.</span><button class="chip" id="altra" style="margin:0">Un'altra</button></div>`
       : `<div class="riga" style="gap:8px"><a class="btn ambra" style="flex:1;min-height:46px" href="#/racconta?domanda=${d.id}">Rispondi a voce</a>
          <button class="chip" id="altra" style="margin:0">Cambia</button></div>`}
+    ${state.adulto && !state.io.domande_su_misura ? `<a href="#/profilo?s=su-misura" class="tenue" style="display:block;margin-top:10px;font-size:14px">Vuoi domande su misura, che partono da quello che racconti?</a>` : ""}
   </div>`;
   el.querySelector("#altra").onclick = () => miaDomanda(true);
+}
+
+// Lettere chiuse per me (si vede chi e quando, mai cosa) e, per gli adulti, un invito gentile a raccontare
+async function perChiConta() {
+  const el = document.getElementById("per-chi-conta");
+  if (!el) return;
+  const [{ data: lettere }, { data: filo }] = await Promise.all([sb.rpc("lettere_chiuse"), state.adulto ? sb.rpc("il_mio_filo") : Promise.resolve({ data: null })]);
+  const data = (d) => new Date(d + "T12:00").toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" });
+  let html = (lettere ?? []).slice(0, 3).map((l) => `<div class="card" style="margin-bottom:14px;display:flex;gap:14px;align-items:center;background:#FBF4E6">
+      <span style="font-size:34px" aria-hidden="true">✉️</span>
+      <div><b>${esc(l.da)} ti ha scritto una lettera</b><div class="tenue">Si apre il ${data(l.si_apre)}</div></div></div>`).join("");
+  const mese = new Date().toISOString().slice(0, 7);
+  let chiuso = null; try { chiuso = localStorage.getItem("ancora_invito_mese"); } catch { /* niente */ }
+  if (filo && filo.mese < 2 && chiuso !== mese) {
+    html += `<div class="card" style="margin-bottom:18px;position:relative">
+      <button class="icona" id="chiudi-invito" aria-label="Chiudi" style="position:absolute;top:6px;right:6px;width:36px;height:36px">✕</button>
+      <span style="font-size:12px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:#8A5A17">Per chi conta davvero</span>
+      <p style="font-family:Fraunces,serif;font-size:19px;line-height:1.35;margin:6px 0 8px">Un giorno qualcuno ti chiederà: «Tu che avresti fatto al posto mio?». Ogni cosa che racconti è una risposta in più.</p>
+      <p class="tenue" style="margin:0 0 12px">${filo.mese ? `Questo mese hai raccontato ${filo.mese === 1 ? "una cosa" : filo.mese + " cose"}.` : "Questo mese non hai ancora raccontato niente."}</p>
+      <div class="riga" style="gap:8px"><a class="btn ambra" style="flex:1;min-height:46px" href="#/racconta">Racconta</a>
+        <a class="btn chiaro" style="flex:1;min-height:46px" href="#/racconta?lettera=1">Scrivi una lettera</a></div></div>`;
+  }
+  el.innerHTML = html;
+  const x = el.querySelector("#chiudi-invito");
+  if (x) x.onclick = () => { try { localStorage.setItem("ancora_invito_mese", mese); } catch { /* niente */ } x.closest(".card").remove(); };
 }
 
 // --- Storie: si pubblicano dal "+" e si guardano a tutto schermo; dopo 24 ore spariscono dalla bacheca ---
