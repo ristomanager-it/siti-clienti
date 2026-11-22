@@ -111,6 +111,25 @@ export default async function ({ params }) {
   });
   controllaNovita(lista[0]?.creato_il ?? new Date(0).toISOString(), filtro);
 
+  document.querySelectorAll(".carosello-box").forEach((box) => {
+    const car = box.querySelector(".carosello"), pal = box.querySelectorAll(".pallini i"), conta = box.querySelector(".conta");
+    car.addEventListener("scroll", () => {
+      const k = Math.round(car.scrollLeft / car.clientWidth);
+      pal.forEach((p, j) => p.classList.toggle("on", j === k));
+      if (conta) conta.textContent = `${k + 1}/${pal.length}`;
+    }, { passive: true });
+    let ultimo = 0;
+    car.addEventListener("click", () => {   // doppio tocco: mi piace, come su Instagram
+      const ora = Date.now();
+      if (ora - ultimo < 320) {
+        const b = document.querySelector(`[data-cuore="${box.dataset.post}"]`);
+        if (b && !b.classList.contains("on")) b.click();
+        const c = box.querySelector(".cuore-grande"); c.classList.remove("vai"); void c.offsetWidth; c.classList.add("vai");
+      }
+      ultimo = ora;
+    });
+  });
+
   document.querySelectorAll("[data-cuore]").forEach((b) => b.onclick = async () => {
     const id = b.dataset.cuore;
     if (b.classList.contains("on")) {
@@ -145,7 +164,10 @@ function post(r, url, i) {
       ${voce ? `<div style="margin-top:14px">${voce.replace('class="voce"', 'class="voce" style="margin:0;background:rgba(18,48,44,.9)"')}</div>` : ""}</div>` : "";
   const media = video && !foto.length ? `<div class="foto" style="aspect-ratio:auto;background:#000"><video src="${esc(url[video.path])}" controls playsinline preload="metadata" style="width:100%;max-height:70vh;display:block"></video></div>`
     : ric && !foto.length ? `<a href="#/ricordo/${r.id}" style="text-decoration:none;color:inherit;display:block">${schedaRicetta}</a>` : foto.length
-    ? `<a class="foto" href="#/ricordo/${r.id}" style="background-image:url('${url[foto[0].path]}')" aria-label="Apri il ricordo">${voce}</a>`
+    ? `<div class="foto carosello-box" data-post="${r.id}">
+        <div class="carosello">${foto.map((f, k) => `<img src="${esc(url[f.path] ?? "")}" alt="" ${k ? 'loading="lazy"' : ""} draggable="false">`).join("")}</div>
+        ${foto.length > 1 ? `<span class="conta">1/${foto.length}</span><div class="pallini">${foto.map((_, k) => `<i class="${k ? "" : "on"}"></i>`).join("")}</div>` : ""}
+        ${voce}<span class="cuore-grande" aria-hidden="true">${ICONE.cuore}</span></div>`
     : `<div class="lettera">${esc(r.testo ?? "")}${voce ? `<div style="margin-top:14px">${voce.replace('class="voce"', 'class="voce" style="margin:0;background:rgba(18,48,44,.9)"')}</div>` : ""}</div>`;
   return `<article class="post">
     <a class="post-testa" href="#/profilo/${r.autore_id}">${avatar(r.persone, 38, r.persone?.foto_path ? url[r.persone.foto_path] : null)}
