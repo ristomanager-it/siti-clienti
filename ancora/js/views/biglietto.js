@@ -22,7 +22,7 @@ export default async function ({ id, params }) {
   document.getElementById("barra").hidden = true;
   $app().innerHTML = `
     <style>
-      .bg{width:148mm;min-height:210mm;margin:12px auto;background:linear-gradient(170deg,#7FA37E,#4D7356);color:#FBF3E2;border-radius:6mm;padding:14mm 12mm;display:flex;flex-direction:column;box-shadow:0 10px 30px rgba(0,0,0,.18);position:relative;overflow:hidden}
+      .bg{width:min(148mm,calc(100% - 24px));min-height:210mm;margin:12px auto;background:linear-gradient(170deg,#7FA37E,#4D7356);color:#FBF3E2;border-radius:6mm;padding:14mm 12mm;display:flex;flex-direction:column;box-shadow:0 10px 30px rgba(0,0,0,.18);position:relative;overflow:hidden}
       .bg .marchio{display:flex;align-items:center;gap:10px}
       .bg .marchio img{width:16mm;height:16mm;border-radius:3.5mm}
       .bg .marchio b{font-family:Fraunces,serif;font-size:26px}
