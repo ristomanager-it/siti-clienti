@@ -28,7 +28,7 @@ export default async function ({ params }) {
       ${x.libro ? (narratori.length || piano ? `<label for="n-${x.id}" style="margin-top:0">Le storie di</label>
           <select id="n-${x.id}">${(narratori.length ? narratori : [{ id: state.io.id, nome: nomeDi(state.io) }]).map((n) => `<option value="${n.id}">${esc(n.nome)}</option>`).join("")}</select>
           <a class="tenue" style="display:block;margin:6px 0 0" href="#/libro/${(narratori[0] ?? { id: state.io.id }).id}">Sfoglia l'anteprima gratis →</a>` : "") : ""}
-      ${x.piano && !piano ? `<p class="tenue" style="margin:0">Serve il Piano Famiglia: <a href="#/piano">crealo qui</a>.</p>`
+      ${x.piano && !piano ? `<p class="tenue" style="margin:0">Serve Ancora+: <a href="#/piano">crealo qui</a>.</p>`
         : `<button class="btn ${x.libro ? "ambra" : ""}" style="margin-top:10px" data-s="${x.id}">${x.libro ? "Ordina" : "Aggiungi"}</button>`}
     </div>`).join("")}
     <p id="es" class="pad" role="status"></p>`;

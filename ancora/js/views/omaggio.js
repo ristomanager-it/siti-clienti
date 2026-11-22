@@ -1,4 +1,4 @@
-// "Ancora in omaggio": chi riceve un codice (#/omaggio/ANCORA-XXXX-XXXX) crea l'account e attiva 12 mesi di Piano Famiglia.
+// "Ancora in omaggio": chi riceve un codice (#/omaggio/ANCORA-XXXX-XXXX) crea l'account e attiva 12 mesi di Ancora+.
 // Chi ha già un account e ha fatto l'accesso riscatta direttamente.
 import { sb, state, $app, esc } from "../app.js";
 import { SUPABASE_URL } from "../config.js";
@@ -15,11 +15,11 @@ export default async function ({ id, params }) {
       <div class="tenue" style="font-weight:700;margin:-4px 0 18px">Il cloud dei tuoi ricordi</div>
       <span class="chip on" style="margin:0 0 12px">🎁 In omaggio</span>
       <h1 style="font-size:28px;line-height:1.2">Un anno di Ancora, per te e la tua famiglia.</h1>
-      <p style="font-size:16px">Le voci, le storie, le foto, i video e le ricette di famiglia, al sicuro e solo per voi. Con l'albero genealogico, le domande della settimana e il tuo cloud dei ricordi da 50 GB.</p></div>
+      <p style="font-size:16px">Le voci, le storie, le foto, i video e le ricette di famiglia, al sicuro e solo per voi. Con l'albero genealogico, le domande della settimana e 200 GB di cloud dei ricordi per tutta la famiglia.</p></div>
     <form id="f" class="card">
       <label for="cod" style="margin-top:0">Codice omaggio</label>
       <input id="cod" value="${esc(codice)}" placeholder="ANCORA-XXXX-XXXX" autocapitalize="characters" required>
-      <p id="stato" class="tenue" role="status">${stato.valido ? "✓ Codice valido: 12 mesi di Piano Famiglia." : stato.errore ? `<span class="errore">${esc(stato.errore)}</span>` : ""}</p>
+      <p id="stato" class="tenue" role="status">${stato.valido ? "✓ Codice valido: 12 mesi di Ancora+." : stato.errore ? `<span class="errore">${esc(stato.errore)}</span>` : ""}</p>
       ${user ? `<button class="btn">Attiva l'omaggio</button>` : `
         <label for="nome">Il tuo nome</label><input id="nome" autocomplete="given-name" required>
         <label for="em">Email</label><input id="em" type="email" autocomplete="username" required>

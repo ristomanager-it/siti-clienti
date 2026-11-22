@@ -1,12 +1,13 @@
 // Il libro delle storie di una persona, pronto da stampare (A5). Ogni storia ha il QR: lo inquadri e senti la sua voce.
 // #/libro/<persona id>   (dal profilo). Il libro digitale è incluso; quello stampato si ordina a parte.
-import { sb, $app, esc, nomeDi, urlMediaMolti } from "../app.js";
+import { passaPiu, state, sb, $app, esc, nomeDi, urlMediaMolti } from "../app.js";
 import qrcode from "https://esm.sh/qrcode-generator@1.4.4";
 
 const qrSvg = (testo) => { const q = qrcode(0, "M"); q.addData(testo); q.make(); return q.createSvgTag({ cellSize: 3, margin: 0, scalable: true }); };
 const data = (d) => new Date(d).toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" });
 
 export default async function ({ id }) {
+  if (!state.piu) { history.back(); setTimeout(() => passaPiu("Il libro delle storie è una funzione di Ancora+."), 300); return; }
   const { data: p } = await sb.from("persone").select("id, nome, cognome, soprannome, data_nascita").eq("id", id).maybeSingle();
   if (!p) { $app().innerHTML = `<p class="pad">Libro non trovato.</p>`; return; }
   const { data: storie } = await sb.from("ricordi")

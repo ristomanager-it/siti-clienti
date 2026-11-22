@@ -58,7 +58,7 @@ export function montaModulo(el, params = {}) {
       <div class="card" style="margin:0 0 14px;background:var(--ambra-chiaro);border-color:#EAD2AA">
         <b style="font-family:Fraunces,serif;font-size:19px;color:#4A3410">Cosa c'è nel regalo di Natale</b>
         <ul style="margin:10px 0 0;padding-left:20px;line-height:1.55;color:#4A3410">
-          <li><b>12 mesi di Piano Famiglia</b> per tutta la famiglia, senza limiti di persone</li>
+          <li><b>12 mesi di Ancora+</b> per tutta la famiglia, senza limiti di persone</li>
           <li><b>Il libro stampato a colori</b> delle vostre storie, a casa a fine anno, con il QR per ascoltare le voci</li>
           <li><b>L'album del pranzo di Natale</b>: i parenti caricano le foto con un QR</li>
           <li><b>Una domanda a settimana per tutti</b>, ognuno la sua, più la domanda di famiglia: si risponde a voce</li>

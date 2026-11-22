@@ -27,7 +27,7 @@ const SEZIONI = [
     <p>Puoi anche partire da una foto: "Chi c'è in questa foto? Dove eravate?".</p>`],
   ["cloud", "Il cloud dei ricordi", `
     <p>In <b>I miei ricordi</b> scatti o carichi foto, video e vocali. Li vedi solo tu finché non li condividi: selezionali e scegli con quale famiglia.</p>
-    <p>Lo spazio: 2 GB gratis, 50 GB con il Piano Famiglia, e se serve +100 GB dai Servizi. Quando sei vicino al limite te lo diciamo.</p>`],
+    <p>Lo spazio: 2 GB gratis, 200 GB per la famiglia con Ancora+, e se serve +100 GB dai Servizi. Quando sei vicino al limite te lo diciamo.</p>`],
   ["albero", "L'albero", `
     <p>Tocca una persona per aggiungere genitori, figli o coniuge. L'albero lo completa tutta la famiglia, anche con chi non c'è più.</p>
     <p><b>Alberi uniti:</b> se una persona è in due alberi (per esempio tua moglie nel tuo e in quello dei suoceri), toccala e scegli <b>È anche in un altro albero? → Collega</b>. Con <b>🔗 Tutti uniti</b> vedi tutti gli alberi insieme.</p>
@@ -44,7 +44,7 @@ const SEZIONI = [
     <p>Dal profilo di una persona: <b>Il libro</b>. Ogni pagina ha il codice QR: chi lo inquadra con il telefono sente la voce del racconto.</p>
     <p>Il libro digitale è incluso. Quello stampato si ordina dai <b>Servizi</b>.</p>`],
   ["piano", "Il piano e i servizi", `
-    <p>Il Piano Famiglia dà lo spazio grande e le domande sul telefono per chi non usa l'app. Se ti hanno regalato Ancora o ti hanno invitato, sei già in un piano: apri il link dell'invito.</p>
+    <p>Ancora+ dà lo spazio grande e le domande sul telefono per chi non usa l'app. Se ti hanno regalato Ancora o ti hanno invitato, sei già in un piano: apri il link dell'invito.</p>
     <p>I ricordi restano gratis per sempre. I servizi (libro stampato, una persona in più con le domande sul telefono, spazio in più) li prendi solo se ti servono.</p>`],
   ["privacy", "Chi vede cosa", `
     <p>Ogni ricordo lo vedono solo le persone e le famiglie che scegli. Chi gestisce Ancora non vede i vostri contenuti. Il diario è solo tuo.</p>

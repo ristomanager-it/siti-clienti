@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "48";
+const VER = "49";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 const ROTTE = {
@@ -105,7 +105,8 @@ async function caricaIo() {
   if (!io) return null;
   const { data: fm } = await sb.from("famiglia_membri").select("famiglia_id, ruolo, narratore, famiglie(nome)").eq("persona_id", io.id).maybeSingle();
   const { data: cerchie } = await sb.from("cerchie").select("id, nome, tipo, proprietario_id, moduli, foto_path, copertina_path").order("creata_il");
-  state.io = io; state.famiglia = fm; state.cerchie = cerchie ?? [];
+  const { data: piu } = await sb.rpc("sono_piu");
+  state.io = io; state.famiglia = fm; state.cerchie = cerchie ?? []; state.piu = !!piu;
   state.accessoPrima = io.ultimo_accesso_app;   // per il "bentornato" (prima di aggiornarlo)
   sb.from("persone").update({ ultimo_accesso_app: new Date().toISOString() }).eq("id", io.id).then(() => {});
   return io;
@@ -428,3 +429,39 @@ export function temaDelPeriodo(oggi = new Date()) {
   const link = document.querySelector('link[rel="icon"][type="image/svg+xml"]');
   if (link && tema) link.href = `icons/tema/${tema}.svg`;
 })();
+
+// --- Ancora+ : le funzioni in più. Basta che uno paghi e tutta la famiglia le ha. ---
+export const VANTAGGI_PIU = [
+  ["L'albero senza limiti", "il gratuito arriva a 15 persone per albero"],
+  ["Gli alberi uniti", "la tua famiglia, quella dei tuoi genitori, quella dei suoceri"],
+  ["Gli album degli eventi con il QR", "matrimoni, battesimi, il pranzo di Natale"],
+  ["Il libro delle storie", "in digitale, pronto da stampare"],
+  ["Le domande sul telefono", "per i nonni che non usano l'app"],
+  ["200 GB per tutta la famiglia", "invece di 2 GB a testa"],
+  ["In arrivo: la voce che resta", "un ricordo con cui parlare, solo con il consenso di chi l'ha registrato"],
+];
+/** Mostra Ancora+ quando qualcuno tocca una funzione in più. */
+export function passaPiu(motivo = "") {
+  document.getElementById("foglio-piu")?.remove();
+  const d = document.createElement("div");
+  d.id = "foglio-piu";
+  d.innerHTML = `<div data-chiudi style="position:fixed;inset:0;background:rgba(18,48,44,.5);z-index:55"></div>
+    <div role="dialog" aria-label="Ancora+" style="position:fixed;left:0;right:0;bottom:0;z-index:56;max-height:88vh;overflow:auto;background:#FBF8F2;border-radius:24px 24px 0 0;padding:22px 20px calc(22px + env(safe-area-inset-bottom))">
+      <div style="display:flex;align-items:center;gap:10px"><b style="font-family:Fraunces,serif;font-size:28px;flex:1">Ancora<span style="color:#C9832E">+</span></b>
+        <button data-chiudi aria-label="Chiudi" style="width:40px;height:40px;border-radius:20px;border:0;background:#EFE8DC;font-size:18px">✕</button></div>
+      ${motivo ? `<p style="margin:6px 0 4px;font-weight:700">${esc(motivo)}</p>` : ""}
+      <p class="tenue" style="margin:4px 0 12px">Basta che uno in famiglia lo prenda, e lo hanno tutti.</p>
+      ${VANTAGGI_PIU.map(([t, s]) => `<div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #EFE6D8">
+        <span style="flex-shrink:0;width:22px;height:22px;border-radius:11px;background:#4D7356;color:#fff;display:grid;place-items:center;font-size:13px;font-weight:800">✓</span>
+        <span><b>${t}</b><br><span class="tenue" style="font-size:14px">${s}</span></span></div>`).join("")}
+      <a class="btn ambra" href="#/piano" style="margin-top:16px">Passa ad Ancora+ · 99 € l'anno</a>
+      <a class="btn chiaro" href="#/regala" style="margin-top:8px">Regalalo a Natale · 129 € con il libro stampato</a>
+    </div>`;
+  document.body.appendChild(d);
+  d.querySelectorAll("[data-chiudi], a").forEach((x) => x.addEventListener("click", () => d.remove()));
+}
+/** Errori che arrivano dal database quando serve Ancora+ */
+export function seServePiu(error) {
+  if (error?.message?.includes("ANCORA_PIU")) { passaPiu(error.message.replace(/^.*ANCORA_PIU:\s*/, "")); return true; }
+  return false;
+}

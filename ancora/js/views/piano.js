@@ -1,5 +1,5 @@
 // Il piano di famiglia: chi c'è, chi racconta, l'abbonamento. I ricordi restano gratis: il piano fa crescere la famiglia.
-import { sb, state, $app, esc, ICONE } from "../app.js";
+import { sb, state, $app, esc, ICONE, VANTAGGI_PIU } from "../app.js";
 import { SUPABASE_URL } from "../config.js";
 
 const RITMI = [["settimanale", "Una a settimana"], ["tre_settimana", "Tre a settimana"], ["giornaliero", "Una al giorno"]];
@@ -8,11 +8,12 @@ const data = (d) => (d ? new Date(d + "T12:00").toLocaleDateString("it-IT", { da
 export default async function ({ params }) {
   const { data: p } = await sb.rpc("piano_mio");
   const testa = `<header class="testa"><a class="icona" href="#/profilo" aria-label="Indietro">${ICONE.indietro}</a>
-    <span class="logo" style="font-size:22px">Piano di famiglia</span><span style="width:44px"></span></header>`;
+    <span class="logo" style="font-size:22px">Ancora+</span><span style="width:44px"></span></header>`;
 
   if (!p) {
     $app().innerHTML = `${testa}
-      <div class="pad"><div class="lettera" style="margin:0;font-size:19px">Il piano è la tua famiglia su Ancora: le domande ai nonni su WhatsApp, il libro, fino a 6 persone e 4 narratori.</div></div>
+    ${p.attivo ? "" : `<div class="pad" style="padding-bottom:0">${vantaggi()}</div>`}
+      <div class="pad">${vantaggi()}</div>
       <form id="crea" class="card"><label for="nf" style="margin-top:0">Come si chiama la tua famiglia?</label>
         <input id="nf" placeholder="Famiglia Rossi" required>
         <button class="btn ambra" style="margin-top:10px">Crea il piano</button>
@@ -35,7 +36,7 @@ export default async function ({ params }) {
 
   const stato = p.attivo
     ? `<b style="color:#2F7A4F">Attivo</b>${a?.fine ? ` fino al ${data(a.fine)}` : ""} · ${a?.tipo === "regalo" ? "regalo" : a?.tipo === "annuale" ? "99 € all'anno" : "9,99 € al mese"}`
-    : `<b style="color:var(--rosso)">Non attivo</b> · i ricordi restano tutti, si fermano solo le domande su WhatsApp`;
+    : `<b style="color:var(--rosso)">Non attivo</b> · i ricordi restano tutti, si fermano le funzioni di Ancora+`;
 
   $app().innerHTML = `${testa}
     <div class="pad"><h1 style="font-size:26px">${esc(p.nome)}</h1><p style="margin:6px 0 0">${stato}</p></div>
@@ -97,4 +98,12 @@ export default async function ({ params }) {
   });
   document.getElementById("ora")?.addEventListener("change", (e) => salvaPref({ ora: e.target.value }));
   document.getElementById("att")?.addEventListener("change", (e) => salvaPref({ attivo: e.target.checked }));
+}
+
+function vantaggi() {
+  return `<div class="card" style="margin:0 0 14px">
+    <b style="font-family:Fraunces,serif;font-size:22px">Cosa dà Ancora<span style="color:var(--ambra)">+</span></b>
+    <p class="tenue" style="margin:4px 0 8px">Basta che uno in famiglia lo prenda, e lo hanno tutti.</p>
+    ${VANTAGGI_PIU.map(([t, d]) => `<div style="padding:6px 0;border-bottom:1px solid #EFE6D8"><b>✓ ${t}</b><br><span class="tenue" style="font-size:14px">${d}</span></div>`).join("")}
+  </div>`;
 }

@@ -1,11 +1,12 @@
 // Albero genealogico di una famiglia (una cerchia di tipo famiglia).
 // Generazioni in righe, coppie affiancate, linee dai genitori ai figli. Si completa insieme: tocca una persona per aggiungere.
-import { sb, state, $app, esc, ICONE } from "../app.js";
+import { sb, state, $app, esc, ICONE, passaPiu, seServePiu } from "../app.js";
 
 const W = 128, H = 70, GAP = 22, COPPIA = 10, RIGA = 140, MARGINE = 24;
 
 export default async function ({ params }) {
   const famiglie = state.cerchie.filter((c) => c.tipo === "famiglia");
+  if (params.c === "tutti" && !state.piu) { location.replace("#/albero"); setTimeout(() => passaPiu("Gli alberi di più famiglie uniti sono una funzione di Ancora+."), 300); return; }
   const uniti = params.c === "tutti" && famiglie.length > 1;
   const cerchiaId = uniti ? null : (params.c ?? famiglie[0]?.id);
   const cerchia = uniti ? { nome: "Tutti gli alberi" } : state.cerchie.find((c) => c.id === cerchiaId);
@@ -31,7 +32,7 @@ export default async function ({ params }) {
       <b>${esc(cerchia.nome)}</b><span style="width:44px"></span></header>
     ${famiglie.length > 1 ? `<div class="storie" style="gap:6px;padding-bottom:8px">${famiglie.map((c) =>
       `<a class="chip ${c.id === cerchiaId ? "on" : ""}" style="flex-shrink:0;text-decoration:none" href="#/albero?c=${c.id}">${esc(c.nome)}</a>`).join("")}
-      <a class="chip ${uniti ? "on" : ""}" style="flex-shrink:0;text-decoration:none" href="#/albero?c=tutti">🔗 Tutti uniti</a></div>` : ""}
+      <a class="chip ${uniti ? "on" : ""}" style="flex-shrink:0;text-decoration:none" href="#/albero?c=tutti" ${state.piu ? "" : 'data-piu="1"'}>🔗 Tutti uniti${state.piu ? "" : " +"}</a></div>` : ""}
     <div class="riga pad" style="padding-top:0;gap:6px"><span class="tenue" id="conta" style="flex:1"></span>
       <button class="chip" id="meno" style="margin:0" aria-label="Rimpicciolisci">−</button>
       <button class="chip" id="adatta" style="margin:0">Tutto</button>
@@ -57,7 +58,7 @@ export default async function ({ params }) {
   let zoom = Math.min(1, Math.max(0.45, (innerWidth - 8) / larga));
   const applica = () => { svg.setAttribute("width", Math.round(larga * zoom)); svg.setAttribute("height", Math.round(alta * zoom)); };
   applica();
-  document.getElementById("conta").textContent = `${nodi.length} persone${uniti ? ` · ${famiglie.length} alberi` : ""}`;
+  document.getElementById("conta").textContent = `${nodi.length}${state.piu || uniti ? "" : " su 15"} persone${uniti ? ` · ${famiglie.length} alberi` : ""}`;
   document.getElementById("meno").onclick = () => { zoom = Math.max(0.3, zoom - 0.15); applica(); };
   document.getElementById("piu").onclick = () => { zoom = Math.min(1.6, zoom + 0.15); applica(); };
   document.getElementById("adatta").onclick = () => { zoom = Math.min(1, (innerWidth - 8) / larga); applica(); };
@@ -326,7 +327,7 @@ function scheda(n, nodi, legami, cerchiaId, { tuttiN, altrove, nomeAlbero }) {
       nome: document.getElementById("n-nome").value.trim(), cognome: document.getElementById("n-cognome").value.trim() || null,
       anno_nascita: anno(document.getElementById("n-na").value), anno_morte: anno(document.getElementById("n-mo").value),
     }).select("id").single();
-    if (error) { alert("Non salvato: " + error.message); return; }
+    if (error) { if (!seServePiu(error)) alert("Non salvato: " + error.message); return; }
     const lega = (da, a, tipo) => ({ cerchia_id: cerchiaId, da, a, tipo });
     const righe = [];
     if (rel === "genitore") {
@@ -358,7 +359,7 @@ function scheda(n, nodi, legami, cerchiaId, { tuttiN, altrove, nomeAlbero }) {
   document.getElementById("colleg-ok")?.addEventListener("click", async () => {
     const v = document.getElementById("colleg").value; if (!v) return;
     const { error } = await sb.from("albero_nodi").update({ collegato_a: v }).eq("id", n.id);
-    if (error) { alert("Non collegato: " + error.message); return; }
+    if (error) { if (!seServePiu(error)) alert("Non collegato: " + error.message); return; }
     location.reload();
   });
 

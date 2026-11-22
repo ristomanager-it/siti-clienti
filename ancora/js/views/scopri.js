@@ -200,13 +200,13 @@ export default async function ({ params } = {}) {
     ${sezione(`${etichetta("Pacchetti")}
       <div style="border-radius:22px;padding:20px;background:${C.rosso};color:${C.panna};margin-bottom:12px">
         <div class="riga"><b style="flex:1;font-size:19px">Regalo di Natale</b><b style="font-family:Fraunces,serif;font-size:36px">129 €</b></div>
-        <div style="color:#F1DCCB;margin-top:4px;line-height:1.45">12 mesi di Piano Famiglia, <b>il libro stampato a colori</b> a fine anno, l'album del pranzo di Natale e il biglietto sotto l'albero. Valore 168 €.</div></div>
+        <div style="color:#F1DCCB;margin-top:4px;line-height:1.45">12 mesi di Ancora+, <b>il libro stampato a colori</b> a fine anno, l'album del pranzo di Natale e il biglietto sotto l'albero. Valore 168 €.</div></div>
       <div style="border-radius:22px;padding:20px;background:#fff;border:1px solid var(--bordo);margin-bottom:12px">
-        <div class="riga"><b style="flex:1;font-size:18px">Piano Famiglia</b><b style="font-family:Fraunces,serif;font-size:26px;color:${C.salvia}">99 € <small style="font-size:14px">l'anno</small></b></div>
-        <div class="tenue" style="margin-top:4px">Oppure 9,99 € al mese. <b>200 GB per tutta la famiglia</b> (basta che paghi uno), le domande sul telefono per i nonni senza app, il libro digitale.</div></div>
+        <div class="riga"><b style="flex:1;font-size:18px">Ancora<span style="color:${C.oro}">+</span></b><b style="font-family:Fraunces,serif;font-size:26px;color:${C.salvia}">99 € <small style="font-size:14px">l'anno</small></b></div>
+        <div class="tenue" style="margin-top:4px">Oppure 9,99 € al mese. Basta che paghi uno e lo ha tutta la famiglia: <b>albero senza limiti</b> e <b>alberi uniti</b> tra famiglie, <b>album degli eventi</b> con il QR, <b>il libro delle storie</b>, le domande sul telefono per i nonni, <b>200 GB</b>. In arrivo: <b>la voce che resta</b>.</div></div>
       <div style="border-radius:22px;padding:20px;background:${C.panna};border:1px solid #EAD9BF;margin-bottom:12px">
         <div class="riga"><b style="flex:1;font-size:18px">Gratis</b><b style="font-family:Fraunces,serif;font-size:26px;color:${C.notte}">0 €</b></div>
-        <div class="tenue" style="margin-top:4px">L'account, tutte le famiglie e i gruppi che vuoi, chat, storie, albero, ricettario, diario. 2 GB a testa, +1 GB per ogni amico che porti (fino a +10 GB).</div>
+        <div class="tenue" style="margin-top:4px">L'account, tutte le famiglie e i gruppi che vuoi, chat, storie, calendario, liste, spese, ricettario, diario, l'albero fino a 15 persone. 2 GB a testa, +1 GB per ogni amico che porti (fino a +10 GB).</div>
         <a class="btn chiaro" href="#/iscriviti" style="margin-top:12px">Crea il tuo account gratis</a></div>
       <div style="padding:4px 4px 0;line-height:1.7">
         <b>Servizi in più, quando servono</b><br>

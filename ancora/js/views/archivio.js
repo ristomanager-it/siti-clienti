@@ -41,7 +41,7 @@ export default async function ({ params }) {
         <div class="barra-prog" style="background:#EFEAE0"><i style="width:${Math.min(100, Math.round(spazio.famiglia.byte / (spazio.famiglia.quota_gb * 1e9) * 100))}%"></i></div></div>` : ""}
       <div style="margin-top:12px"><div class="tenue">${spazio?.famiglia ? "Il mio spazio: " : ""}${peso(spazio?.byte ?? 0)} su ${spazio?.quota_gb ?? 2} GB · ${spazio?.foto ?? 0} foto · ${spazio?.video ?? 0} video · ${spazio?.audio ?? 0} audio${spazio?.amici < 10 ? ` · <a href="#/invita">+1 GB per amico</a>` : ""}</div>
         <div class="barra-prog" style="background:#EFEAE0"><i style="width:${Math.min(100, Math.round((spazio?.byte ?? 0) / ((spazio?.quota_gb ?? 2) * 1e9) * 100))}%"></i></div>
-        ${(spazio?.byte ?? 0) > (spazio?.quota_gb ?? 2) * 0.8e9 ? `<p class="tenue" style="margin:6px 0 0">Stai finendo lo spazio. ${spazio?.piano ? `<a href="#/servizi">Aggiungi 100 GB</a>` : `<a href="#/invita">Invita amici: +1 GB ciascuno</a> · <a href="#/piano">Piano Famiglia: 200 GB</a>`}</p>` : ""}</div>
+        ${(spazio?.byte ?? 0) > (spazio?.quota_gb ?? 2) * 0.8e9 ? `<p class="tenue" style="margin:6px 0 0">Stai finendo lo spazio. ${spazio?.piano ? `<a href="#/servizi">Aggiungi 100 GB</a>` : `<a href="#/invita">Invita amici: +1 GB ciascuno</a> · <a href="#/piano">Ancora+: 200 GB</a>`}</p>` : ""}</div>
     </div>
     <div class="storie" style="gap:6px;padding-bottom:8px">${FILTRI.map(([k, t]) =>
       `<a class="chip ${filtro === k ? "on" : ""}" style="flex-shrink:0;text-decoration:none" href="#/archivio${k ? `?f=${k}` : ""}">${t}</a>`).join("")}</div>
@@ -66,7 +66,7 @@ export default async function ({ params }) {
       coda.innerHTML = `<div class="card" style="margin:10px 0 0">Carico ${fatti + 1} di ${lista.length}: ${esc(f.name || "file")}…
         <div class="barra-prog" style="background:#EFEAE0"><i style="width:${Math.round(fatti / lista.length * 100)}%"></i></div></div>`;
       if ((spazio?.byte ?? 0) + f.size > (spazio?.quota_gb ?? 2) * 1e9) {
-        alert(`Spazio finito (${spazio?.quota_gb ?? 2} GB). ${spazio?.piano ? "Aggiungi 100 GB da Servizi." : "Con il Piano Famiglia hai 50 GB."}`);
+        alert(`Spazio finito (${spazio?.quota_gb ?? 2} GB). ${spazio?.piano ? "Aggiungi 100 GB da Servizi." : "Con Ancora+ la famiglia ha 200 GB."}`);
         break;
       }
       if (f.size > MAX_MB * 1024 * 1024) {

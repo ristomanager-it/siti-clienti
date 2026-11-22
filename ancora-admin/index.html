@@ -232,7 +232,7 @@ async function omaggi() {
   const lista = await rpc("admin_omaggi");
   const link = (c) => `https://ristomanager-it.github.io/siti-clienti/ancora/#/omaggio/${c}`;
   $("#corpo").innerHTML = `<div class="card"><b>Crea codici omaggio</b>
-      <div class="tenue">Ogni codice attiva 12 mesi di Piano Famiglia. Si usa una volta sola.</div>
+      <div class="tenue">Ogni codice attiva 12 mesi di Ancora+. Si usa una volta sola.</div>
       <div class="riga" style="margin-top:10px;gap:6px"><input id="quanti" type="number" min="1" max="50" value="1" style="width:70px">
         <input id="nota" placeholder="Per chi (es. zia, amico)" style="flex:1"><button class="btn" id="crea">Crea</button></div></div>` +
     (lista.map((o) => `<div class="card"><div class="riga"><b style="font-family:monospace;font-size:15px">${esc(o.codice)}</b>
@@ -315,7 +315,7 @@ async function manifesto() {
     <h2>Perché</h2><div class="card"><b>Crediamo che nessuno debba perdere la voce di chi ama.</b>
       <p>1. Tenere ferme le radici. 2. Avvicinare chi è lontano adesso. 3. Continuare dopo.</p></div>
     <h2>Come</h2><div class="card">La voce prima di tutto · WhatsApp è il campanello, l'app è la casa · Privato per davvero, noi non leggiamo i contenuti · Semplice a 80 anni e a 15 · I ricordi restano gratis per sempre · La relazione prima della tecnologia.</div>
-    <h2>Cosa</h2><div class="card">Domande su WhatsApp · Album di famiglia con la voce · Cerchie · Diario privato · Libro · Clone più avanti, nell'app e sempre dichiarato.<br><br>Regalo 129 € (12 mesi) · Piano Famiglia 9,99 €/mese o 99 €/anno · App e ricordi gratis per sempre.</div>
+    <h2>Cosa</h2><div class="card">Domande su WhatsApp · Album di famiglia con la voce · Cerchie · Diario privato · Libro · Clone più avanti, nell'app e sempre dichiarato.<br><br>Regalo 129 € (12 mesi) · Ancora+ 9,99 €/mese o 99 €/anno · App e ricordi gratis per sempre.</div>
     <h2>Cosa non siamo</h2><div class="card">Non un social pubblico · Non vendiamo i dati · Non un chatbot su WhatsApp · Non sostituiamo le persone.</div>`;
 }
 

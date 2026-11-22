@@ -159,8 +159,8 @@ export async function condizioni() {
     ${h("1. Chi vende")}
     <p>${esc(AZIENDA.nome)}, ${esc(AZIENDA.sede)}, P.IVA ${esc(AZIENDA.piva)} («Ancora»).</p>
     ${h("2. Cosa compri")}
-    <p><b>Regalo di Natale (129 €):</b> 12 mesi di Piano Famiglia per la famiglia di chi riceve il regalo, a partire dalla data scelta.<br>
-    <b>Piano Famiglia:</b> 99 € l'anno o 9,99 € al mese, con rinnovo automatico finché non lo disdici.<br>
+    <p><b>Regalo di Natale (129 €):</b> 12 mesi di Ancora+ per la famiglia di chi riceve il regalo, a partire dalla data scelta.<br>
+    <b>Ancora+:</b> 99 € l'anno o 9,99 € al mese, con rinnovo automatico finché non lo disdici.<br>
     <b>Servizi:</b> libro stampato (49 € b/n, 69 € a colori), narratore in più (1,99 €/mese), spazio +100 GB (2,99 €/mese).<br>
     Prezzi IVA inclusa.</p>
     ${h("3. Pagamento")}
