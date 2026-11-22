@@ -6,6 +6,7 @@ import { $app, esc } from "../app.js";
 const AGGIORNATE = "22 novembre 2026";
 
 const NOVITA = [
+  ["22 novembre 2026 · sera tardi", "Storie: in basso «👁 Vista da…» con chi l'ha vista e come ha reagito; ⋯ in alto per eliminarle (le storie non si modificano: si rifanno). Il numerino rosso sull'icona di Ancora segna i messaggi non letti."],
   ["22 novembre 2026 · sera tardi", "Libreria musicale per le storie: 25 brani, anche rock e rap (allegri, di Natale, compleanno, dolci, emozionanti, viaggio). Si ascoltano prima di sceglierli."],
   ["22 novembre 2026 · sera", "Storie come su Instagram: testo (Aa) con colori, emoji da spostare e ingrandire, musica da un file del telefono. Guardando una storia: reazioni con le emoji e risposte, che arrivano anche in chat."],
   ["22 novembre 2026 · sera", "Foto dei post a scorrimento con doppio tocco per il cuore; ⋯ sui tuoi post per modificarli o eliminarli; le domande ora arrivano come notifica e stanno in Chat → Domande per te."],

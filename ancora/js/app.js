@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "78";
+const VER = "79";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 const ROTTE = {
@@ -544,6 +544,8 @@ async function aggiornaBadgeChat() {
   if (!b || !state.io || document.hidden) return;
   const { data: n } = await sb.rpc("chat_non_letti");
   b.hidden = !n; b.textContent = n > 99 ? "99+" : String(n ?? "");
+  // numerino sull'icona dell'app (telefono): i messaggi non letti; a zero si toglie
+  try { n ? await navigator.setAppBadge?.(n) : await navigator.clearAppBadge?.(); } catch { /* non supportato */ }
 }
 setInterval(aggiornaBadgeChat, 20_000);
 addEventListener("hashchange", () => setTimeout(aggiornaBadgeChat, 800));

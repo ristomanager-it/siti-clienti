@@ -330,6 +330,7 @@ function guardaStorie(gruppi, gi, url, conAggiungi = false) {
     const mus = lib ? { descrizione: lib.nome } : r.ricordi_media.find((x) => x.tipo === "audio");
     musica?.pause(); musica = lib ? new Audio(`musica/${lib.id}.m4a`) : mus && url[mus.path] ? new Audio(url[mus.path]) : null;
     segna(r.id);
+    if (gr.autore !== state.io.id) sb.from("storie_viste").upsert({ ricordo_id: r.id, persona_id: state.io.id }, { onConflict: "ricordo_id,persona_id", ignoreDuplicates: true }).then(() => {});
     const min = Math.floor((Date.now() - new Date(r.creato_il)) / 60_000);
     const fa = min < 1 ? "adesso" : min < 60 ? `${min} min` : `${Math.floor(min / 60)} h`;
     v.innerHTML = `
@@ -337,7 +338,8 @@ function guardaStorie(gruppi, gi, url, conAggiungi = false) {
         `<span style="flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,.35);overflow:hidden"><i style="display:block;height:100%;background:#fff;width:${k < i ? 100 : 0}%" ${k === i ? 'id="barra-ora"' : ""}></i></span>`).join("")}</div>
       <div style="display:flex;align-items:center;gap:10px;padding:0 12px 10px">${avatar(gr.persona ?? {}, 34, gr.persona?.foto_path ? url[gr.persona.foto_path] : null)}
         <b style="flex:1">${esc(nomeDi(gr.persona))} <span style="opacity:.7;font-weight:500">· ${fa}</span></b>
-        ${gr.autore === state.io.id ? `<button id="st-agg" style="background:rgba(255,255,255,.15);color:#fff;border:0;border-radius:999px;padding:8px 12px;font-weight:700">+ Aggiungi</button>` : ""}
+        ${gr.autore === state.io.id ? `<button id="st-agg" style="background:rgba(255,255,255,.15);color:#fff;border:0;border-radius:999px;padding:8px 12px;font-weight:700">+ Aggiungi</button>
+          <button id="st-menu" aria-label="Altre azioni" style="background:none;border:0;color:#fff;font-size:24px;font-weight:800;width:40px;height:44px">⋯</button>` : ""}
         <button id="st-x" aria-label="Chiudi" style="background:none;border:0;color:#fff;font-size:26px;width:44px;height:44px">✕</button></div>
       <div style="flex:1;position:relative;display:grid;place-items:center;overflow:hidden">
         <div style="position:relative;max-width:100%;max-height:100%">
@@ -355,7 +357,7 @@ function guardaStorie(gruppi, gi, url, conAggiungi = false) {
       ${gr.autore === state.io.id ? `<div id="st-reazioni" style="padding:8px 16px 0;font-size:15px;opacity:.9"></div>`
         : `<div style="display:flex;justify-content:space-around;padding:8px 10px 0">${["❤️", "😂", "😍", "😮", "😢", "👏", "🔥"].map((e) => `<button data-emo="${e}" aria-label="Reagisci ${e}" style="background:none;border:0;font-size:30px;width:46px;height:46px">${e}</button>`).join("")}</div>`}
       <div style="display:flex;align-items:center;gap:12px;padding:6px 16px calc(14px + env(safe-area-inset-bottom))">
-        ${gr.autore === state.io.id ? `<span style="flex:1"></span>` : `<input id="st-risp" placeholder="Rispondi a ${esc(nomeDi(gr.persona))}…" style="flex:1;min-height:44px;border-radius:22px;background:transparent;color:#fff;border:1px solid rgba(255,255,255,.5);padding:0 16px">`}
+        ${gr.autore === state.io.id ? `<button id="st-viste" style="flex:1;text-align:left;background:none;border:0;color:#fff;font-weight:700;font-size:16px;min-height:44px">👁 …</button>` : `<input id="st-risp" placeholder="Rispondi a ${esc(nomeDi(gr.persona))}…" style="flex:1;min-height:44px;border-radius:22px;background:transparent;color:#fff;border:1px solid rgba(255,255,255,.5);padding:0 16px">`}
         <button id="st-cuore" aria-label="Mi piace" aria-pressed="false" style="background:none;border:0;color:#fff;display:flex;align-items:center;gap:6px;font-weight:800;font-size:16px;min-width:48px;min-height:48px;justify-content:center">
           <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z"/></svg><span id="st-n"></span></button></div>`;
     // reazioni con emoji e risposte: arrivano anche in chat a chi ha pubblicato
@@ -375,6 +377,37 @@ function guardaStorie(gruppi, gi, url, conAggiungi = false) {
         const t = risp.value.trim(); risp.value = ""; risp.blur();
         await sb.from("reazioni").insert({ ricordo_id: r.id, persona_id: state.io.id, tipo: "commento", testo: t });
         await alChat(`Ha risposto alla tua storia: ${t}`); risp.placeholder = "Inviato ✓"; };
+    }
+    if (gr.autore === state.io.id) {
+      const pausa = () => { clearTimeout(timer); musica?.pause(); v.querySelector("#st-media")?.pause?.(); };
+      sb.from("storie_viste").select("vista_il, persone:persona_id(id, nome, soprannome, foto_path)").eq("ricordo_id", r.id).order("vista_il", { ascending: false }).then(({ data: viste }) => {
+        const b = v.querySelector("#st-viste"); if (!b) return;
+        b.textContent = `👁 ${viste?.length ? `Vista da ${viste.length}` : "Nessuno l'ha ancora vista"}`;
+        b.onclick = async () => {
+          if (!viste?.length) return;
+          pausa();
+          const { data: rz } = await sb.from("reazioni").select("persona_id, tipo, testo").eq("ricordo_id", r.id);
+          const di = (id) => (rz ?? []).filter((x) => x.persona_id === id).map((x) => x.tipo === "cuore" ? "❤️" : x.tipo === "emoji" ? x.testo : `«${x.testo}»`).join(" ");
+          const f = document.createElement("div");
+          f.style.cssText = "position:absolute;left:0;right:0;bottom:0;z-index:5;background:#1b1b1b;border-radius:22px 22px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom));max-height:60vh;overflow:auto";
+          f.innerHTML = `<div style="display:flex;align-items:center;margin-bottom:8px"><b style="flex:1;font-size:18px">Vista da ${viste.length}</b><button data-chiudi style="background:none;border:0;color:#fff;font-size:24px;width:44px;height:44px">✕</button></div>
+            ${viste.map((x) => `<div style="display:flex;align-items:center;gap:12px;padding:8px 0">${avatar(x.persone, 40)}<span style="flex:1"><b>${esc(nomeDi(x.persone))}</b><br><small style="opacity:.6">${quando(x.vista_il)}</small></span><span style="font-size:20px">${esc(di(x.persone?.id))}</span></div>`).join("")}`;
+          v.appendChild(f);
+          f.querySelector("[data-chiudi]").onclick = () => { f.remove(); mostra(); };
+        };
+      });
+      v.querySelector("#st-menu")?.addEventListener("click", async () => {
+        pausa();
+        if (!confirm("Eliminare questa storia? Spariscono anche le reazioni.")) { mostra(); return; }
+        const paths = r.ricordi_media.map((x) => x.path);
+        const { error } = await sb.from("ricordi").delete().eq("id", r.id);
+        if (error) { alert("Non eliminata: " + error.message); mostra(); return; }
+        if (paths.length) sb.storage.from("ricordi").remove(paths);
+        gr.storie.splice(i, 1);
+        if (!gr.storie.length) { chiudi(); location.reload(); return; }
+        if (i >= gr.storie.length) i = gr.storie.length - 1;
+        mostra();
+      });
     }
     if (gr.autore === state.io.id) sb.from("reazioni").select("tipo, testo, persone:persona_id(nome, soprannome)").eq("ricordo_id", r.id).in("tipo", ["emoji", "commento"]).then(({ data }) => {
       const el = v.querySelector("#st-reazioni"); if (!el || !data?.length) return;
