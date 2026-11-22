@@ -72,10 +72,6 @@ export default async function ({ params }) {
   $app().innerHTML = `
     <header class="testa"><b style="font-family:Fraunces,serif;font-size:24px;line-height:1.1;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(
       scelta?.nome ?? (filtro === "diretti" ? "Messaggi per me" : state.cerchie.length ? "Tutte le famiglie" : "Ancora"))}</b></header>
-    ${scelta ? testata({ nome: scelta.nome, persona: { id: scelta.id, nome: scelta.nome }, foto: url[scelta.foto_path], copertina: url[scelta.copertina_path], alta: 130, tondo: 72 })
-      .replace(`<div style="flex:1;padding-bottom:6px" data-testata-dx></div>`, `<div style="flex:1;padding-bottom:6px">${scelta.proprietario_id === state.io.id && !scelta.foto_path ? `<a class="tenue" href="#/cerchie">Aggiungi foto e copertina</a>` : ""}</div>`) : ""}
-    ${cardSettimana}
-    <div id="mia-domanda"></div>
     <div class="storie" aria-label="Storie">
       <button class="storia" id="nuova-storia" type="button"><span class="anello ${mie ? "" : "visto"}" style="position:relative"><span style="${state.io.foto_path ? `background-image:url('${url[state.io.foto_path]}')` : ""}">${state.io.foto_path ? "" : esc(nomeDi(state.io)[0] ?? "")}</span>
         <i style="position:absolute;right:-2px;bottom:-2px;width:24px;height:24px;border-radius:12px;background:var(--ambra);color:#fff;font-style:normal;font-weight:800;display:grid;place-items:center;border:2px solid var(--carta)">+</i></span>
@@ -87,6 +83,10 @@ export default async function ({ params }) {
       }).join("")}
     </div>
     <input type="file" id="file-storia" accept="image/*,video/*" hidden>
+    ${scelta ? testata({ nome: scelta.nome, persona: { id: scelta.id, nome: scelta.nome }, foto: url[scelta.foto_path], copertina: url[scelta.copertina_path], alta: 130, tondo: 72 })
+      .replace(`<div style="flex:1;padding-bottom:6px" data-testata-dx></div>`, `<div style="flex:1;padding-bottom:6px">${scelta.proprietario_id === state.io.id && !scelta.foto_path ? `<a class="tenue" href="#/cerchie">Aggiungi foto e copertina</a>` : ""}</div>`) : ""}
+    ${cardSettimana}
+    <div id="mia-domanda"></div>
     ${lista.map((r, i) => post(r, url, i)).join("") || `<div class="pad"><h1>Ancora vuoto</h1><p class="tenue">Invita la famiglia dalle cerchie, o racconta tu per primo.</p></div>`}`;
   miaDomanda();
   collegaStorie(perPersona, url, filtro);
