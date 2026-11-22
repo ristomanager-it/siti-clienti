@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "81";
+const VER = "82";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 const ROTTE = {
@@ -46,6 +46,7 @@ const ROTTE = {
   "biglietto": () => import(`./views/biglietto.js?v=${VER}`),
   "ricette": () => import(`./views/ricette.js?v=${VER}`),
   "libro": () => import(`./views/libro.js?v=${VER}`),
+  "film": () => import(`./views/film.js?v=${VER}`),
   "archivio": () => import(`./views/archivio.js?v=${VER}`),
   "settimana": () => import(`./views/settimana.js?v=${VER}`),
   "servizi": () => import(`./views/servizi.js?v=${VER}`),
@@ -384,7 +385,7 @@ function vociMenu() {
     ["Le mie famiglie e i gruppi", [...famiglie.map((c) => [`#/?c=${c.id}`, c.nome]),
       ...(famiglie.length > 1 ? [["#/?c=tutti", "Tutte insieme"]] : []), ["#/?c=diretti", "Messaggi per me"]]],
     ["La famiglia", [["#/calendario", "Calendario"], ["#/liste", "Liste e desideri"], ["#/spese", "Spese"], ["#/album", "Album degli eventi"], ["#/domande", "Domande per te"], ["#/albero", "L'albero"], ["#/cerchie", "Famiglie e cerchie"]]],
-    ["I miei ricordi", [["#/archivio", "Il cloud dei ricordi"], ["#/racconta", "Racconta"], ["#/racconta?lettera=1", "Una lettera per più avanti"], ["#/diario", "Il diario"], ["#/ricette", "Il ricettario"], [`#/libro/${state.io.id}`, "Il mio libro"]]],
+    ["I miei ricordi", [["#/archivio", "Il cloud dei ricordi"], ["#/racconta", "Racconta"], ["#/racconta?lettera=1", "Una lettera per più avanti"], ["#/diario", "Il diario"], ["#/ricette", "Il ricettario"], [`#/libro/${state.io.id}`, "Il mio libro"], ["#/film", "Il film dell'anno"]]],
     ["Agenda", [["vacanze", "Vacanze"], ["compiti", "Compiti"], ["esami", "Esami"]].filter(([k]) => attivi(k)).map(([k, t]) => [`#/agenda?t=${k}`, t])],
     ["Il mio account", [["#/invita", "Invita un amico · +1 GB"], ["#/profilo", "Profilo e impostazioni"], ["#/piano", "Il piano"], ["#/servizi", "Servizi"], ["#/omaggio", "Codice omaggio"], ["#/istruzioni", "Istruzioni"]]],
   ].filter(([, v]) => v.length);
@@ -508,6 +509,7 @@ export const VANTAGGI_PIU = [
   ["Gli alberi uniti", "la tua famiglia, quella dei tuoi genitori, quella dei suoceri"],
   ["Gli album degli eventi con il QR", "matrimoni, battesimi, il pranzo di Natale"],
   ["Il libro delle storie", "in digitale, pronto da stampare"],
+  ["Il film dell'anno", "le foto e i video di tutti, montati con la musica"],
   ["Le domande sul telefono", "per i nonni che non usano l'app"],
   ["200 GB per tutta la famiglia", "invece di 2 GB a testa"],
   ["In arrivo: la voce che resta", "un ricordo con cui parlare, solo con il consenso di chi l'ha registrato"],
@@ -527,7 +529,7 @@ export function passaPiu(motivo = "") {
         <span style="flex-shrink:0;width:22px;height:22px;border-radius:11px;background:#4D7356;color:#fff;display:grid;place-items:center;font-size:13px;font-weight:800">✓</span>
         <span><b>${t}</b><br><span class="tenue" style="font-size:14px">${s}</span></span></div>`).join("")}
       <a class="btn ambra" href="#/piano" style="margin-top:16px">Passa ad Ancora+ · 99 € l'anno</a>
-      <a class="btn chiaro" href="#/regala" style="margin-top:8px">Regalalo a Natale · 129 € con il libro stampato</a>
+      <a class="btn chiaro" href="#/regala" style="margin-top:8px">Regala «La storia della tua famiglia» · 99 €</a>
     </div>`;
   document.body.appendChild(d);
   d.querySelectorAll("[data-chiudi], a").forEach((x) => x.addEventListener("click", () => d.remove()));
