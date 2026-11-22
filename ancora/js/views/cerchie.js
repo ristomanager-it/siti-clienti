@@ -50,7 +50,7 @@ export default async function () {
       </div>
       <div style="display:flex;gap:18px;margin-top:12px;font-size:14px;font-weight:700">
         ${c.tipo === "famiglia" ? `<a href="#/albero?c=${c.id}">L'albero</a>` : ""}
-        ${mia ? `<a href="#" data-rinomina="${c.id}">Rinomina</a>` : `<a href="#" data-esci="${c.id}" style="color:#8A3B2E">Esci dalla cerchia</a>`}
+        ${mia ? `<a href="#" data-rinomina="${c.id}">Rinomina</a> <a href="#" data-elimina="${c.id}" style="color:#8A3B2E">Elimina</a>` : `<a href="#" data-esci="${c.id}" style="color:#8A3B2E">Esci dalla cerchia</a>`}
       </div></div></div>`;
   };
 
@@ -92,6 +92,15 @@ export default async function () {
   document.querySelectorAll("[data-esci]").forEach((b) => b.onclick = async (e) => { e.preventDefault();
     if (!confirm("Uscire da questa cerchia? Non vedrai più i suoi ricordi.")) return;
     await sb.from("cerchia_membri").delete().eq("cerchia_id", b.dataset.esci).eq("persona_id", state.io.id);
+    location.reload();
+  });
+
+  document.querySelectorAll("[data-elimina]").forEach((b) => b.onclick = async (e) => { e.preventDefault();
+    const c = state.cerchie.find((x) => x.id === b.dataset.elimina);
+    if (!confirm(`Eliminare «${c?.nome ?? ""}»? Spariscono chat, calendario, liste, spese e album di questa cerchia. I ricordi non si perdono: tornano privati a chi li ha scritti.`)) return;
+    const { error } = await sb.rpc("elimina_cerchia", { p_cerchia: b.dataset.elimina });
+    if (error) { alert("Non eliminata: " + error.message); return; }
+    try { if (localStorage.getItem("ancora_cerchia") === b.dataset.elimina) localStorage.removeItem("ancora_cerchia"); } catch { /* niente */ }
     location.reload();
   });
 
