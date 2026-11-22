@@ -27,7 +27,7 @@ export default async function ({ id }) {
   $app().innerHTML = `
     <header class="testa">${id ? `<a class="icona" href="#/" aria-label="Indietro">${ICONE.indietro}</a>` : `<span style="width:44px"></span>`}
       <b>${esc(nomeDi(p))}</b><span style="width:44px"></span></header>
-    <div style="position:relative;height:150px;background:${p.copertina_path ? `url('${url[p.copertina_path]}') center/cover` : "linear-gradient(135deg,#7FA37E,#4D7356)"}">
+    <div style="position:relative;aspect-ratio:16/9;max-height:320px;width:100%;background:${p.copertina_path ? `url('${url[p.copertina_path]}') center/cover` : "linear-gradient(135deg,#7FA37E,#4D7356)"}">
       ${io ? `<label class="chip" style="position:absolute;right:12px;bottom:10px;margin:0;background:rgba(251,248,242,.92)">📷 Copertina<input type="file" accept="image/*" id="f-copertina" hidden></label>` : ""}
     </div>
     <div class="pad" style="display:flex;align-items:flex-end;gap:18px;margin-top:-56px;position:relative">

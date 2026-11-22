@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "43";
+const VER = "44";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 const ROTTE = {
@@ -230,7 +230,7 @@ export async function cambiaImmagine({ file, tabella, id, campo, cartella, vecch
 }
 // Testata con copertina e foto tonda; con "modifica" compaiono i tasti 📷.
 export const testata = ({ nome, foto, copertina, persona, modifica, chiave, alta = 150, tondo = 98 }) => `
-  <div style="position:relative;height:${alta}px;background:${copertina ? `url('${copertina}') center/cover` : "linear-gradient(135deg,#7FA37E,#4D7356)"}">
+  <div style="position:relative;aspect-ratio:16/9;max-height:${Math.max(alta, 300)}px;width:100%;background:${copertina ? `url('${copertina}') center/cover` : "linear-gradient(135deg,#7FA37E,#4D7356)"}">
     ${modifica ? `<label class="chip" style="position:absolute;right:12px;bottom:10px;margin:0;background:rgba(251,248,242,.92)">📷 Copertina<input type="file" accept="image/*" data-img="copertina" data-k="${chiave ?? ""}" hidden></label>` : ""}
   </div>
   <div class="pad" style="display:flex;align-items:flex-end;gap:14px;margin-top:-${Math.round(tondo / 2 + 6)}px;position:relative">
