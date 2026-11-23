@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "96";
+const VER = "97";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 const ROTTE = {
@@ -435,7 +435,7 @@ export async function personeConosciute() {
 
 // domande su misura: chiede una nuova domanda partendo dai racconti (solo se attive; il server decide se serve)
 export async function chiediSuMisura() {
-  if (!state.io?.domande_su_misura) return;
+  if (!state.io?.domande_su_misura || !state.piu) return;   // le domande su misura sono di Ancora+
   try {
     const { data: { session } } = await sb.auth.getSession();
     fetch(`${SUPABASE_URL}/functions/v1/domanda-su-misura`, { method: "POST", headers: { authorization: `Bearer ${session?.access_token}`, "content-type": "application/json" }, body: "{}" }).catch(() => {});
@@ -650,8 +650,9 @@ export const VANTAGGI_PIU = [
   ["L'albero senza limiti", "il gratuito arriva a 15 persone per albero"],
   ["Gli alberi uniti", "la tua famiglia, quella dei tuoi genitori, quella dei suoceri"],
   ["Gli album degli eventi con il QR", "matrimoni, battesimi, il pranzo di Natale"],
-  ["Il libro delle storie", "in digitale, pronto da stampare"],
+  ["Il libro intero della famiglia", "in PDF e stampato, con i QR per sentire le voci"],
   ["Il film dell'anno", "le foto e i video di tutti, montati con la musica"],
+  ["Ricette, lettere e album senza limiti", "il ricettario di casa intero, le lettere da aprire più avanti per ognuno, un album per ogni evento"],
   ["Le domande sul telefono", "per i nonni che non usano l'app"],
   ["200 GB per tutta la famiglia", "invece di 2 GB a testa"],
   ["Le storie e i consigli di ognuno", "sempre lì quando servono: «tu che avresti fatto?», «com'era quella volta?»"],

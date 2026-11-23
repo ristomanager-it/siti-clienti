@@ -1,5 +1,5 @@
 // Racconta: un grande pulsante da tenere premuto, foto, e la cerchia con cui condividere.
-import { sb, state, $app, esc, ICONE, nomeDi, personeConosciute, chiediSuMisura } from "../app.js";
+import { sb, state, $app, esc, ICONE, nomeDi, personeConosciute, chiediSuMisura, seServePiu } from "../app.js";
 
 export default async function ({ params }) {
   let domanda = null, rispostaA = null;
@@ -153,7 +153,7 @@ export default async function ({ params }) {
       domanda_inviata_id: domanda?.id ?? null,
       in_risposta_a: rispostaA?.id ?? null,
     }).select("id").single();
-    if (error) { esito.innerHTML = `<span class="errore">Non salvato: ${esc(error.message)}</span>`; return; }
+    if (error) { if (seServePiu(error)) { esito.innerHTML = ""; return; } esito.innerHTML = `<span class="errore">Non salvato: ${esc(error.message)}</span>`; return; }
 
     const base = `${state.io.id}/${r.id}`;
     if (blob) {

@@ -1,6 +1,6 @@
 // Album degli eventi (Ancora+). #/album = i miei album e "crea"; #/album/<id> = foto e QR da stampare.
 // Gli invitati caricano da #/evento/<codice> (pagina pubblica, senza account).
-import { sb, state, $app, esc, urlMediaMolti, passaPiu } from "../app.js";
+import { sb, state, $app, esc, urlMediaMolti, passaPiu, seServePiu } from "../app.js";
 import qrcode from "https://esm.sh/qrcode-generator@1.4.4";
 
 const linkEvento = (codice) => `${location.origin}${location.pathname}#/evento/${codice}`;
@@ -11,12 +11,12 @@ export default async function ({ id } = {}) {
   $app().innerHTML = `
     <header class="testa"><b style="font-family:Fraunces,serif;font-size:24px;flex:1">Album degli eventi</b></header>
     <div class="pad" style="padding-top:0">
-      <button class="btn ambra" id="nuovo">+ Nuovo album${state.piu ? "" : " · Ancora+"}</button>
+      <button class="btn ambra" id="nuovo">+ Nuovo album</button>
       ${(album ?? []).map((a) => `<a href="#/album/${a.id}" style="display:flex;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--bordo);text-decoration:none;color:inherit">
         <span style="font-size:28px">📸</span><span style="flex:1"><b>${esc(a.titolo)}</b><br><span class="tenue" style="font-size:14px">${a.giorno ? new Date(a.giorno).toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" }) + " · " : ""}${a.album_foto?.[0]?.count ?? 0} foto</span></span>›</a>`).join("")
         || `<p class="tenue" style="margin-top:12px">Matrimoni, battesimi, compleanni, il pranzo di Natale: crei l'album, stampi il QR, e gli invitati caricano le foto dal loro telefono.</p>`}
     </div>`;
-  document.getElementById("nuovo").onclick = () => state.piu ? nuovo() : passaPiu("Gli album degli eventi con il QR sono una funzione di Ancora+.");
+  document.getElementById("nuovo").onclick = () => nuovo();   // il primo album è gratis; dal secondo serve Ancora+ (lo dice il database)
 }
 
 function nuovo() {
@@ -35,7 +35,7 @@ function nuovo() {
     e.preventDefault();
     const { data, error } = await sb.from("album_eventi").insert({ titolo: f.querySelector("#a-t").value.trim(), giorno: f.querySelector("#a-g").value || null,
       cerchia_id: f.querySelector("#a-c").value, creato_da: state.io.id }).select("id").single();
-    if (error) { if (/row-level|policy/i.test(error.message)) passaPiu("Per questa famiglia serve Ancora+."); else alert("Non creato: " + error.message); return; }
+    if (error) { if (seServePiu(error)) { f.remove(); return; } alert("Non creato: " + error.message); return; }
     f.remove(); location.hash = `#/album/${data.id}`;
   };
 }

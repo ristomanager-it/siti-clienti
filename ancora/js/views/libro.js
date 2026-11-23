@@ -7,14 +7,6 @@ const qrSvg = (testo) => { const q = qrcode(0, "M"); q.addData(testo); q.make();
 const data = (d) => new Date(d).toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" });
 
 export default async function ({ id, params }) {
-  if (!state.piu) {
-    $app().innerHTML = `<header class="testa"><span class="logo" style="font-size:22px">Il libro delle storie</span><span style="flex:1"></span></header>
-      <div class="pad"><p style="font-size:17px">Il libro con tutte le storie raccontate, e il QR per ascoltare le voci, è una funzione di <b>Ancora+</b>.</p>
-      <button class="btn ambra" id="vedi-piu">Scopri Ancora+</button></div>`;
-    document.getElementById("vedi-piu").onclick = () => passaPiu();
-    passaPiu("Il libro delle storie è una funzione di Ancora+.");
-    return;
-  }
   if (!id || params?.famiglia) return libroFamiglia(params ?? {});
   const { data: p } = await sb.from("persone").select("id, nome, cognome, soprannome, data_nascita").eq("id", id).maybeSingle();
   if (!p) { $app().innerHTML = `<p class="pad">Libro non trovato.</p>`; return; }
@@ -68,7 +60,7 @@ export default async function ({ id, params }) {
         <div class="piede"><div class="qr">${qrSvg(base + r.id)}</div><div>${voce ? "Inquadra e ascolta la sua voce" : "Inquadra per aprire il ricordo"}<br>su Ancora</div></div>
       </section>`;
     }).join("") || `<section class="pag"><p>Ancora nessuna storia: il libro si riempie con le risposte alle domande.</p></section>`}`;
-  document.getElementById("stampa").onclick = () => window.print();
+  if (!anteprima()) document.getElementById("stampa").onclick = () => window.print();
 }
 
 // --- Il libro della famiglia: l'anno raccontato da tutti, mese per mese. Con i QR per sentire le voci. ---
@@ -152,7 +144,28 @@ async function libroFamiglia(params) {
       <p class="tenue">${rr.length} ${rr.length === 1 ? "ricordo" : "ricordi"}</p></section>${rr.map(pagina).join("")}` : "").join("")
       || `<section class="pag"><p class="testo">Il libro si riempie con le foto, le storie e le voci di tutti. Comincia oggi: anche una foto con due righe è un ricordo.</p></section>`}
     <section class="pag capitolo"><h2 style="font-size:34px">La storia continua.</h2><p class="tenue">${esc(c.nome)} · Ancora</p></section>`;
-  document.getElementById("stampa").onclick = () => window.print();
+  if (!anteprima()) document.getElementById("stampa").onclick = () => window.print();
   const vai = () => location.hash = `#/libro?famiglia=${document.getElementById("lf-c").value}&anno=${document.getElementById("lf-a").value}`;
   document.getElementById("lf-c").onchange = vai; document.getElementById("lf-a").onchange = vai;
+}
+
+// Senza Ancora+: si vedono le prime pagine; il libro intero, il PDF e la stampa sono di Ancora+
+const PAGINE_ANTEPRIMA = 6;
+function anteprima() {
+  if (state.piu) return false;
+  const pagine = [...document.querySelectorAll("section.pag")];
+  const fine = pagine.at(-1);
+  pagine.slice(PAGINE_ANTEPRIMA).forEach((p) => { if (p !== fine) p.remove(); });
+  const resto = Math.max(0, pagine.length - PAGINE_ANTEPRIMA - 1);
+  const ultima = document.createElement("section");
+  ultima.className = "pag capitolo";
+  ultima.innerHTML = `<h2 style="font-size:30px;line-height:1.15">${resto ? `Il libro continua per altre ${resto} pagine.` : "Il libro continua."}</h2>
+    <p style="font-size:15px;max-width:90mm;margin:10px auto 18px">Il libro intero, con tutte le storie, le foto e i QR delle voci, in PDF e stampato: con Ancora+.</p>
+    <button class="btn ambra noprint" style="width:auto;margin:0 auto" id="libro-piu">Scopri Ancora+</button>`;
+  (fine ?? document.body).before(ultima);
+  ultima.querySelector("#libro-piu").onclick = () => passaPiu("Il libro intero, in PDF e stampato, è di Ancora+.");
+  const b = document.getElementById("stampa");
+  if (b) { b.textContent = "Il libro intero e il PDF con Ancora+"; b.onclick = () => passaPiu("Il libro intero, in PDF e stampato, è di Ancora+."); }
+  document.querySelectorAll("section.pag").forEach((p) => p.classList.add("anteprima"));
+  return true;
 }

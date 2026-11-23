@@ -97,6 +97,7 @@ export default async function ({ id, params }) {
       Object.assign(state.io, dati); location.reload();
     };
     document.getElementById("c-misura").onchange = async (e) => {
+      if (e.target.checked && !state.piu) { e.target.checked = false; passaPiu("Le domande su misura, scritte su quello che racconti, sono di Ancora+."); return; }
       const on = e.target.checked;
       const { error } = await sb.from("persone").update({ domande_su_misura: on }).eq("id", state.io.id);
       if (error) { e.target.checked = !on; alert("Non salvato: " + error.message); return; }
