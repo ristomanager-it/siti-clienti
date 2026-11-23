@@ -29,41 +29,52 @@ const SEGNI = {
   niente: { e: "😮", fa: "apre la bocca un istante", vuol: "non ha briscole", tasto: "Bocca aperta" },
 };
 const FRASI = ["Bella! 👏", "Carica!", "Vai liscio", "Prendi tu", "Che fortuna 😄", "Uffa 😅"];
-const nomeCarta = (c) => `${Number(c.slice(1)) > 7 ? FIGURE[Number(c.slice(1))] : c.slice(1)} di ${SEMI[c[0]]}`;
+const NUMERI = ["", "Asso", "Due", "Tre", "Quattro", "Cinque", "Sei", "Sette", "Fante", "Cavallo", "Re"];
+const nomeCarta = (c) => `${NUMERI[Number(c.slice(1))]} di ${SEMI[c[0]]}`;
+// i segnali del tressette si dicono a voce alta (li sentono tutti)
+const SEGNALI = {
+  busso: { e: "👊", fa: "bussa", vuol: "gioca la carta più alta di questo seme" },
+  striscio: { e: "👉", fa: "striscia", vuol: "ha altre carte di questo seme" },
+  volo: { e: "🕊️", fa: "vola", vuol: "era l'ultima carta di questo seme" },
+};
+const terzi = (t) => { const n = Math.floor(t / 3), r = t % 3; return `${n}${r === 1 ? "⅓" : r === 2 ? "⅔" : ""}`; };
 
-export default async function ({ params }) {
+export default async function ({ params, gioco = "briscola" }) {
+  const TRE = gioco === "tressette";
+  const TITOLO = TRE ? "🃏 Tressette" : "🃏 Briscola";
   let id = params?.id;
   const gruppo = (params?.c && state.cerchie.find((c) => c.id === params.c)) ?? state.cerchie.find((c) => c.tipo === "famiglia") ?? state.cerchie[0];
 
   if (!id) {
     // tavoli aperti nel gruppo, oppure se ne apre uno nuovo
-    const { data: aperti } = gruppo ? await sb.from("partite").select("id, n, posti, stato, creata_il").eq("cerchia_id", gruppo.id).eq("gioco", "briscola")
+    const { data: aperti } = gruppo ? await sb.from("partite").select("id, n, posti, stato, creata_il").eq("cerchia_id", gruppo.id).eq("gioco", gioco)
       .neq("stato", "finita").gte("creata_il", new Date(Date.now() - 864e5).toISOString()).order("creata_il", { ascending: false }) : { data: [] };
     $app().innerHTML = `
-      <header class="testa"><a class="icona" href="#/giochi${gruppo ? `?c=${gruppo.id}` : ""}" aria-label="Indietro">${ICONE.indietro}</a><b>🃏 Briscola</b><span style="width:44px"></span></header>
+      <header class="testa"><a class="icona" href="#/giochi${gruppo ? `?c=${gruppo.id}` : ""}" aria-label="Indietro">${ICONE.indietro}</a><b>${TITOLO}</b><span style="width:44px"></span></header>
       <div class="pad" style="padding-bottom:120px">
         ${!gruppo ? `<p>Prima entra in una famiglia o in un gruppo.</p>` : `
         <p class="tenue" style="margin-top:0">Si gioca in ${esc(gruppo.nome)}. Appena apri il tavolo, al gruppo arriva l'invito sul telefono. Se manca qualcuno, gioca il telefono al suo posto.</p>
-        ${(aperti ?? []).map((p) => `<a href="#/briscola?id=${p.id}" class="card" style="display:block;margin:0 0 10px;text-decoration:none;color:inherit">
-          <b>${p.stato === "in_corso" ? "In corso" : "Si cercano giocatori"} · briscola a ${p.n}</b>
+        ${(aperti ?? []).map((p) => `<a href="#/${gioco}?id=${p.id}" class="card" style="display:block;margin:0 0 10px;text-decoration:none;color:inherit">
+          <b>${p.stato === "in_corso" ? "In corso" : "Si cercano giocatori"} · ${gioco} a ${p.n}</b>
           <div class="tenue">${p.posti.map((x) => esc(x.nome ?? "posto libero")).join(" · ")}</div></a>`).join("")}
-        <button class="btn ambra" data-n="2">Nuovo tavolo a 2</button>
-        <button class="btn" data-n="4" style="margin-top:10px">Nuovo tavolo a 4 (a coppie)</button>
-        <button class="btn" data-n="5" style="margin-top:10px">Nuovo tavolo a 5 (chiamata)</button>
-        <p class="tenue" style="font-size:14px;margin-top:14px">A 5: asta a punti da 61, chi vince chiama una carta (il suo seme è la briscola, chi la tiene è il socio segreto). Il chiamante prende doppio.</p>`}
+        <button class="btn ambra" data-n="4">Nuovo tavolo a 4 (a coppie)</button>
+        <button class="btn" data-n="2" style="margin-top:10px">Nuovo tavolo a 2</button>
+        ${TRE ? `<p class="tenue" style="font-size:14px;margin-top:14px">Si risponde sempre al seme, niente briscola. Comanda il 3, poi il 2 e l'asso. L'asso vale un punto, tre, due e figure un terzo, l'ultima presa un punto. Al compagno si può bussare, strisciare e volare.</p>`
+          : `<button class="btn" data-n="5" style="margin-top:10px">Nuovo tavolo a 5 (chiamata)</button>
+        <p class="tenue" style="font-size:14px;margin-top:14px">A 5: asta a punti da 61, chi vince chiama una carta (il suo seme è la briscola, chi la tiene è il socio segreto). Il chiamante prende doppio.</p>`}`}
       </div>`;
     document.querySelectorAll("[data-n]").forEach((b) => b.onclick = async () => {
       b.disabled = true;
-      const { data, error } = await sb.rpc("briscola_crea", { p_cerchia: gruppo.id, p_n: Number(b.dataset.n) });
+      const { data, error } = await sb.rpc(`${gioco}_crea`, { p_cerchia: gruppo.id, p_n: Number(b.dataset.n) });
       if (error) { alert(error.message); b.disabled = false; return; }
-      location.hash = `#/briscola?id=${data}`;
+      location.hash = `#/${gioco}?id=${data}`;
     });
     return;
   }
 
   let ultimaFirma = "", ultimaPresaVista = null, timer = null;
   $app().innerHTML = `
-    <header class="testa"><a class="icona" href="#/briscola" aria-label="Indietro">${ICONE.indietro}</a><b>🃏 Briscola</b><span style="width:44px"></span></header>
+    <header class="testa"><a class="icona" href="#/${gioco}" aria-label="Indietro">${ICONE.indietro}</a><b>${TITOLO}</b><span style="width:44px"></span></header>
     <div id="corpo"></div>
     <div id="segni-box"></div>
     <div id="chat" class="card" style="margin:12px 16px 130px" hidden>
@@ -83,7 +94,7 @@ export default async function ({ params }) {
       const chi = m.posto === mioPosto ? "tu" : esc(posti[m.posto]?.nome ?? "");
       if (m.tipo === "testo") righe.push(`<div><b>${chi}:</b> ${esc(m.testo)}</div>`);
       else {
-        const sg = SEGNI[m.testo]; if (!sg) continue;
+        const sg = SEGNI[m.testo] ?? SEGNALI[m.testo]; if (!sg) continue;
         righe.push(`<div class="tenue">🤫 ${chi} ${sg.fa} ${sg.e}</div>`);
         // il segno del compagno: compare grande per qualche secondo (non al primo caricamento)
         if (m.posto !== mioPosto && !primoGiro) {
@@ -122,7 +133,18 @@ export default async function ({ params }) {
     posti = p.posti; mioPosto = p.posti.findIndex((x) => x.persona_id === state.io.id);
     document.getElementById("chat").hidden = p.stato === "attesa" || mioPosto < 0;
     const sb4 = document.getElementById("segni-box");
-    if (p.n === 4 && p.stato === "in_corso" && mioPosto >= 0) {
+    if (TRE && p.stato === "in_corso" && mioPosto >= 0) {
+      if (!sb4.dataset.pronto) {
+        sb4.dataset.pronto = "1";
+        sb4.innerHTML = `<div class="card" style="margin:12px 16px 0"><b>📢 Segnali</b> <span class="tenue" style="font-size:13px">· li sentono tutti, si dicono quando giochi la carta</span>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px">${Object.entries(SEGNALI).map(([k, v]) => `<button data-segnale="${k}" style="border:1px solid var(--bordo);background:#fff;border-radius:14px;padding:8px 2px;cursor:pointer"><div style="font-size:28px">${v.e}</div><small style="font-weight:700;font-size:12px;text-transform:capitalize">${k}</small></button>`).join("")}</div>
+          <p class="tenue" style="font-size:12px;margin:6px 0 0">👊 busso: gioca la più alta · 👉 striscio: ne ho altre · 🕊️ volo: era l'ultima</p></div>`;
+        sb4.querySelectorAll("[data-segnale]").forEach((b) => b.onclick = async () => {
+          const { error } = await sb.rpc("tressette_segnale", { p_partita: id, p_segnale: b.dataset.segnale });
+          if (error) alert(error.message); else { b.style.background = "#E1F5EE"; setTimeout(() => { b.style.background = "#fff"; }, 800); messaggi(); }
+        });
+      }
+    } else if (!TRE && p.n === 4 && p.stato === "in_corso" && mioPosto >= 0) {
       if (!sb4.dataset.pronto) {
         sb4.dataset.pronto = "1";
         sb4.innerHTML = `<div class="card" style="margin:12px 16px 0"><b>🤫 Segni al compagno</b> <span class="tenue" style="font-size:13px">· li vede solo lui</span>
@@ -151,7 +173,7 @@ export default async function ({ params }) {
     if (p.stato === "attesa") {
       const creatore = p.creato_da === state.io.id;
       corpo.innerHTML = `
-        <div class="pad" style="text-align:center"><div style="font-size:44px">🃏</div><h1 style="margin:4px 0">Briscola a ${p.n}</h1>
+        <div class="pad" style="text-align:center"><div style="font-size:44px">🃏</div><h1 style="margin:4px 0">${TRE ? "Tressette" : "Briscola"} a ${p.n}</h1>
           <p class="tenue" style="margin:0">${p.n === 4 ? "Si gioca a coppie: chi siede di fronte è in squadra con te." : p.n === 5 ? "Chiamata: asta, carta chiamata, socio segreto." : "Uno contro uno."}</p></div>
         ${p.posti.map((x, i) => `<div class="card" style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
           <b style="flex:1">${p.n === 4 ? `<span class="tenue">Coppia ${i % 2 ? "B" : "A"} · </span>` : ""}${x.persona_id ? esc(x.nome) : `<span class="tenue">posto libero</span>`}</b>
@@ -165,7 +187,7 @@ export default async function ({ params }) {
       });
       corpo.querySelector("#inizia")?.addEventListener("click", async (e) => {
         e.target.disabled = true;
-        const { error } = await sb.rpc("briscola_inizia", { p_partita: id });
+        const { error } = await sb.rpc(`${gioco}_inizia`, { p_partita: id });
         if (error) { alert(error.message); e.target.disabled = false; } ultimaFirma = ""; aggiorna();
       });
       corpo.querySelector("#invita").onclick = async (e) => {
@@ -228,6 +250,8 @@ export default async function ({ params }) {
     // gli altri intorno al tavolo, dal mio punto di vista
     const altri = Array.from({ length: p.n - 1 }, (_, k) => (Math.max(io, 0) + k + 1) % p.n);
     const tav = pub.tavolo ?? [];
+    const obbligo = TRE && tav.length && mia?.carte.some((c) => c[0] === tav[0].carta[0]) ? tav[0].carta[0] : null;
+    const giocabile = (c) => !obbligo || c[0] === obbligo;
     const ultima = pub.ultima;
     // mano appena chiusa: la mostro un attimo, così si vede chi ha preso
     const mostraUltima = ultima && ultima.n !== ultimaPresaVista && !tav.length;
@@ -242,6 +266,12 @@ export default async function ({ params }) {
         <div class="tenue" style="margin-top:4px">Hanno fatto ${e.fatti} su ${pub.offerta} offerti${so === ch ? " (si era chiamato da solo)" : ""}</div>
         <div style="margin-top:8px">${p.posti.map((x, i) => `${i === io ? "tu" : nome(i)} <b>${e.punteggio[i] > 0 ? "+" : ""}${e.punteggio[i]}</b>`).join(" · ")}</div>
         <a class="btn ambra" href="#/briscola?c=${p.cerchia_id}" style="margin-top:12px">Un'altra partita</a></div>`;
+    } else if (p.stato === "finita" && TRE) {
+      const [a, b] = pub.punti ?? [0, 0], mio = io >= 0 ? squadra(io) : 0;
+      risultato = `<div class="card" style="text-align:center;background:#FFF6E8"><div style="font-size:42px">${a === b ? "🤝" : (a > b ? 0 : 1) === mio ? "🏆" : "🙂"}</div>
+        <b style="font-size:20px">${a === b ? `Pareggio: ${a} a ${b}` : `Vince ${a > b ? etichettaSq(0) : etichettaSq(1)}, ${Math.max(a, b)} a ${Math.min(a, b)}`}</b>
+        <div class="tenue" style="margin-top:4px">${etichettaSq(0)} ${terzi(pub.terzi[0])} · ${etichettaSq(1)} ${terzi(pub.terzi[1])} (i terzi si perdono)</div>
+        <a class="btn ambra" href="#/tressette?c=${p.cerchia_id}" style="margin-top:12px">Un'altra partita</a></div>`;
     } else if (p.stato === "finita") {
       const [a, b] = punti, mio = io >= 0 ? squadra(io) : 0;
       risultato = `<div class="card" style="text-align:center;background:#FFF6E8"><div style="font-size:42px">${a === b ? "🤝" : (a > b ? 0 : 1) === mio ? "🏆" : "🙂"}</div>
@@ -253,7 +283,7 @@ export default async function ({ params }) {
     corpo.innerHTML = `
       ${risultato}
       <div style="display:flex;justify-content:space-around;padding:10px 12px 0;gap:8px">${altri.map((i) => `<div style="text-align:center;min-width:0">
-        <div style="display:flex;justify-content:center;gap:2px">${p.stato === "in_corso" ? Array.from({ length: Math.min(3, Number(pub.restanti) > 0 ? 3 : 3) }).map(() => dorso()).join("") : ""}</div>
+        <div style="display:flex;justify-content:center;gap:2px">${p.stato === "in_corso" ? (p.n === 2 ? dorso() + dorso() + dorso() : dorso()) : ""}</div>
         <small style="display:block;margin-top:4px;font-weight:${turno === i ? 800 : 600};${turno === i ? "color:#C8102E" : ""}">${turno === i && p.stato === "in_corso" ? "▶ " : ""}${nome(i)}${p.n === 4 && squadra(i) === squadra(io) ? " 🤝" : ""}</small></div>`).join("")}</div>
 
       <div style="margin:12px 16px;padding:14px 10px;border-radius:18px;background:#2E6B4F;min-height:150px;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;position:relative">
@@ -263,23 +293,30 @@ export default async function ({ params }) {
       </div>
 
       <div style="display:flex;align-items:center;gap:12px;padding:0 16px">
-        ${pub.briscola ? `<div style="text-align:center">${carta(pub.briscola, { piccola: true })}<small class="tenue" style="display:block;font-size:11px">briscola</small></div>` : ""}
-        <div style="flex:1">
+        ${TRE ? `<div style="flex:1">
+          <div class="tenue" style="font-size:14px">Si risponde al seme · comanda il 3${p.n === 2 ? ` · nel mazzo ${pub.restanti ?? 0}` : ""}</div>
+          <div style="font-size:14px;margin-top:4px">${etichettaSq(0)}: <b>${terzi(pub.terzi?.[0] ?? 0)}</b> · ${etichettaSq(1)}: <b>${terzi(pub.terzi?.[1] ?? 0)}</b></div>
+          ${p.n === 2 && pub.pescate?.length ? `<div style="font-size:13px;margin-top:4px" class="tenue">Pescate: ${pub.pescate.map((x) => `${x.posto === io ? "tu" : nome(x.posto)} ${nomeCarta(x.carta)}`).join(" · ")}</div>` : ""}
+          ${ultima ? `<div style="font-size:13px;margin-top:6px" class="tenue">Ultima mano: ${ultima.tavolo.map((x) => nomeCarta(x.carta)).join(" · ")} → ${ultima.vince === io ? "tu" : nome(ultima.vince)}</div>` : ""}
+        </div>` : ""}
+        ${!TRE && pub.briscola ? `<div style="text-align:center">${carta(pub.briscola, { piccola: true })}<small class="tenue" style="display:block;font-size:11px">briscola</small></div>` : ""}
+        ${TRE ? "" : `<div style="flex:1">
           <div class="tenue" style="font-size:14px">Briscola: <b style="color:${COLORE[pub.briscola?.[0]]}">${SEMI[pub.briscola?.[0]] ?? ""}</b> · nel mazzo ${pub.restanti ?? 0}</div>
           ${p.n === 5 ? `<div style="font-size:14px;margin-top:4px">📣 ${Number(pub.chiamante) === io ? "Tu" : nome(pub.chiamante)} a <b>${pub.offerta}</b> · chiamato il <b>${pub.chiamata ? nomeCarta(pub.chiamata) : ""}</b></div>
             <div style="font-size:14px;margin-top:2px">Socio: <b>${pub.socio != null ? (Number(pub.socio) === io ? "tu" : nome(pub.socio)) : "ancora segreto 🤫"}</b>${mia?.carte.includes(pub.chiamata) ? " <span class='tenue'>(sei tu, ma non dirlo!)</span>" : ""}</div>`
           : `<div style="font-size:14px;margin-top:4px">${etichettaSq(0)}: <b>${punti[0]}</b> · ${etichettaSq(1)}: <b>${punti[1]}</b></div>`}
           ${ultima && !mostraUltima ? `<div style="font-size:13px;margin-top:6px;display:flex;align-items:center;gap:4px;flex-wrap:wrap"><span class="tenue">Ultima mano:</span>${ultima.tavolo.map((x) => `<span style="font-weight:700;color:${COLORE[x.carta[0]]}">${nomeCarta(x.carta).replace(" di ", " ")}</span>`).join("<span class='tenue'>·</span>")}<span class="tenue">→ ${ultima.vince === io ? "tu" : nome(ultima.vince)}${ultima.punti ? ` +${ultima.punti}` : ""}</span></div>` : ""}
-        </div></div>
+        </div>`}</div>
 
       ${io >= 0 && mia ? `<div style="margin:14px 16px 0;padding:10px;border-radius:16px;background:${tocca ? "#FFF6E8" : "#F3EDE2"};${tocca ? "box-shadow:0 0 0 3px #E8B56B" : ""}">
-        <div style="font-weight:800;margin-bottom:8px">${tocca ? "▶ Tocca a te: scegli la carta" : "Le tue carte"}</div>
-        <div style="display:flex;gap:${mia.carte.length > 3 ? 6 : 10}px;justify-content:center;flex-wrap:wrap">${mia.carte.slice().sort().map((c) => `<button data-carta="${c}" aria-label="${nomeCarta(c)}" ${tocca ? "" : "disabled"} style="border:0;background:none;padding:0;cursor:${tocca ? "pointer" : "default"};${tocca ? "" : "opacity:.8"}">${carta(c, { attiva: tocca, piccola: mia.carte.length > 3 })}</button>`).join("") || `<span class="tenue">Nessuna carta</span>`}</div></div>`
+        <div style="font-weight:800;margin-bottom:8px">${tocca ? (TRE && obbligo ? `▶ Tocca a te: rispondi a ${SEMI[obbligo]}` : "▶ Tocca a te: scegli la carta") : "Le tue carte"}</div>
+        <div style="display:flex;gap:${mia.carte.length > 3 ? 6 : 10}px;justify-content:center;flex-wrap:wrap">${mia.carte.slice().sort().map((c) => { const ok = tocca && giocabile(c);
+          return `<button data-carta="${c}" aria-label="${nomeCarta(c)}" ${ok ? "" : "disabled"} style="border:0;background:none;padding:0;cursor:${ok ? "pointer" : "default"};${ok ? "" : tocca ? "opacity:.35" : "opacity:.8"}">${carta(c, { attiva: ok, piccola: mia.carte.length > 3 })}</button>`; }).join("") || `<span class="tenue">Nessuna carta</span>`}</div></div>`
         : `<p class="pad tenue" style="text-align:center">Guardi la partita.</p>`}`;
 
     corpo.querySelectorAll("[data-carta]").forEach((b) => b.onclick = async () => {
       corpo.querySelectorAll("[data-carta]").forEach((x) => x.disabled = true);
-      const { error } = await sb.rpc("briscola_gioca", { p_partita: id, p_carta: b.dataset.carta });
+      const { error } = await sb.rpc(`${gioco}_gioca`, { p_partita: id, p_carta: b.dataset.carta });
       if (error) alert(error.message);
       ultimaFirma = ""; aggiorna();
     });
