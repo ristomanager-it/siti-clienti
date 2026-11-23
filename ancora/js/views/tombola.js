@@ -50,22 +50,44 @@ export default async function ({ params }) {
   }
 
   let voce = true; try { voce = localStorage.getItem("ancora_tombola_voce") !== "0"; } catch { /* niente */ }
-  let ultimoVisto = null, premiVisti = null, timer = null, ultimaFirma = "";
+  let ultimoVisto = null, premiVisti = null, timer = null, ultimaFirma = "", animando = false;
   $app().innerHTML = `
     <header class="testa"><a class="icona" href="#/giochi" aria-label="Indietro">${ICONE.indietro}</a><b>🎄 Tombola</b>
       <button class="icona" id="voce" aria-label="Voce" style="border:0;background:none;font-size:22px">${voce ? "🔊" : "🔇"}</button></header>
-    <div id="corpo" style="padding-bottom:130px"></div>`;
+    <div id="corpo" style="padding-bottom:130px"></div>
+    <style>
+      @keyframes tomb-lampo { 0%,100% { transform: scale(1); filter: brightness(1); } 25% { transform: scale(1.12); filter: brightness(1.5); } 50% { transform: scale(.96); filter: brightness(.8); } 75% { transform: scale(1.08); filter: brightness(1.4); } }
+      .tomb-lampo { animation: tomb-lampo .45s ease-in-out 4; }
+      .tomb-gira { filter: blur(1px); opacity: .85; }
+    </style>`;
   document.getElementById("voce").onclick = (e) => { voce = !voce; e.target.textContent = voce ? "🔊" : "🔇"; try { localStorage.setItem("ancora_tombola_voce", voce ? "1" : "0"); } catch { /* niente */ } };
+
+  function estrazione(n) {
+    const palla = document.getElementById("palla"), sm = document.getElementById("smorfia");
+    if (!palla) return;
+    animando = true; setTimeout(() => { animando = false; }, 2300);
+    sm.style.visibility = "hidden"; palla.classList.add("tomb-gira");
+    const fine = Date.now() + 1600;
+    const giro = setInterval(() => {
+      if (Date.now() < fine) { palla.textContent = 1 + Math.floor(Math.random() * 90); return; }
+      clearInterval(giro);
+      palla.textContent = n; palla.classList.remove("tomb-gira"); palla.classList.add("tomb-lampo");
+      sm.style.visibility = "visible";
+      if (navigator.vibrate) navigator.vibrate(120);
+      if (voce) parla(n);
+      setTimeout(() => palla.classList.remove("tomb-lampo"), 2000);
+    }, 70);
+  }
 
   async function aggiorna() {
     if (!document.getElementById("corpo")) { clearInterval(timer); return; }
     const [{ data: t }, { data: cart }] = await Promise.all([
-      sb.from("tombole").select("id, cerchia_id, banco_id, stato, estratti, premi, premi_testi, prezzo_cent, pagati, persone:banco_id(nome, soprannome), cerchie(nome)").eq("id", id).maybeSingle(),
+      sb.from("tombole").select("id, cerchia_id, banco_id, stato, estratti, premi, premi_testi, prezzo_cent, pagati, programmata_il, persone:banco_id(nome, soprannome), cerchie(nome)").eq("id", id).maybeSingle(),
       sb.from("tombola_cartelle").select("id, persona_id, numeri, persone:persona_id(nome, soprannome)").eq("tombola_id", id).order("creata_il"),
     ]);
     if (!t) { document.getElementById("corpo").innerHTML = `<p class="pad">Questa tombola non c'è più.</p>`; clearInterval(timer); return; }
     // ridisegna solo se è cambiato qualcosa (così non salta lo scorrimento)
-    const firma = [t.stato, t.estratti.length, (t.premi ?? []).length, (cart ?? []).map((c) => c.id).join(), JSON.stringify(t.premi_testi), t.prezzo_cent, t.pagati.join()].join("|");
+    const firma = [t.stato, t.estratti.length, (t.premi ?? []).length, (cart ?? []).map((c) => c.id).join(), JSON.stringify(t.premi_testi), t.prezzo_cent, t.pagati.join(), t.programmata_il].join("|");
     if (firma === ultimaFirma) return;
     // se il banco sta scrivendo i premi non gli cancelliamo il testo: si ridisegna al giro dopo
     const a = document.activeElement;
@@ -81,8 +103,8 @@ export default async function ({ params }) {
     const giocatori = [...new Map(cart.map((c) => [c.persona_id, c.persone?.soprannome || c.persone?.nome])).values()];
     const est = new Set(t.estratti);
     const ultimo = t.estratti.at(-1);
-    // un numero nuovo: si legge a voce (anche a chi non fa il banco)
-    if (ultimoVisto !== null && ultimo && ultimo !== ultimoVisto && voce) parla(ultimo);
+    // un numero nuovo: gira come al lotto, poi lampeggia e si legge a voce (a tutti, non solo al banco)
+    const nuovo = ultimoVisto !== null && ultimo && ultimo !== ultimoVisto;
     ultimoVisto = ultimo ?? 0;
     // un premio nuovo: festa
     const nPremi = (t.premi ?? []).length;
@@ -132,8 +154,8 @@ export default async function ({ params }) {
         `<div style="display:grid;place-items:center;aspect-ratio:1;border-radius:6px;font-size:13px;font-weight:700;${est.has(n) ? "background:#C8102E;color:#fff" : "background:#F3EDE2;color:#999"}">${n}</div>`).join("")}</div></details>`;
 
     const grande = ultimo ? `<div style="text-align:center;padding:14px 16px 4px">
-        <div style="display:inline-grid;place-items:center;width:120px;height:120px;border-radius:60px;background:#C8102E;color:#fff;font-size:56px;font-weight:900;box-shadow:0 6px 18px rgba(200,16,46,.35)">${ultimo}</div>
-        <div style="font-size:18px;font-weight:700;margin-top:8px;min-height:24px">${esc(SMORFIA[ultimo] ?? "")}</div>
+        <div id="palla" style="display:inline-grid;place-items:center;width:120px;height:120px;border-radius:60px;background:radial-gradient(circle at 35% 30%,#ff5a6e,#C8102E 60%,#8A0B20);color:#fff;font-size:56px;font-weight:900;box-shadow:0 6px 18px rgba(200,16,46,.35)">${ultimo}</div>
+        <div id="smorfia" style="font-size:18px;font-weight:700;margin-top:8px;min-height:24px">${esc(SMORFIA[ultimo] ?? "")}</div>
         <div class="tenue" style="font-size:14px">Prima: ${t.estratti.slice(-6, -1).reverse().join(" · ") || "—"}</div></div>` : "";
 
     if (t.stato === "attesa") {
@@ -141,12 +163,17 @@ export default async function ({ params }) {
         <div class="pad" style="text-align:center">
           <div style="font-size:48px">🎄</div>
           <h1 style="margin:4px 0">${banco ? "Fai tu il banco" : `Il banco è ${esc(t.persone?.soprannome || t.persone?.nome || "")}`}</h1>
+          ${t.programmata_il ? `<div style="display:inline-block;margin:6px 0 4px;padding:6px 12px;border-radius:12px;background:#FCE8EA;color:#8A1022;font-weight:800">📅 ${esc(new Date(t.programmata_il).toLocaleString("it-IT", { weekday: "long", day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" }))}</div>` : ""}
           <p class="tenue" style="margin:0">${esc(t.cerchie?.nome ?? "")} · ${giocatori.length ? `giocano: ${giocatori.map(esc).join(", ")}` : "ancora nessuno ha preso le cartelle"}</p>
         </div>
         <div class="card"><b>Le tue cartelle: ${mie.length}</b>
           <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">${[1, 2, 3, 4, 5, 6].map((n) => `<button class="chip ${mie.length === n ? "on" : ""}" data-n="${n}" style="margin:0;min-width:44px">${n}</button>`).join("")}
             ${mie.length ? `<button class="chip" data-n="0" style="margin:0">Nessuna</button>` : ""}</div>
           <p class="tenue" style="margin:8px 0 0;font-size:14px">Si segnano da sole: tu guardi e fai il tifo.</p></div>
+        ${banco ? `<details class="card" ${t.programmata_il ? "" : ""}><summary style="font-weight:800;cursor:pointer;min-height:32px">📅 ${t.programmata_il ? "Cambia l'appuntamento" : "Su appuntamento: fissa giorno e ora"}</summary>
+          <p class="tenue" style="margin:6px 0 0">Arriva la notifica a tutti, la tombola va nel calendario e 10 minuti prima parte il promemoria.</p>
+          <input id="quando" type="datetime-local" value="${t.programmata_il ? new Date(new Date(t.programmata_il).getTime() - new Date().getTimezoneOffset() * 6e4).toISOString().slice(0, 16) : ""}" style="margin-top:8px">
+          <button class="btn" id="fissa" style="margin-top:10px">Fissa e avvisa tutti</button></details>` : ""}
         ${modulo}${palioHtml}${cassaHtml}
         ${mie.map(cartellaHtml).join("")}
         <div class="pad">
@@ -165,6 +192,8 @@ export default async function ({ params }) {
         ${banco && t.stato === "in_corso" ? `<div class="pad"><button class="chip" id="chiudi" style="color:var(--rosso)">Chiudi la partita</button></div>` : ""}`;
     }
 
+    if (nuovo) estrazione(ultimo);
+
     corpo.querySelectorAll("[data-n]").forEach((b) => b.onclick = async () => {
       const voglio = Number(b.dataset.n);
       if (voglio < mie.length) await sb.from("tombola_cartelle").delete().in("id", mie.slice(voglio).map((c) => c.id));
@@ -176,12 +205,21 @@ export default async function ({ params }) {
     });
     const be = corpo.querySelector("#estrai");
     if (be) be.onclick = async () => {
+      if (animando) return;
       be.disabled = true;
       const { data: n, error } = await sb.rpc("tombola_estrai", { p_tombola: id });
       if (error) alert(error.message);
-      else if (voce) { parla(n); ultimoVisto = n; }
       await aggiorna();
+      setTimeout(() => { if (be.isConnected) be.disabled = false; }, 2200);
     };
+    corpo.querySelector("#fissa")?.addEventListener("click", async (e) => {
+      const v = corpo.querySelector("#quando").value;
+      if (!v) { alert("Scegli giorno e ora."); return; }
+      e.target.disabled = true;
+      const { error } = await sb.rpc("tombola_programma", { p_tombola: id, p_quando: new Date(v).toISOString() });
+      if (error) { alert(error.message); e.target.disabled = false; return; }
+      ultimaFirma = ""; aggiorna();
+    });
     corpo.querySelector("#salva-premi")?.addEventListener("click", async (e) => {
       const premi = Object.fromEntries(Object.keys(PREMI).map((k) => [k, corpo.querySelector(`#pr-${k}`).value]));
       const pz = corpo.querySelector("#prezzo");
