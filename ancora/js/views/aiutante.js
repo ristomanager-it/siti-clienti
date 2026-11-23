@@ -19,8 +19,30 @@ export default async function ({ params }) {
   const scelta = (params.c && state.cerchie.find((c) => c.id === params.c)) ?? famiglie[0] ?? state.cerchie[0];
   if (!scelta) { $app().innerHTML = `<div class="pad"><p>Prima crea o entra in una famiglia: l'aiutante lavora per lei.</p><a class="btn" href="#/cerchie">Famiglie e gruppi</a></div>`; return; }
   const { data: cer } = await sb.from("cerchie").select("id, nome, aiutante_nome").eq("id", scelta.id).single();
+  const { data: restanti } = await sb.rpc("aiutante_restanti", { p_cerchia: scelta.id });
+  if (restanti !== -1) return presentazione(cer ?? scelta);
   if (!cer?.aiutante_nome || params.rinomina) return sceltaNome(cer ?? scelta);
   return chat(cer);
+}
+
+// Chi non ha Ancora+: cosa sa fare, e il passaggio ad Ancora+.
+function presentazione(cer) {
+  const cosa = [["🍝", "Il cuoco", "Fotografi il frigo e ti propone la cena, con dosi e passaggi. Inventa ricette e rifà le dosi."],
+    ["🌿", "Il giardiniere", "Fotografi una pianta: ti dice cos'ha e come curarla, e cosa seminare questo mese."],
+    ["📅", "Il segretario", "«Domenica pranzo dalla zia alle 13», «metti il latte nella spesa»: lo fa lui."],
+    ["📖", "La memoria di casa", "Compleanni, cosa è successo, la ricetta della nonna ricopiata da una foto."],
+    ["🏠", "E tutto il resto", "Macchie, piccoli lavori, gite, regali, compiti dei figli."]];
+  $app().innerHTML = `
+    <header class="testa"><a class="icona" href="#/" aria-label="Indietro">${ICONE.indietro}</a><b>L'aiutante di casa</b><span style="width:44px"></span></header>
+    <div class="pad" style="padding-top:16px;padding-bottom:130px">
+      <div style="text-align:center"><div style="width:64px;height:64px;border-radius:32px;background:#E1F5EE;display:inline-grid;place-items:center;font-size:30px">✨</div>
+        <h1 style="margin:12px 0 4px">Un aiutante per tutta la famiglia</h1>
+        <p class="tenue" style="margin:0 0 16px">Gli date un nome voi, conosce solo quello che mettete su Ancora e risponde a tutti, nonni compresi.</p></div>
+      ${cosa.map(([i, t, d]) => `<div style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--bordo)"><span style="font-size:24px" aria-hidden="true">${i}</span><div><b>${t}</b><div class="tenue" style="margin-top:2px">${d}</div></div></div>`).join("")}
+      <button class="btn ambra" id="piu" style="margin-top:18px">È incluso in Ancora+ · scopri</button>
+      <p class="tenue" style="text-align:center;font-size:14px">Basta che una persona abbia Ancora+: vale per tutta ${esc(cer.nome)}.</p>
+    </div>`;
+  document.getElementById("piu").onclick = () => passaPiu("L'aiutante di casa è incluso in Ancora+.");
 }
 
 function sceltaNome(cer) {
@@ -49,8 +71,7 @@ function sceltaNome(cer) {
 
 async function chat(cer) {
   const nome = cer.aiutante_nome;
-  const [{ data: restanti }, { data: storia }] = await Promise.all([
-    sb.rpc("aiutante_restanti", { p_cerchia: cer.id }),
+  const [{ data: storia }] = await Promise.all([
     sb.from("aiutante_messaggi").select("ruolo, testo, azioni, creato_il").eq("cerchia_id", cer.id).order("creato_il", { ascending: false }).limit(40),
   ]);
   const altre = state.cerchie.filter((c) => c.id !== cer.id && c.tipo === "famiglia");
@@ -60,7 +81,6 @@ async function chat(cer) {
       <div style="width:36px;height:36px;border-radius:18px;background:#E1F5EE;color:#085041;display:grid;place-items:center;flex-shrink:0">✨</div>
       <div style="flex:1;min-width:0"><b style="display:block;font-size:17px">${esc(nome)}</b>
         <small class="tenue">${esc(cer.nome)} · <a href="#/aiutante?c=${cer.id}&rinomina=1">rinomina</a>${altre.length ? ` · <a href="#" id="altra">altra famiglia</a>` : ""}</small></div>
-      <span id="conta" class="chip" style="margin:0;font-size:12px;${restanti === -1 ? "display:none" : ""}">${restanti} su 5</span>
     </header>
     <div id="fili" style="padding:12px 14px 150px;display:flex;flex-direction:column;gap:8px"></div>
     <form id="scrivi" style="position:fixed;left:0;right:0;bottom:calc(84px + env(safe-area-inset-bottom));display:flex;gap:8px;align-items:center;padding:10px 12px;background:#FBF8F2;border-top:1px solid var(--bordo);max-width:720px;margin:0 auto">
@@ -128,12 +148,10 @@ async function chat(cer) {
       });
       const j = await r.json();
       attesa.remove();
-      if (j.limite) { bolla("aiutante", j.errore); passaPiu("L'aiutante della famiglia senza limiti è di Ancora+."); }
+      if (j.limite) { bolla("aiutante", "Sono incluso in Ancora+: con Ancora+ attivo ti rispondo di nuovo."); passaPiu("L'aiutante di casa è incluso in Ancora+."); }
       else if (!r.ok) bolla("aiutante", j.errore ?? "Non riesco a rispondere ora. Riprova tra poco.");
       else {
         bolla("aiutante", j.testo, j.azioni);
-        const c = document.getElementById("conta");
-        if (j.restanti >= 0) c.textContent = `${j.restanti} su 5`;
       }
     } catch { attesa.textContent = "Connessione assente. Riprova."; }
     occupato = false;
