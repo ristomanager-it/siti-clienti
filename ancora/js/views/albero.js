@@ -64,7 +64,7 @@ export default async function ({ params }) {
   let zoom = Math.min(1, Math.max(0.45, (innerWidth - 8) / larga));
   const applica = () => { svg.setAttribute("width", Math.round(larga * zoom)); svg.setAttribute("height", Math.round(alta * zoom)); };
   applica();
-  document.getElementById("conta").textContent = `${nodi.length}${state.piu || uniti ? "" : " su 15"} persone${uniti ? ` · ${famiglie.length} alberi` : ""}`;
+  document.getElementById("conta").textContent = `${nodi.length}${state.piu || uniti ? "" : " su 10"} persone${uniti ? ` · ${famiglie.length} alberi` : ""}`;
   document.getElementById("meno").onclick = () => { zoom = Math.max(0.3, zoom - 0.15); applica(); };
   document.getElementById("piu").onclick = () => { zoom = Math.min(1.6, zoom + 0.15); applica(); };
   document.getElementById("adatta").onclick = () => { zoom = Math.min(1, (innerWidth - 8) / larga); applica(); };

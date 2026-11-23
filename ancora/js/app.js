@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "97";
+const VER = "98";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 const ROTTE = {
@@ -647,7 +647,7 @@ export function temaDelPeriodo(oggi = new Date()) {
 
 // --- Ancora+ : le funzioni in più. Basta che uno paghi e tutta la famiglia le ha. ---
 export const VANTAGGI_PIU = [
-  ["L'albero senza limiti", "il gratuito arriva a 15 persone per albero"],
+  ["L'albero senza limiti", "il gratuito arriva a 10 persone per albero"],
   ["Gli alberi uniti", "la tua famiglia, quella dei tuoi genitori, quella dei suoceri"],
   ["Gli album degli eventi con il QR", "matrimoni, battesimi, il pranzo di Natale"],
   ["Il libro intero della famiglia", "in PDF e stampato, con i QR per sentire le voci"],

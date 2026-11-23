@@ -150,7 +150,7 @@ async function libroFamiglia(params) {
 }
 
 // Senza Ancora+: si vedono le prime pagine; il libro intero, il PDF e la stampa sono di Ancora+
-const PAGINE_ANTEPRIMA = 6;
+const PAGINE_ANTEPRIMA = 3;
 function anteprima() {
   if (state.piu) return false;
   const pagine = [...document.querySelectorAll("section.pag")];

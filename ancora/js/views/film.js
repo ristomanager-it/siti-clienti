@@ -5,7 +5,7 @@ import { sb, state, $app, esc, urlMediaMolti, passaPiu } from "../app.js";
 
 const W = 720, H = 1280, FPS = 30;
 const FOTO_SEC = 3.2, VIDEO_SEC = 5, DISSOLVENZA = 0.7, TITOLO_SEC = 3.5, FINE_SEC = 3;
-const MAX_PIU = 60, MAX_ANTEPRIMA = 8;
+const MAX_PIU = 60, MAX_ANTEPRIMA = 5;
 
 export default async function ({ params }) {
   const fam = state.cerchie.filter((c) => c.tipo === "famiglia");
