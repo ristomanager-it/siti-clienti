@@ -4,7 +4,15 @@ import { sb, state, $app, esc, passaPiu, ICONE } from "../app.js";
 import { SUPABASE_URL } from "../config.js";
 
 const SUGGERITI = ["Ancora", "Nonna Pina", "Il saggio", "Pippo", "Zia Rosa"];
-const PRONTE = ["Cosa è successo questa settimana?", "Compleanni in arrivo?", "Cosa c'è da comprare?", "Fotografa una ricetta"];
+// [testo del bottone, domanda] — se la domanda inizia con 📷 si apre la fotocamera
+const PRONTE = [
+  ["📷 Cosa cucino col mio frigo?", "📷Ecco il mio frigo: cosa posso cucinare stasera?"],
+  ["📷 Com'è messa questa pianta?", "📷Com'è messa questa pianta? Cosa devo fare?"],
+  ["📷 Ricopia una ricetta", "📷Ricopia questa ricetta e salvala nel ricettario."],
+  ["Cosa è successo questa settimana?", "Cosa è successo questa settimana?"],
+  ["Compleanni in arrivo?", "Compleanni in arrivo?"],
+  ["Cosa seminare questo mese?", "Cosa posso seminare o piantare questo mese?"],
+];
 
 export default async function ({ params }) {
   const famiglie = state.cerchie.filter((c) => c.tipo === "famiglia");
@@ -21,7 +29,7 @@ function sceltaNome(cer) {
     <div class="pad" style="text-align:center;padding-top:20px">
       <div style="width:64px;height:64px;border-radius:32px;background:#E1F5EE;color:#085041;display:inline-grid;place-items:center;font-size:30px">✨</div>
       <h1 style="margin:12px 0 4px">Come lo chiamate?</h1>
-      <p class="tenue" style="margin:0 0 16px">L'aiutante di ${esc(cer.nome)}: si ricorda tutto quello che mettete su Ancora e vi dà una mano. Il nome lo scegliete voi, e si cambia quando volete.</p>
+      <p class="tenue" style="margin:0 0 16px">L'aiutante di casa di ${esc(cer.nome)}: cuoco, giardiniere, segretario. Si ricorda quello che mettete su Ancora e vi dà una mano in tutto. Il nome lo scegliete voi, e si cambia quando volete.</p>
       <input id="nome" maxlength="30" value="${esc(cer.aiutante_nome ?? "")}" placeholder="Un nome per il vostro aiutante" style="text-align:center;font-size:18px">
       <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:10px 0 16px">
         ${SUGGERITI.map((n) => `<button type="button" class="chip" data-n="${esc(n)}" style="margin:0">${esc(n)}</button>`).join("")}</div>
@@ -56,7 +64,7 @@ async function chat(cer) {
     </header>
     <div id="fili" style="padding:12px 14px 150px;display:flex;flex-direction:column;gap:8px"></div>
     <form id="scrivi" style="position:fixed;left:0;right:0;bottom:calc(84px + env(safe-area-inset-bottom));display:flex;gap:8px;align-items:center;padding:10px 12px;background:#FBF8F2;border-top:1px solid var(--bordo);max-width:720px;margin:0 auto">
-      <label class="icona" aria-label="Foto di una ricetta" style="width:44px;height:44px;display:grid;place-items:center;border-radius:22px;border:1px solid var(--bordo);cursor:pointer;flex-shrink:0">📷
+      <label class="icona" aria-label="Manda una foto" style="width:44px;height:44px;display:grid;place-items:center;border-radius:22px;border:1px solid var(--bordo);cursor:pointer;flex-shrink:0">📷
         <input id="foto" type="file" accept="image/*" capture="environment" hidden></label>
       <input id="testo" placeholder="Chiedi a ${esc(nome)}…" autocomplete="off" style="flex:1;margin:0;min-height:44px">
       <button type="button" id="voce" class="icona" aria-label="Parla" style="width:44px;height:44px;border-radius:22px;border:1px solid var(--bordo);flex-shrink:0">🎙</button>
@@ -86,13 +94,17 @@ async function chat(cer) {
     fili.appendChild(d);
     return d;
   };
-  bolla("aiutante", `Ciao ${state.io?.soprannome || state.io?.nome || ""}! Sono ${nome}. Posso mettere appuntamenti nel calendario, aggiungere cose alla spesa, ricopiare una ricetta da una foto e ricordarvi cosa è successo in famiglia. Come ti aiuto?`);
+  bolla("aiutante", `Ciao ${state.io?.soprannome || state.io?.nome || ""}! Sono ${nome}, l'aiutante di casa. Fotografa il frigo e ti dico cosa cucinare, o una pianta e ti dico come curarla. Metto gli impegni in calendario, le cose nella spesa, e mi puoi chiedere di tutto: casa, gite, compiti, regali. Come ti aiuto?`);
   for (const m of (storia ?? []).reverse()) bolla(m.ruolo, m.testo, m.azioni);
   const pronte = document.createElement("div");
   pronte.style.cssText = "display:flex;flex-wrap:wrap;gap:6px";
-  pronte.innerHTML = PRONTE.map((p) => `<button type="button" class="chip" style="margin:0;background:#E1F5EE;color:#085041;border-color:#9FE1CB">${esc(p)}</button>`).join("");
+  pronte.innerHTML = PRONTE.map(([t, d], i) => `<button type="button" class="chip" data-i="${i}" style="margin:0;background:#E1F5EE;color:#085041;border-color:#9FE1CB">${esc(t)}</button>`).join("");
   fili.appendChild(pronte);
-  pronte.querySelectorAll("button").forEach((b) => b.onclick = () => b.textContent === "Fotografa una ricetta" ? document.getElementById("foto").click() : invia(b.textContent));
+  let domandaFoto = "";
+  pronte.querySelectorAll("button").forEach((b) => b.onclick = () => {
+    const d = PRONTE[b.dataset.i][1];
+    if (d.startsWith("📷")) { domandaFoto = d.slice(2); document.getElementById("foto").click(); } else invia(d);
+  });
   window.scrollTo(0, document.body.scrollHeight);
 
   document.getElementById("altra")?.addEventListener("click", (e) => {
@@ -105,7 +117,7 @@ async function chat(cer) {
     if (occupato || (!testo && !immagine)) return;
     occupato = true;
     pronte.remove();
-    bolla("utente", immagine ? `📷 ${testo || "Ricopia questa ricetta"}` : testo);
+    bolla("utente", immagine ? `📷 ${testo || "Guarda questa foto"}` : testo);
     const attesa = bolla("aiutante", "…");
     window.scrollTo(0, document.body.scrollHeight);
     try {
@@ -138,8 +150,8 @@ async function chat(cer) {
     const k = Math.min(1, 1600 / Math.max(img.width, img.height));
     const c = document.createElement("canvas"); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
     c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
-    const t = campo.value.trim(); campo.value = ""; e.target.value = "";
-    invia(t || "Ricopia questa ricetta e salvala nel ricettario.", c.toDataURL("image/jpeg", 0.82));
+    const t = campo.value.trim() || domandaFoto; campo.value = ""; e.target.value = ""; domandaFoto = "";
+    invia(t, c.toDataURL("image/jpeg", 0.82));
   };
   // dettatura: il telefono trascrive e si invia
   const Riconosci = window.SpeechRecognition || window.webkitSpeechRecognition;

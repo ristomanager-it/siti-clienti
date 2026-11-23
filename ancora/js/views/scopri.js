@@ -38,7 +38,7 @@ const COSA = [
   ["Il diario", "privato, con «accadeva oggi»"],
   ["Il libro della famiglia", "l'anno di tutti, mese per mese, con i QR per sentire le voci: in PDF e stampato"],
   ["Il film dell'anno", "le foto e i video di tutti, montati con la musica, da mandare a tutti"],
-  ["L'aiutante della famiglia", "gli date un nome voi: si ricorda compleanni e impegni, segna la spesa, ricopia la ricetta della nonna da una foto"],
+  ["L'aiutante della famiglia", "gli date un nome voi: fotografi il frigo e vi dice cosa cucinare, fotografi una pianta e vi dice come curarla, segna impegni e spesa, ricopia la ricetta della nonna"],
 ];
 
 const CONTRO = [

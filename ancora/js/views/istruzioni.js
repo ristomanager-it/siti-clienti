@@ -66,7 +66,7 @@ const SEZIONI = [
     <p>Senza Ancora+ vedi le prime pagine; con Ancora+ il libro intero, il PDF e la stampa. Quello stampato si ordina anche dai <b>Servizi</b>.</p>`],
   ["aiutante", "L'aiutante della famiglia", `
     <p>Dal menu, sotto <b>La famiglia</b>: la prima volta gli date un nome (si cambia con «rinomina»). Poi gli scrivi o gli parli col 🎙: «domenica pranzo dalla zia alle 13», «aggiungi latte alla spesa», «quando è il compleanno del nonno?», «cosa è successo questa settimana?».</p>
-    <p>Col 📷 fotografi una ricetta scritta a mano e lui la ricopia nel ricettario. Quello che fa compare in un riquadro con <b>Apri</b> e <b>Annulla</b>. Vede solo quello che vedi tu e la tua chat con lui è solo tua. Senza Ancora+: 5 domande al mese.</p>`],
+    <p>È anche cuoco e giardiniere: col 📷 fotografi il frigo e ti propone la cena, una pianta e ti dice come curarla, una ricetta scritta a mano e la ricopia nel ricettario. Puoi chiedergli anche di casa, gite, regali e compiti. Quello che fa compare in un riquadro con <b>Apri</b> e <b>Annulla</b>. Vede solo quello che vedi tu e la tua chat con lui è solo tua. Senza Ancora+: 5 domande al mese.</p>`],
   ["film", "Il film dell'anno", `
     <p>Dal menu: <b>Il film dell'anno</b>. Scegli il gruppo, il periodo e la musica: il telefono monta foto e video e lo vedi nascere. Poi lo salvi o lo mandi a tutti. Tieni l'app aperta mentre si crea.</p>
     <p>Senza Ancora+ un'anteprima di 5 momenti; con Ancora+ il film intero.</p>`],
