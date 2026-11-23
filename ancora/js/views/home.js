@@ -103,6 +103,11 @@ export default async function ({ params }) {
           <small style="color:#085041">Cosa cucino col frigo · com'è la pianta · la spesa · gli impegni</small></span>
         <span aria-hidden="true" style="font-size:22px;color:#085041">›</span></a>`;
     })() : ""}
+    ${fam && (() => { const d = new Date(), m = d.getMonth(), g = d.getDate(); return (m === 10 && g >= 20) || m === 11 || (m === 0 && g <= 6); })()
+      ? `<a href="#/tombola?c=${fam.id}" class="card" style="margin:0 16px 16px;display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit;background:#FCE8EA;border-color:#F2B8BF">
+        <span style="font-size:32px" aria-hidden="true">🎄</span>
+        <span style="flex:1"><b style="display:block;font-size:17px">Tombola di famiglia</b><small style="color:#8A1022">Tutti con le cartelle sul telefono, anche da case diverse</small></span>
+        <span aria-hidden="true" style="font-size:22px;color:#8A1022">›</span></a>` : ""}
     ${(() => {
       // prima i post; la domanda della settimana e gli inviti a raccontare arrivano dopo i primi due
       const extra = `<div id="mia-domanda" hidden></div><div id="per-chi-conta"></div>`;
