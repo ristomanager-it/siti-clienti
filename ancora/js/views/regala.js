@@ -12,7 +12,7 @@ export default async function ({ params }) {
 
 export const PREZZO = 99, PREZZO_PIENO = 129;
 export const NEL_REGALO = [
-  ["Un anno di Ancora+ per tutta la famiglia", "le domande ogni settimana a tutti, l'albero senza limiti, le famiglie collegate, la voce e le risposte quando qualcuno non può rispondere"],
+  ["Un anno di Ancora+ per tutta la famiglia", "le domande ogni settimana a tutti, l'albero senza limiti, le famiglie collegate, le storie e i consigli di ognuno sempre lì quando servono"],
   ["Il libro della vostra famiglia", "a colori, copertina rigida, spedito a casa a fine anno; con i QR per ascoltare le voci e il PDF da condividere"],
   ["Il film dell'anno", "le foto e i video di tutti, montati con la musica, da guardare insieme"],
   ["Il biglietto regalo", "da mandare il giorno che vuoi o stampare e mettere sotto l'albero"],
