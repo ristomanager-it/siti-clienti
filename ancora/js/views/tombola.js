@@ -30,11 +30,19 @@ function nuovaCartella() {
   }
 }
 
+let voceSbloccata = false;
+function sbloccaVoce() {
+  if (voceSbloccata || !("speechSynthesis" in window)) return;
+  const u = new SpeechSynthesisUtterance(" "); u.volume = 0; u.lang = "it-IT";
+  speechSynthesis.speak(u); voceSbloccata = true;
+  document.getElementById("sblocca-voce")?.remove();
+}
+
 function parla(n) {
   if (!("speechSynthesis" in window)) return;
   speechSynthesis.cancel();
   const u = new SpeechSynthesisUtterance(`${n}${SMORFIA[n] ? ". " + SMORFIA[n] : ""}`);
-  u.lang = "it-IT"; u.rate = 0.9;
+  u.lang = "it-IT"; u.rate = 0.9; u.volume = 1;
   const v = speechSynthesis.getVoices().find((x) => x.lang?.startsWith("it")); if (v) u.voice = v;
   speechSynthesis.speak(u);
 }
@@ -53,14 +61,20 @@ export default async function ({ params }) {
   let ultimoVisto = null, premiVisti = null, timer = null, ultimaFirma = "", animando = false;
   $app().innerHTML = `
     <header class="testa"><a class="icona" href="#/giochi" aria-label="Indietro">${ICONE.indietro}</a><b>🎄 Tombola</b>
-      <button class="icona" id="voce" aria-label="Voce" style="border:0;background:none;font-size:22px">${voce ? "🔊" : "🔇"}</button></header>
+      <button class="chip" id="voce" style="margin:0;font-size:14px">${voce ? "🔊 Voce sì" : "🔇 Voce no"}</button></header>
+    ${"speechSynthesis" in window ? `<button id="sblocca-voce" class="card" style="display:block;width:calc(100% - 32px);margin:8px 16px 0;text-align:center;font-weight:800;background:#FCE8EA;border-color:#F2B8BF;cursor:pointer">🔊 Tocca qui per sentire i numeri a voce</button>` : ""}
     <div id="corpo" style="padding-bottom:130px"></div>
     <style>
       @keyframes tomb-lampo { 0%,100% { transform: scale(1); filter: brightness(1); } 25% { transform: scale(1.12); filter: brightness(1.5); } 50% { transform: scale(.96); filter: brightness(.8); } 75% { transform: scale(1.08); filter: brightness(1.4); } }
       .tomb-lampo { animation: tomb-lampo .45s ease-in-out 4; }
       .tomb-gira { filter: blur(1px); opacity: .85; }
     </style>`;
-  document.getElementById("voce").onclick = (e) => { voce = !voce; e.target.textContent = voce ? "🔊" : "🔇"; try { localStorage.setItem("ancora_tombola_voce", voce ? "1" : "0"); } catch { /* niente */ } };
+  document.getElementById("sblocca-voce")?.addEventListener("click", () => {
+    voce = true; try { localStorage.setItem("ancora_tombola_voce", "1"); } catch { /* niente */ }
+    document.getElementById("voce").textContent = "🔊 Voce sì"; sbloccaVoce(); parla(ultimoVisto || 1);
+  });
+  document.addEventListener("click", sbloccaVoce, { once: true });
+  document.getElementById("voce").onclick = (e) => { voce = !voce; sbloccaVoce(); e.target.textContent = voce ? "🔊 Voce sì" : "🔇 Voce no"; if (voce) parla(ultimoVisto || 1); try { localStorage.setItem("ancora_tombola_voce", voce ? "1" : "0"); } catch { /* niente */ } };
 
   function estrazione(n) {
     const palla = document.getElementById("palla"), sm = document.getElementById("smorfia");
@@ -142,7 +156,7 @@ export default async function ({ params }) {
           ${banco ? `<button class="chip ${ok ? "on" : ""}" data-paga="${pid}" data-si="${ok ? 0 : 1}" style="margin:0">${ok ? "pagato ✓" : "da pagare"}</button>` : `<span class="tenue">${ok ? "pagato ✓" : "da pagare"}</span>`}</div>`; }).join("") || `<p class="tenue" style="margin:6px 0 0">Ancora nessuna cartella.</p>`}
       ${perPersona.length ? `<div style="margin-top:10px;font-weight:700">Raccolti ${euro(perPersona.filter(([pid]) => t.pagati.includes(pid)).reduce((s, [, x]) => s + x.n * t.prezzo_cent, 0))} su ${euro(montepremi)}</div>` : ""}
       ${!banco && mie.length && !t.pagati.includes(state.io.id) ? `<p style="margin:8px 0 0">Le tue cartelle: <b>${euro(mie.length * t.prezzo_cent)}</b> da dare a ${esc(t.persone?.soprannome || t.persone?.nome || "chi fa il banco")}.</p>` : ""}</div>` : "";
-    const modulo = banco && t.stato !== "finita" ? `<details class="card" ${inPalio.length || t.prezzo_cent ? "" : "open"}><summary style="font-weight:800;cursor:pointer;min-height:32px">✏️ Scrivi i premi${t.stato === "attesa" ? " e il prezzo" : ""}</summary>
+    const modulo = banco && t.stato !== "finita" ? `<details class="card" ${t.stato === "attesa" && !inPalio.length && !t.prezzo_cent ? "open" : ""}><summary style="font-weight:800;cursor:pointer;min-height:32px">✏️ Scrivi i premi${t.stato === "attesa" ? " e il prezzo" : ""}</summary>
       ${Object.entries(PREMI).map(([k, n]) => `<label for="pr-${k}">${n}</label><input id="pr-${k}" maxlength="60" value="${esc(testi[k] ?? "")}" placeholder="${k === "tombola" ? "es. il cesto natalizio" : k === "ambo" ? "es. un torroncino" : "es. 5 €"}">`).join("")}
       ${t.stato === "attesa" ? `<label for="prezzo">Prezzo di una cartella (€, 0 = si gioca gratis)</label><input id="prezzo" type="number" min="0" max="100" step="0.5" inputmode="decimal" value="${t.prezzo_cent ? t.prezzo_cent / 100 : ""}" placeholder="0">
         <button type="button" class="chip" id="dividi" style="margin:8px 0 0">Dividi il montepremi in automatico</button>` : ""}
@@ -205,6 +219,7 @@ export default async function ({ params }) {
     });
     const be = corpo.querySelector("#estrai");
     if (be) be.onclick = async () => {
+      sbloccaVoce();
       if (animando) return;
       be.disabled = true;
       const { data: n, error } = await sb.rpc("tombola_estrai", { p_tombola: id });
