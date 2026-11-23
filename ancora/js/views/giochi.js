@@ -6,7 +6,7 @@ const GIOCHI = [
   { icona: "🃏", nome: "Briscola", testo: "A 2, a 4 a coppie e a 5 chiamata, con le carte napoletane. Segni al compagno e chat al tavolo; se manca qualcuno gioca il telefono.", link: "#/briscola", pronto: true },
   { icona: "🂡", nome: "Tressette", testo: "A 4 a coppie o a 2, con le napoletane. Busso, striscio e volo al compagno; se manca qualcuno gioca il telefono.", link: "#/tressette", pronto: true },
   { icona: "♟️", nome: "Dama e scacchi", testo: "Una mossa la mattina, una la sera: il nonno contro il nipote.", pronto: false },
-  { icona: "🏠", nome: "Il gioco della famiglia", testo: "Compra la casa della nonna e il mare del 2019: il tabellone lo fanno i vostri ricordi.", pronto: false },
+  { icona: "🏠", nome: "Il gioco della famiglia", testo: "Compra la casa della nonna e il mare del 2019: il tabellone lo rinominate voi, con i vostri posti e le vostre carte.", link: "#/tabellone", pronto: true },
 ];
 
 export default async function ({ params } = {}) {
