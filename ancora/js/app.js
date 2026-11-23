@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "91";
+const VER = "92";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 const ROTTE = {
@@ -276,8 +276,18 @@ function invitoSchermataHome(forza = false) {
   return true;
 }
 
-// --- Ancora+ per chi ha 50 anni o più e non ce l'ha: un promemoria gentile, una volta a settimana ---
-// (non nei primi 2 giorni, al massimo 8 volte, mai insieme ad altri avvisi)
+// --- Ancora+ per chi non ce l'ha: un promemoria con foto, che cambia ogni volta ---
+// 50 anni o più: una volta a settimana (al massimo 8). Gli altri: ogni 14 giorni (al massimo 4).
+// Mai nei primi 2 giorni, mai insieme ad altri avvisi.
+const MESSAGGI_PIU = [
+  ["panettone", "Il ricettario di casa", "Le tue ricette, in eredità.", "Le dosi giuste, i trucchi, la tua voce mentre le spieghi. Per chi verrà dopo."],
+  ["compiti", "Per chi conta davvero", "La tua storia, in eredità ai nipoti.", "Le scelte, le avventure, il tuo modo di vedere le cose. Raccontate da te, una domanda alla volta."],
+  ["nonna-nipote", "Il regalo che resta", "I tuoi ricordi, da lasciare ai nipoti.", "Foto, voci e storie in un posto solo vostro. E a fine anno diventano un libro da tenere in mano."],
+  ["foto", "Ancora, e ancora", "I tuoi ricordi, all'infinito.", "Non più in una scatola o persi in un telefono: al sicuro, solo per la tua famiglia."],
+  ["colazione", "Lo scrigno della famiglia", "Foto, voci, storie, ricette. Tutto in un posto.", "Il posto dove la tua famiglia mette quello che conta. E cresce ogni giorno con voi."],
+  ["letto", "Le storie di famiglia", "Le storie dei nonni, ascoltate dai nipoti dei nipoti.", "Registrate una volta, restano lì. Con la voce di chi le racconta."],
+  ["compiti", "Per chi conta davvero", "«Tu che avresti fatto al posto mio?»", "Un giorno qualcuno te lo chiederà. Con Ancora+ le tue storie e le tue scelte restano lì per la tua famiglia."],
+];
 function eta() {
   const d = state.io?.data_nascita; if (!d) return null;
   const n = new Date(d), o = new Date();
@@ -285,22 +295,27 @@ function eta() {
 }
 function ricordaPiu() {
   if (state.piu || !state.io || document.querySelector("#foglio-piu, #schermata-home, #banner-cookie, [role=dialog]")) return;
-  const anni = eta(); if (anni === null || anni < 50) return;
   if (state.io.creato_il && Date.now() - new Date(state.io.creato_il).getTime() < 2 * 86400_000) return;
+  const adulto = (eta() ?? 0) >= 50;
+  const ogni = adulto ? 7 : 14, max = adulto ? 8 : 4;
   let st = { volte: 0, ultima: 0 }; try { st = JSON.parse(localStorage.getItem("ancora_ricorda_piu") ?? "null") ?? st; } catch { /* niente */ }
-  if (st.volte >= 8 || Date.now() - st.ultima < 7 * 86400_000) return;
+  if (st.volte >= max || Date.now() - st.ultima < ogni * 86400_000) return;
   try { localStorage.setItem("ancora_ricorda_piu", JSON.stringify({ volte: st.volte + 1, ultima: Date.now() })); } catch { /* niente */ }
+  const [foto, occh, titolo, testo] = MESSAGGI_PIU[st.volte % MESSAGGI_PIU.length];
   const d = document.createElement("div");
   d.id = "foglio-piu";
-  d.innerHTML = `<div data-chiudi style="position:fixed;inset:0;background:rgba(18,48,44,.55);z-index:55"></div>
-    <div role="dialog" aria-label="Ancora+" style="position:fixed;left:16px;right:16px;top:50%;transform:translateY(-50%);max-width:460px;margin:0 auto;z-index:56;background:#12302C;color:#FBF3E2;border-radius:24px;padding:26px 22px;box-shadow:0 20px 50px rgba(0,0,0,.35)">
-      <button data-chiudi aria-label="Chiudi" style="position:absolute;top:10px;right:10px;width:38px;height:38px;border-radius:19px;border:0;background:rgba(255,255,255,.12);color:#fff;font-size:17px">✕</button>
-      <p style="margin:0 0 6px;font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#E7C48A">Per chi conta davvero</p>
-      <b style="display:block;font-family:Fraunces,serif;font-size:26px;line-height:1.15;margin-bottom:10px">«Tu che avresti fatto al posto mio?»</b>
-      <p style="margin:0 0 14px;line-height:1.5;color:#F3E6D2">Un giorno qualcuno te lo chiederà. Con Ancora<span style="color:#E7C48A">+</span> le tue storie, le tue scelte e la tua voce restano lì per la tua famiglia. E a fine anno diventano un libro da tenere in mano.</p>
-      <button class="btn ambra" id="rp-scopri">Scopri Ancora+</button>
-      <a class="btn" href="#/regala" style="margin-top:8px;background:transparent;border:1.5px solid rgba(255,255,255,.35);color:#fff">Regalalo alla famiglia · 99 €</a>
-      <button data-chiudi style="display:block;margin:12px auto 0;border:0;background:none;color:#CFC3AE;font-weight:700">Più tardi</button>
+  d.innerHTML = `<div data-chiudi style="position:fixed;inset:0;background:rgba(18,48,44,.6);z-index:55"></div>
+    <div role="dialog" aria-label="Ancora+" style="position:fixed;left:16px;right:16px;top:50%;transform:translateY(-50%);max-width:440px;max-height:92vh;overflow:auto;margin:0 auto;z-index:56;background:#12302C;color:#FBF3E2;border-radius:24px;box-shadow:0 20px 50px rgba(0,0,0,.35)">
+      <div style="position:relative;aspect-ratio:900/560;background:#2F5A55 url('img/promo/${foto}.jpg') center/cover">
+        <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(18,48,44,0) 45%,#12302C)"></div>
+        <button data-chiudi aria-label="Chiudi" style="position:absolute;top:10px;right:10px;width:38px;height:38px;border-radius:19px;border:0;background:rgba(0,0,0,.35);color:#fff;font-size:17px">✕</button></div>
+      <div style="padding:4px 22px 22px">
+        <p style="margin:0 0 6px;font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#E7C48A">${occh}</p>
+        <b style="display:block;font-family:Fraunces,serif;font-size:27px;line-height:1.12;margin-bottom:10px;color:#fff">${titolo}</b>
+        <p style="margin:0 0 16px;line-height:1.5;color:#F3E6D2">${testo}</p>
+        <button class="btn ambra" id="rp-scopri">Scopri Ancora<span>+</span></button>
+        <a class="btn" href="#/regala" style="margin-top:8px;background:transparent;border:1.5px solid rgba(255,255,255,.35);color:#fff">Regalalo alla famiglia · 99 €</a>
+        <button data-chiudi style="display:block;margin:12px auto 0;border:0;background:none;color:#CFC3AE;font-weight:700">Più tardi</button></div>
     </div>`;
   document.body.appendChild(d);
   d.querySelectorAll("[data-chiudi], a").forEach((x) => x.addEventListener("click", () => d.remove()));

@@ -196,6 +196,19 @@ export default async function ({ params } = {}) {
       <p style="font-size:17px;line-height:1.55;color:#E6EFEC;margin:0 0 12px">Un giorno qualcuno te lo chiederà. Ancora ti aiuta a lasciare la risposta, un poco alla volta: domande sul lavoro, sui soldi, sull'amicizia, sulle scelte difficili. Non cosa hai fatto, ma <b style="color:${C.panna}">come ragioni e come decidi</b>.</p>
       <p style="font-size:17px;line-height:1.55;color:#E6EFEC;margin:0 0 12px">Le domande imparano da quello che racconti, e ogni risposta resta a chi scegli tu. Puoi anche scrivere <b style="color:${C.panna}">una lettera da aprire più avanti</b>: per i 18 anni di tua figlia, o tra dieci anni. Fino a quel giorno resta chiusa.</p>
       <p style="font-size:15px;color:#B9CCC7;margin:0">Ai ragazzi basta usarla come un social. Ai grandi dà qualcosa in più: un posto per quello che sanno e per quello che sono.</p>`, C.notte, C.panna, "per-chi-conta")}
+    <section id="eredita" style="padding:34px 20px">
+      <p style="margin:0 0 6px;font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:${C.oro}">Lo scrigno della famiglia</p>
+      ${titolo("I tuoi ricordi, all'infinito. E ancora.")}
+      <div style="display:grid;gap:14px">
+        ${[["panettone", "Le tue ricette, in eredità.", "Le dosi giuste, i trucchi, la tua voce mentre le spieghi."],
+           ["compiti", "La tua storia, in eredità ai nipoti.", "Le scelte, le avventure, il tuo modo di vedere le cose. Raccontate da te."],
+           ["letto", "Le storie dei nonni, ascoltate dai nipoti dei nipoti.", "Registrate una volta, restano lì. Con la voce di chi le racconta."],
+           ["colazione", "Non perdere più un ricordo tra mille chat.", "Ogni foto, ogni vocale, ogni storia ha il suo posto, solo per voi."]]
+          .map(([f, t, d]) => `<div style="border-radius:20px;overflow:hidden;background:#fff;border:1px solid var(--bordo)">
+            <div style="aspect-ratio:900/480;background:url('img/promo/${f}.jpg') center/cover"></div>
+            <div style="padding:14px 16px 16px"><b style="font-family:Fraunces,serif;font-size:21px;line-height:1.2;color:${C.notte}">${t}</b>
+              <p class="tenue" style="margin:6px 0 0;font-size:15px;line-height:1.45">${d}</p></div></div>`).join("")}
+      </div></section>
 
     ${sezione(`${etichetta("Pacchetti")}
       <div style="border-radius:22px;padding:20px;background:${C.rosso};color:${C.panna};margin-bottom:12px">

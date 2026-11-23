@@ -261,10 +261,10 @@ async function assistenza() {
 }
 
 // Grafiche per le campagne social (foto Unsplash, uso commerciale libero). Feed 1080×1350, storie/reel 1080×1920.
-const CREATIVITA = ["01-storie-di-casa-feed.jpg", "01-storie-di-casa-storia.jpg", "02-tu-che-avresti-fatto-feed.jpg", "02-tu-che-avresti-fatto-storia.jpg", "03-scatola-feed.jpg", "03-scatola-storia.jpg", "04-regalo-natale-feed.jpg", "04-regalo-natale-storia.jpg", "05-facile-feed.jpg", "05-facile-storia.jpg", "06-ricette-feed.jpg", "06-ricette-storia.jpg", "07-buonanotte-feed.jpg", "07-buonanotte-storia.jpg"];
+const CREATIVITA = ["01-storie-di-casa-feed.jpg", "01-storie-di-casa-storia.jpg", "02-tu-che-avresti-fatto-feed.jpg", "02-tu-che-avresti-fatto-storia.jpg", "03-scatola-feed.jpg", "03-scatola-storia.jpg", "04-regalo-natale-feed.jpg", "04-regalo-natale-storia.jpg", "05-facile-feed.jpg", "05-facile-storia.jpg", "06-ricette-feed.jpg", "06-ricette-storia.jpg", "07-buonanotte-feed.jpg", "07-buonanotte-storia.jpg", "08-ricette-in-eredita-feed.jpg", "08-ricette-in-eredita-storia.jpg", "09-storia-in-eredita-feed.jpg", "09-storia-in-eredita-storia.jpg", "10-ricordi-ai-nipoti-feed.jpg", "10-ricordi-ai-nipoti-storia.jpg", "11-all-infinito-feed.jpg", "11-all-infinito-storia.jpg", "12-scrigno-feed.jpg", "12-scrigno-storia.jpg", "13-mille-chat-feed.jpg", "13-mille-chat-storia.jpg", "14-nipoti-dei-nipoti-feed.jpg", "14-nipoti-dei-nipoti-storia.jpg"];
 async function creativita() {
   const gruppi = [...new Set(CREATIVITA.map((f) => f.replace(/-(feed|storia)\.jpg$/, "")))];
-  $("#corpo").innerHTML = `<p class="tenue">Le tre con «Prezzo di lancio fino a Natale» vanno tolte dopo il 25 dicembre. Pubblico consigliato: 50+ anni, e figli 30-50 che fanno il regalo.</p>
+  $("#corpo").innerHTML = `<p class="tenue">Quelle con «Prezzo di lancio fino a Natale» vanno tolte dopo il 25 dicembre. Pubblico consigliato: 50+ anni, e figli 30-50 che fanno il regalo.</p>
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px">
     ${gruppi.map((g) => `<div class="card" style="padding:10px">
       <img src="creativita/${g}-feed.jpg" alt="" style="width:100%;border-radius:10px;display:block">
