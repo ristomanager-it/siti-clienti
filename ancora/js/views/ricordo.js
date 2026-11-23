@@ -3,7 +3,7 @@ import { sb, state, $app, esc, quando, nomeDi, avatar, pulsanteVoce, urlMediaMol
 
 export default async function ({ id }) {
   const { data: r } = await sb.from("ricordi")
-    .select("id, tipo, titolo, testo, dettagli, creato_il, autore_id, visibilita, cerchia_id, persone:autore_id(id, nome, soprannome, foto_path), ricordi_media(path, tipo, durata_sec, ordine)")
+    .select("id, tipo, titolo, testo, dettagli, creato_il, autore_id, link_pubblico, visibilita, cerchia_id, persone:autore_id(id, nome, soprannome, foto_path), ricordi_media(path, tipo, durata_sec, ordine)")
     .eq("id", id).maybeSingle();
   if (!r) { $app().innerHTML = `<p class="pad">Ricordo non trovato.</p>`; return; }
 
@@ -36,7 +36,11 @@ export default async function ({ id }) {
       <ul style="padding-left:20px;margin:8px 0 0;line-height:1.7">${(r.dettagli?.ingredienti ?? []).map((i) => `<li>${esc(i)}</li>`).join("")}</ul>
       ${r.dettagli?.procedimento ? `<span class="tenue" style="text-transform:uppercase;font-weight:800;letter-spacing:.5px;display:block;margin-top:14px">Come si fa</span>
         <p style="white-space:pre-line;margin:6px 0 0;line-height:1.6">${esc(r.dettagli.procedimento)}</p>` : ""}
-    </div>` : ""}
+    </div>
+    ${r.autore_id === state.io.id ? `<div class="card" id="condivisione" style="background:#FFF6E8;border-color:#F0D5A8">
+      <b style="display:block">🔗 Condividi questa ricetta</b>
+      <p class="tenue" style="margin:4px 0 10px">Solo questa, con chi vuoi tu. Chi la riceve vede foto e titolo e, per leggerla tutta, si iscrive gratis ad Ancora. Il resto della famiglia resta privato.</p>
+      <div id="cond-azioni"></div></div>` : ""}` : ""}
     <div class="pad tenue">${cuori.length ? `♥ ${cuori.map((c) => esc(nomeDi(c.persone))).join(", ")}` : ""}</div>
 
     ${(risposte ?? []).length ? `<h2>Risposte</h2>` + risposte.map((x) => {
@@ -84,4 +88,39 @@ export default async function ({ id }) {
     await sb.from("reazioni").insert({ ricordo_id: id, persona_id: state.io.id, tipo: "commento", testo: t });
     location.reload();
   };
+  if (r.tipo === "ricetta" && r.autore_id === state.io.id) condivisioneRicetta(r);
+}
+
+// la ricetta condivisa con un link: crea, manda su WhatsApp, smetti di condividere
+export async function condivisioneRicetta(r) {
+  const box = document.getElementById("cond-azioni"); if (!box) return;
+  const base = location.href.split("#")[0];
+  const disegna = async (token) => {
+    if (!token) {
+      box.innerHTML = `<button class="btn ambra" id="cond-crea" style="margin:0">Crea il link e condividi</button>`;
+      document.getElementById("cond-crea").onclick = async () => {
+        const { data, error } = await sb.rpc("ricetta_condividi", { p_ricordo: r.id, p_attiva: true });
+        if (error) { alert("Non riuscito. Riprova."); return; }
+        r.link_pubblico = data; await disegna(data); manda(data);
+      };
+      return;
+    }
+    const { data: letture } = await sb.rpc("ricetta_letture", { p_ricordo: r.id });
+    box.innerHTML = `<button class="btn ambra" id="cond-manda" style="margin:0">Manda il link</button>
+      <p class="tenue" style="margin:10px 0 0;font-size:14px">Link attivo${letture ? ` · letta da ${letture} ${letture === 1 ? "persona" : "persone"}` : ""} · <a href="#" id="cond-stop" style="color:var(--rosso)">smetti di condividere</a></p>`;
+    document.getElementById("cond-manda").onclick = () => manda(token);
+    document.getElementById("cond-stop").onclick = async (e) => {
+      e.preventDefault();
+      if (!confirm("Il link smette di funzionare per tutti. Continuare?")) return;
+      await sb.rpc("ricetta_condividi", { p_ricordo: r.id, p_attiva: false });
+      r.link_pubblico = null; disegna(null);
+    };
+  };
+  const manda = async (token) => {
+    const link = `${base}#/ricetta?t=${token}&utm_source=ricetta&utm_medium=condivisione`;
+    const testo = `Ti mando la ricetta di ${r.titolo ?? "famiglia"}: la trovi qui 👇`;
+    if (navigator.share) { try { await navigator.share({ title: r.titolo ?? "Ricetta", text: testo, url: link }); return; } catch { /* annullato */ } }
+    window.open(`https://wa.me/?text=${encodeURIComponent(`${testo}\n${link}`)}`, "_blank");
+  };
+  await disegna(r.link_pubblico);
 }

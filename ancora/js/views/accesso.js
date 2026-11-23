@@ -17,7 +17,7 @@ const GANCI = [
 ];
 
 export default async function ({ params }) {
-  const invito = params?.invito ?? null;
+  const invito = params?.invito ?? null, ricetta = params?.ricetta ?? null;
   const ant = invito ? await fetch(`${SUPABASE_URL}/functions/v1/invito?codice=${encodeURIComponent(invito)}`).then((r) => r.json()).catch(() => null) : null;
   const { anteprima } = invito ? await import("./iscriviti.js") : {};
   $app().innerHTML = `${ant && !ant.errore ? anteprima(ant) : ""}
@@ -30,7 +30,7 @@ export default async function ({ params }) {
       <p class="tenue">Ti mandiamo il link di accesso su WhatsApp.</p>
       <button class="btn" type="submit">Ricevi il link</button>
       <p id="esito" role="status"></p>
-      <p style="text-align:center;margin:8px 0 0">Non hai un account? <a href="#/iscriviti${invito ? `?invito=${invito}` : ""}"><b>Crealo gratis</b></a></p>
+      <p style="text-align:center;margin:8px 0 0">Non hai un account? <a href="#/iscriviti${invito ? `?invito=${invito}` : ricetta ? `?ricetta=${encodeURIComponent(ricetta)}` : ""}"><b>Crealo gratis</b></a></p>
     </form>
     <details class="card"><summary style="font-weight:800;cursor:pointer;min-height:32px">Entra con email e password</summary>
       <form id="fe">
@@ -47,7 +47,7 @@ export default async function ({ params }) {
     e.preventDefault();
     const { error } = await sb.auth.signInWithPassword({ email: document.getElementById("em").value.trim(), password: document.getElementById("pw").value });
     if (error) { document.getElementById("esitoe").innerHTML = `<span class="errore">Email o password non corretti.</span>`; return; }
-    location.hash = invito ? `#/?invito=${invito}` : "#/";
+    location.hash = ricetta ? `#/ricetta?t=${encodeURIComponent(ricetta)}` : invito ? `#/?invito=${invito}` : "#/";
   };
 
   let g = 0;

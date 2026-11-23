@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "107";
+const VER = "108";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 const ROTTE = {
@@ -45,6 +45,7 @@ const ROTTE = {
   "ascolta": () => import(`./views/prova.js?v=${VER}`),
   "biglietto": () => import(`./views/biglietto.js?v=${VER}`),
   "ricette": () => import(`./views/ricette.js?v=${VER}`),
+  "ricetta": () => import(`./views/ricetta.js?v=${VER}`),
   "libro": () => import(`./views/libro.js?v=${VER}`),
   "film": () => import(`./views/film.js?v=${VER}`),
   "aiutante": () => import(`./views/aiutante.js?v=${VER}`),
@@ -54,7 +55,7 @@ const ROTTE = {
   "settimana": () => import(`./views/settimana.js?v=${VER}`),
   "servizi": () => import(`./views/servizi.js?v=${VER}`),
 };
-const PUBBLICHE = new Set(["evento", "iscriviti", "chisiamo", "contatti", "privacy", "cookie", "condizioni", "scopri", "omaggio", "accesso", "regala", "perche", "prova", "rispondi", "ascolta", "biglietto"]);
+const PUBBLICHE = new Set(["evento", "iscriviti", "chisiamo", "contatti", "privacy", "cookie", "condizioni", "scopri", "omaggio", "accesso", "regala", "perche", "prova", "rispondi", "ascolta", "biglietto", "ricetta"]);
 
 export const $app = () => document.getElementById("app");
 export const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
