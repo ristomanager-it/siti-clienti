@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "92";
+const VER = "93";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 const ROTTE = {
@@ -422,6 +422,22 @@ export function utm() {
     if (s && Date.now() - s.t < 30 * 86400_000) return s.u;
   }
   return utmSessione;
+}
+
+// --- Cosa fanno le persone nella pagina di vendita (solo con il consenso ai cookie statistici) ---
+let sessioneLanding = null;
+export function traccia(evento, valore = null) {
+  if (!leggi(CHIAVE_CONSENSO)?.statistiche) return;
+  try {
+    sessioneLanding ??= sessionStorage.getItem("ancora_sessione") ?? (() => { const x = crypto.randomUUID().slice(0, 18); sessionStorage.setItem("ancora_sessione", x); return x; })();
+    const fatti = JSON.parse(sessionStorage.getItem("ancora_eventi") ?? "[]");
+    const chiave = evento + (evento === "scroll" ? valore : "");
+    if (evento !== "tempo" && fatti.includes(chiave)) return;   // ogni evento una volta per visita
+    if (evento !== "tempo") sessionStorage.setItem("ancora_eventi", JSON.stringify([...fatti, chiave].slice(-80)));
+  } catch { return; }
+  const u = utm() ?? {};
+  sb.from("eventi_landing").insert({ sessione: sessioneLanding, evento: String(evento).slice(0, 60), valore,
+    sorgente: u.sorgente ?? null, mezzo: u.mezzo ?? null, campagna: u.campagna ?? null, contenuto: u.contenuto ?? null }).then(() => {});
 }
 
 function registraVisita() {

@@ -285,6 +285,8 @@ async function messaggi() {
 
 async function marketing() {
   const righe = await rpc("admin_marketing", { p_giorni: 30 });
+  const fun = await rpc("admin_funnel", { p_giorni: 30 }).catch(() => []);
+  const pc = (n, d) => d ? `${n} <span class="tenue">(${Math.round(n / d * 100)}%)</span>` : "0";
   const base = "https://ristomanager-it.github.io/siti-clienti/ancora/";
   $("#corpo").innerHTML = `<div class="nota">Ultimi 30 giorni. Le visite si contano solo per chi accetta i cookie statistici; le vendite sempre.</div>
     <div class="card"><table style="width:100%;border-collapse:collapse;font-size:14px">
@@ -292,16 +294,27 @@ async function marketing() {
       ${righe.map((r) => `<tr style="border-top:1px solid var(--bordo)"><td>${esc(r.sorgente)}</td><td>${esc(r.campagna)}</td>
         <td style="text-align:right">${r.visite}</td><td style="text-align:right">${r.regali}</td><td style="text-align:right">${euro(r.incasso_cent)}</td></tr>`).join("")
         || `<tr><td colspan="5" class="tenue">Ancora nessun dato.</td></tr>`}</table></div>
+    <div class="card" style="overflow:auto"><b>Cosa fanno nella pagina di vendita</b>
+      <p class="tenue" style="margin:4px 0 8px;font-size:13px">Per campagna e creatività (utm_content). Persone = visite uniche. Le percentuali sono sulle persone.</p>
+      <table style="width:100%;border-collapse:collapse;font-size:13px;white-space:nowrap">
+      <tr style="text-align:left"><th>Sorgente / campagna</th><th>Creatività</th><th style="text-align:right">Persone</th><th style="text-align:right">Metà pagina</th><th style="text-align:right">Fino in fondo</th><th style="text-align:right">Secondi</th><th style="text-align:right">Visto «eredità»</th><th style="text-align:right">Visto prezzi</th><th style="text-align:right">Clic Regala</th><th style="text-align:right">Clic Gratis</th><th style="text-align:right">Modulo</th><th style="text-align:right">Al pagamento</th></tr>
+      ${fun.map((r) => `<tr style="border-top:1px solid var(--bordo)"><td>${esc(r.sorgente)} · ${esc(r.campagna)}</td><td>${esc(r.contenuto)}</td>
+        <td style="text-align:right"><b>${r.persone}</b></td><td style="text-align:right">${pc(r.scroll50, r.persone)}</td><td style="text-align:right">${pc(r.scroll100, r.persone)}</td>
+        <td style="text-align:right">${r.secondi}</td><td style="text-align:right">${pc(r.eredita, r.persone)}</td><td style="text-align:right">${pc(r.prezzi, r.persone)}</td>
+        <td style="text-align:right">${pc(r.clic_regala, r.persone)}</td><td style="text-align:right">${pc(r.clic_gratis, r.persone)}</td>
+        <td style="text-align:right">${pc(r.modulo, r.persone)}</td><td style="text-align:right">${pc(r.pagamento, r.persone)}</td></tr>`).join("")
+        || `<tr><td colspan="12" class="tenue">Ancora nessun dato.</td></tr>`}</table></div>
     <div class="card"><b>Crea un link tracciato</b>
       <div class="riga" style="gap:6px;margin-top:8px;flex-wrap:wrap">
         <input id="u-s" placeholder="sorgente (facebook, instagram, volantino)" style="flex:1;min-width:160px">
         <input id="u-m" placeholder="mezzo (social, ads, qr)" style="flex:1;min-width:120px">
-        <input id="u-c" placeholder="campagna (natale26)" style="flex:1;min-width:120px"></div>
+        <input id="u-c" placeholder="campagna (natale26)" style="flex:1;min-width:120px">
+        <select id="u-t" style="flex:1;min-width:160px"><option value="">creatività (facoltativa)</option>${[...new Set(CREATIVITA.map((f) => f.replace(/-(feed|storia)\.jpg$/, "")))].map((g) => `<option>${g}</option>`).join("")}</select></div>
       <p id="u-link" style="word-break:break-all;font-family:monospace;font-size:13px;margin:10px 0"></p>
       <button class="btn chiaro" id="u-copia">Copia link</button></div>`;
-  const link = () => { const q = new URLSearchParams(); [["s","source"],["m","medium"],["c","campaign"]].forEach(([k, n]) => { const v = $("#u-" + k).value.trim(); if (v) q.set("utm_" + n, v.toLowerCase().replace(/\s+/g, "-")); });
+  const link = () => { const q = new URLSearchParams(); [["s","source"],["m","medium"],["c","campaign"],["t","content"]].forEach(([k, n]) => { const v = $("#u-" + k).value.trim(); if (v) q.set("utm_" + n, v.toLowerCase().replace(/\s+/g, "-")); });
     return `${base}${q.toString() ? "?" + q : ""}#/scopri`; };
-  ["s", "m", "c"].forEach((k) => $("#u-" + k).oninput = () => { $("#u-link").textContent = link(); });
+  ["s", "m", "c", "t"].forEach((k) => $("#u-" + k).oninput = $("#u-" + k).onchange = () => { $("#u-link").textContent = link(); });
   $("#u-link").textContent = link();
   $("#u-copia").onclick = async () => { await navigator.clipboard.writeText(link()); $("#u-copia").textContent = "Copiato ✓"; };
 }

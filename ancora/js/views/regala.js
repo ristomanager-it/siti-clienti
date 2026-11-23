@@ -1,5 +1,6 @@
 // Regala Ancora: "La storia della tua famiglia". Chi compra riceve un biglietto con un codice; la famiglia la crea chi riceve.
 import { $app, esc, utm } from "../app.js";
+import { traccia } from "../app.js";
 import { SUPABASE_URL } from "../config.js";
 
 export default async function ({ params }) {
@@ -55,8 +56,10 @@ export function montaModulo(el, params = {}) {
     el.querySelectorAll("#quando .chip").forEach((x) => x.classList.toggle("on", x === b));
     dd.hidden = !!b.dataset.d; if (b.dataset.d) dd.value = b.dataset.d; else dd.focus();
   });
+  el.querySelector("#f").addEventListener("focusin", () => traccia("modulo_regalo"), { once: true });
   el.querySelector("#f").onsubmit = async (e) => {
     e.preventDefault();
+    traccia("checkout");
     const v = (id) => el.querySelector("#" + id).value.trim();
     const esito = el.querySelector("#esito"), btn = e.target.querySelector("button.btn");
     btn.disabled = true; esito.textContent = "Ti porto al pagamento…";

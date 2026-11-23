@@ -1,7 +1,7 @@
 // Pagina di vendita (pubblica). Versione di Natale: toni caldi delle feste, sempre con i colori del brand.
 // Perché, come, cosa; più di una chat di gruppo; prezzi; modulo d'acquisto. Toni leggeri e vivi: si racconta adesso, insieme.
 // Foto: Unsplash (licenza Unsplash, uso libero).
-import { $app } from "../app.js";
+import { $app, traccia } from "../app.js";
 import { NEL_REGALO, montaModulo } from "./regala.js";
 import { testataPubblica, collegaMenu, piePubblico, collegaPie } from "./info.js";
 
@@ -269,4 +269,28 @@ export default async function ({ params } = {}) {
     barra.style.display = scrollY > 560 && !sulModulo && !document.getElementById("banner-cookie") ? "flex" : "none";
   };
   addEventListener("scroll", aggiornaBarra, { passive: true });
+  misuraLanding();
+}
+
+// Cosa fanno le persone qui (per campagna, con il consenso): sezioni viste, quanto scorrono, clic, tempo
+function misuraLanding() {
+  traccia("vista");
+  const radice = $app();
+  const os = new IntersectionObserver((voci) => voci.forEach((v) => { if (v.isIntersecting) { traccia("sezione:" + v.target.id); os.unobserve(v.target); } }), { threshold: 0.35 });
+  radice.querySelectorAll("section[id], [id=acquista]").forEach((el) => os.observe(el));
+  let massimo = 0;
+  const scorri = () => {
+    if (!location.hash.startsWith("#/scopri") && location.hash !== "" && location.hash !== "#/") { removeEventListener("scroll", scorri); return; }
+    const p = Math.round((scrollY + innerHeight) / document.documentElement.scrollHeight * 100);
+    for (const soglia of [25, 50, 75, 100]) if (p >= soglia - 2 && massimo < soglia) { massimo = soglia; traccia("scroll", soglia); }
+  };
+  addEventListener("scroll", scorri, { passive: true });
+  radice.addEventListener("click", (e) => {
+    const b = e.target.closest("a, button"); if (!b) return;
+    const testo = (b.textContent || b.getAttribute("aria-label") || "").replace(/\s+/g, " ").trim().toLowerCase().slice(0, 40);
+    if (testo) traccia("clic:" + testo);
+  }, true);
+  const inizio = Date.now();
+  const fine = () => { if (document.visibilityState === "hidden") traccia("tempo", Math.min(3600, Math.round((Date.now() - inizio) / 1000))); };
+  document.addEventListener("visibilitychange", fine, { once: true });
 }
