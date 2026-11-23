@@ -243,7 +243,8 @@ export default async function ({ params } = {}) {
       <div style="display:grid;gap:10px;max-width:520px">
         <a class="btn ambra" href="#/contatti">✉️ Scrivici un messaggio</a>
         <a class="btn chiaro" href="#/assistenza">💬 Sei già su Ancora? Scrivici in chat</a>
-      </div></section>
+      </div>
+      <p class="tenue" style="margin:12px 0 0;font-size:14px">Oppure via email: <a href="mailto:carulloantonio@icloud.com">carulloantonio@icloud.com</a></p></section>
 
     ${piePubblico()}
     <div id="barra-acquisto" style="position:fixed;left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom));max-width:540px;margin:0 auto;z-index:20;

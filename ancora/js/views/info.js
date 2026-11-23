@@ -7,8 +7,8 @@ import { sb, $app, esc, utm, consensoCookie } from "../app.js";
 export const AZIENDA = {
   nome: "Antonio Carullo",
   piva: "",   // venditore privato (vendita occasionale): niente P.IVA per ora
-  sede: "[Sede legale da completare]",
-  email: "la chat Assistenza nell'app (menu → Assistenza)",
+  sede: "Via Mazzini 12, 01028 Orte (VT)",
+  email: "carulloantonio@icloud.com",
   aggiornato: "21 novembre 2026",
 };
 

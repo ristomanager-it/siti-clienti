@@ -232,6 +232,7 @@ const D = {
   "E se il codice non viene usato?": ["And if the code isn't used?", "¿Y si el código no se usa?", "Und wenn der Code nicht genutzt wird?", "Et si le code n'est pas utilisé ?"],
   "Se non viene attivato entro 30 giorni dalla data scelta, ti rimborsiamo per intero.": ["If it isn't activated within 30 days of the chosen date, we refund you in full.", "Si no se activa en 30 días desde la fecha elegida, te lo reembolsamos íntegramente.", "Wird er nicht innerhalb von 30 Tagen nach dem gewählten Datum aktiviert, erstatten wir den vollen Betrag.", "S'il n'est pas activé dans les 30 jours suivant la date choisie, nous te remboursons intégralement."],
   "Altre domande?": ["More questions?", "¿Más preguntas?", "Weitere Fragen?", "D'autres questions ?"],
+  "Oppure via email:": ["Or by email:", "O por email:", "Oder per E-Mail:", "Ou par e-mail :"],
   "Scrivici": ["Write to us", "Escríbenos", "Schreib uns", "Écris-nous"],
   "Parliamone": ["Let's talk", "Hablemos", "Lass uns reden", "Parlons-en"],
   "Un dubbio sul regalo, una domanda, un'idea? Rispondiamo noi, di persona, di solito in giornata.": ["A doubt about the gift, a question, an idea? We answer personally, usually the same day.", "¿Una duda sobre el regalo, una pregunta, una idea? Respondemos nosotros, en persona, normalmente en el día.", "Eine Frage zum Geschenk, eine Idee? Wir antworten persönlich, meist am selben Tag.", "Un doute sur le cadeau, une question, une idée ? Nous répondons nous-mêmes, en général dans la journée."],
