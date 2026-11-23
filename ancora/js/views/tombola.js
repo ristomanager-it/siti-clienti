@@ -43,7 +43,7 @@ export default async function ({ params }) {
   let id = params?.id;
   if (!id) {
     const fam = (params?.c && state.cerchie.find((c) => c.id === params.c)) ?? state.cerchie.find((c) => c.tipo === "famiglia") ?? state.cerchie[0];
-    if (!fam) { $app().innerHTML = `<div class="pad"><p>Prima entra in una famiglia: la tombola si gioca tra voi.</p><a class="btn" href="#/cerchie">Famiglie e gruppi</a></div>`; return; }
+    if (!fam) { $app().innerHTML = `<div class="pad"><p>Prima entra in una famiglia o in un gruppo: la tombola si gioca tra voi.</p><a class="btn" href="#/cerchie">Famiglie e gruppi</a></div>`; return; }
     const { data, error } = await sb.rpc("tombola_crea", { p_cerchia: fam.id });
     if (error) { $app().innerHTML = `<p class="pad errore">${esc(error.message)}</p>`; return; }
     location.replace(`#/tombola?id=${data}`); return;
@@ -52,7 +52,7 @@ export default async function ({ params }) {
   let voce = true; try { voce = localStorage.getItem("ancora_tombola_voce") !== "0"; } catch { /* niente */ }
   let ultimoVisto = null, premiVisti = null, timer = null, ultimaFirma = "";
   $app().innerHTML = `
-    <header class="testa"><a class="icona" href="#/giochi" aria-label="Indietro">${ICONE.indietro}</a><b>🎄 Tombola di famiglia</b>
+    <header class="testa"><a class="icona" href="#/giochi" aria-label="Indietro">${ICONE.indietro}</a><b>🎄 Tombola</b>
       <button class="icona" id="voce" aria-label="Voce" style="border:0;background:none;font-size:22px">${voce ? "🔊" : "🔇"}</button></header>
     <div id="corpo" style="padding-bottom:130px"></div>`;
   document.getElementById("voce").onclick = (e) => { voce = !voce; e.target.textContent = voce ? "🔊" : "🔇"; try { localStorage.setItem("ancora_tombola_voce", voce ? "1" : "0"); } catch { /* niente */ } };
@@ -60,13 +60,16 @@ export default async function ({ params }) {
   async function aggiorna() {
     if (!document.getElementById("corpo")) { clearInterval(timer); return; }
     const [{ data: t }, { data: cart }] = await Promise.all([
-      sb.from("tombole").select("id, cerchia_id, banco_id, stato, estratti, premi, persone:banco_id(nome, soprannome), cerchie(nome)").eq("id", id).maybeSingle(),
+      sb.from("tombole").select("id, cerchia_id, banco_id, stato, estratti, premi, premi_testi, prezzo_cent, pagati, persone:banco_id(nome, soprannome), cerchie(nome)").eq("id", id).maybeSingle(),
       sb.from("tombola_cartelle").select("id, persona_id, numeri, persone:persona_id(nome, soprannome)").eq("tombola_id", id).order("creata_il"),
     ]);
     if (!t) { document.getElementById("corpo").innerHTML = `<p class="pad">Questa tombola non c'è più.</p>`; clearInterval(timer); return; }
     // ridisegna solo se è cambiato qualcosa (così non salta lo scorrimento)
-    const firma = [t.stato, t.estratti.length, (t.premi ?? []).length, (cart ?? []).map((c) => c.id).join()].join("|");
+    const firma = [t.stato, t.estratti.length, (t.premi ?? []).length, (cart ?? []).map((c) => c.id).join(), JSON.stringify(t.premi_testi), t.prezzo_cent, t.pagati.join()].join("|");
     if (firma === ultimaFirma) return;
+    // se il banco sta scrivendo i premi non gli cancelliamo il testo: si ridisegna al giro dopo
+    const a = document.activeElement;
+    if (a && a.tagName === "INPUT" && document.getElementById("corpo")?.contains(a)) return;
     ultimaFirma = firma;
     disegna(t, cart ?? []);
   }
@@ -103,7 +106,27 @@ export default async function ({ params }) {
         <div style="display:grid;grid-template-columns:repeat(9,1fr);gap:4px">${c.numeri.map(cella).join("")}</div></div>`;
     };
 
-    const premiHtml = (t.premi ?? []).length ? `<div class="card"><b>Premi</b>${t.premi.map((p) => `<div style="margin-top:6px">🏆 <b>${PREMI[p.premio]}</b> · ${esc(p.nome)} <span class="tenue">(col ${p.numero})</span></div>`).join("")}</div>` : "";
+    const euro = (c) => (c / 100).toLocaleString("it-IT", { style: "currency", currency: "EUR" });
+    const testi = t.premi_testi ?? {};
+    const perPersona = [...cart.reduce((m, c) => m.set(c.persona_id, { nome: c.persone?.soprannome || c.persone?.nome, n: (m.get(c.persona_id)?.n ?? 0) + 1 }), new Map())];
+    const montepremi = cart.length * t.prezzo_cent;
+    const inPalio = Object.keys(PREMI).filter((k) => testi[k]);
+    const palioHtml = inPalio.length || t.prezzo_cent ? `<div class="card"><b>🎁 In palio</b>${t.prezzo_cent ? ` <span class="tenue">· montepremi ${euro(montepremi)}</span>` : ""}
+      ${inPalio.map((k) => { const v = (t.premi ?? []).filter((p) => p.premio === k);
+        return `<div style="display:flex;gap:8px;margin-top:6px;${v.length ? "opacity:.55" : ""}"><b style="min-width:84px">${PREMI[k]}</b><span style="flex:1">${esc(testi[k])}</span>${v.length ? `<span>✓ ${v.map((x) => esc(x.nome)).join(", ")}</span>` : ""}</div>`; }).join("")}</div>` : "";
+    const cassaHtml = t.prezzo_cent ? `<div class="card"><b>💶 Cassa</b> <span class="tenue">· ${euro(t.prezzo_cent)} a cartella</span>
+      ${perPersona.map(([pid, x]) => { const ok = t.pagati.includes(pid);
+        return `<div style="display:flex;align-items:center;gap:8px;margin-top:8px"><span style="flex:1">${esc(x.nome)} · ${x.n} ${x.n === 1 ? "cartella" : "cartelle"} · <b>${euro(x.n * t.prezzo_cent)}</b></span>
+          ${banco ? `<button class="chip ${ok ? "on" : ""}" data-paga="${pid}" data-si="${ok ? 0 : 1}" style="margin:0">${ok ? "pagato ✓" : "da pagare"}</button>` : `<span class="tenue">${ok ? "pagato ✓" : "da pagare"}</span>`}</div>`; }).join("") || `<p class="tenue" style="margin:6px 0 0">Ancora nessuna cartella.</p>`}
+      ${perPersona.length ? `<div style="margin-top:10px;font-weight:700">Raccolti ${euro(perPersona.filter(([pid]) => t.pagati.includes(pid)).reduce((s, [, x]) => s + x.n * t.prezzo_cent, 0))} su ${euro(montepremi)}</div>` : ""}
+      ${!banco && mie.length && !t.pagati.includes(state.io.id) ? `<p style="margin:8px 0 0">Le tue cartelle: <b>${euro(mie.length * t.prezzo_cent)}</b> da dare a ${esc(t.persone?.soprannome || t.persone?.nome || "chi fa il banco")}.</p>` : ""}</div>` : "";
+    const modulo = banco && t.stato !== "finita" ? `<details class="card" ${inPalio.length || t.prezzo_cent ? "" : "open"}><summary style="font-weight:800;cursor:pointer;min-height:32px">✏️ Scrivi i premi${t.stato === "attesa" ? " e il prezzo" : ""}</summary>
+      ${Object.entries(PREMI).map(([k, n]) => `<label for="pr-${k}">${n}</label><input id="pr-${k}" maxlength="60" value="${esc(testi[k] ?? "")}" placeholder="${k === "tombola" ? "es. il cesto natalizio" : k === "ambo" ? "es. un torroncino" : "es. 5 €"}">`).join("")}
+      ${t.stato === "attesa" ? `<label for="prezzo">Prezzo di una cartella (€, 0 = si gioca gratis)</label><input id="prezzo" type="number" min="0" max="100" step="0.5" inputmode="decimal" value="${t.prezzo_cent ? t.prezzo_cent / 100 : ""}" placeholder="0">
+        <button type="button" class="chip" id="dividi" style="margin:8px 0 0">Dividi il montepremi in automatico</button>` : ""}
+      <button class="btn" id="salva-premi" style="margin-top:12px">Salva</button></details>` : "";
+
+    const premiHtml = (t.premi ?? []).length ? `<div class="card"><b>Premi</b>${t.premi.map((p) => `<div style="margin-top:6px">🏆 <b>${PREMI[p.premio]}</b> · ${esc(p.nome)} <span class="tenue">(col ${p.numero})</span>${testi[p.premio] ? ` → ${esc(testi[p.premio])}` : ""}</div>`).join("")}</div>` : "";
     const tabellone = `<details class="card" ${banco ? "open" : ""}><summary style="font-weight:800;cursor:pointer;min-height:32px">Tabellone · ${t.estratti.length} su 90</summary>
       <div style="display:grid;grid-template-columns:repeat(10,1fr);gap:3px;margin-top:8px">${Array.from({ length: 90 }, (_, k) => k + 1).map((n) =>
         `<div style="display:grid;place-items:center;aspect-ratio:1;border-radius:6px;font-size:13px;font-weight:700;${est.has(n) ? "background:#C8102E;color:#fff" : "background:#F3EDE2;color:#999"}">${n}</div>`).join("")}</div></details>`;
@@ -124,9 +147,10 @@ export default async function ({ params }) {
           <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">${[1, 2, 3, 4, 5, 6].map((n) => `<button class="chip ${mie.length === n ? "on" : ""}" data-n="${n}" style="margin:0;min-width:44px">${n}</button>`).join("")}
             ${mie.length ? `<button class="chip" data-n="0" style="margin:0">Nessuna</button>` : ""}</div>
           <p class="tenue" style="margin:8px 0 0;font-size:14px">Si segnano da sole: tu guardi e fai il tifo.</p></div>
+        ${modulo}${palioHtml}${cassaHtml}
         ${mie.map(cartellaHtml).join("")}
         <div class="pad">
-          ${banco ? `<button class="btn ambra" id="estrai" style="font-size:20px">Inizia: estrai il primo numero</button>` : `<p class="tenue" style="text-align:center">Aspettiamo che ${esc(t.persone?.soprannome || t.persone?.nome || "il banco")} estragga il primo numero…</p>`}
+          ${banco ? `<button class="btn chiaro" id="avvisa" style="margin-bottom:10px">🔔 Avvisa tutti sul telefono</button><button class="btn ambra" id="estrai" style="font-size:20px">Inizia: estrai il primo numero</button>` : `<p class="tenue" style="text-align:center">Aspettiamo che ${esc(t.persone?.soprannome || t.persone?.nome || "il banco")} estragga il primo numero…</p>`}
           <button class="btn chiaro" id="invita" style="margin-top:10px">Invita a giocare su WhatsApp</button></div>`;
     } else {
       corpo.innerHTML = `
@@ -134,8 +158,9 @@ export default async function ({ params }) {
           ${banco ? `<button class="btn ambra" id="nuova" style="margin-top:12px">Un'altra partita</button>` : ""}</div>` : ""}
         ${grande}
         ${banco && t.stato === "in_corso" ? `<div class="pad" style="padding-top:8px"><button class="btn ambra" id="estrai" style="font-size:22px;min-height:64px">Estrai</button></div>` : ""}
-        ${premiHtml}
+        ${premiHtml}${palioHtml}
         ${mie.map(cartellaHtml).join("") || `<p class="pad tenue" style="text-align:center">Guardi la partita senza cartelle.</p>`}
+        ${cassaHtml}${modulo}
         ${tabellone}
         ${banco && t.stato === "in_corso" ? `<div class="pad"><button class="chip" id="chiudi" style="color:var(--rosso)">Chiudi la partita</button></div>` : ""}`;
     }
@@ -157,12 +182,36 @@ export default async function ({ params }) {
       else if (voce) { parla(n); ultimoVisto = n; }
       await aggiorna();
     };
+    corpo.querySelector("#salva-premi")?.addEventListener("click", async (e) => {
+      const premi = Object.fromEntries(Object.keys(PREMI).map((k) => [k, corpo.querySelector(`#pr-${k}`).value]));
+      const pz = corpo.querySelector("#prezzo");
+      const { error } = await sb.rpc("tombola_imposta", { p_tombola: id, p_premi: premi, p_prezzo_cent: pz ? Math.round(Number(String(pz.value).replace(",", ".") || 0) * 100) : t.prezzo_cent });
+      if (error) { alert(error.message); return; }
+      e.target.blur(); ultimaFirma = ""; aggiorna();
+    });
+    // montepremi diviso come si usa: 10% ambo, 15% terno, 20% quaterna, 25% cinquina, 30% tombola (sulle cartelle prese finora)
+    corpo.querySelector("#dividi")?.addEventListener("click", () => {
+      const pz = Math.round(Number(String(corpo.querySelector("#prezzo").value).replace(",", ".") || 0) * 100);
+      const tot = cart.length * pz;
+      if (!tot) { alert("Metti il prezzo della cartella: il montepremi si calcola sulle cartelle prese."); return; }
+      const quote = { ambo: 10, terno: 15, quaterna: 20, cinquina: 25, tombola: 30 };
+      for (const [k, q] of Object.entries(quote)) corpo.querySelector(`#pr-${k}`).value = euro(Math.round(tot * q / 100 / 10) * 10);
+    });
+    corpo.querySelectorAll("[data-paga]").forEach((b) => b.onclick = async () => {
+      await sb.rpc("tombola_pagato", { p_tombola: id, p_persona: b.dataset.paga, p_si: b.dataset.si === "1" });
+      ultimaFirma = ""; aggiorna();
+    });
+    corpo.querySelector("#avvisa")?.addEventListener("click", async (e) => {
+      const { data: n, error } = await sb.rpc("tombola_invita", { p_tombola: id });
+      if (error) { alert(error.message); return; }
+      e.target.textContent = n ? `🔔 Avvisati ${n} sul telefono` : "🔔 Già avvisati (si può rifare tra 10 minuti)"; e.target.disabled = true;
+    });
     corpo.querySelector("#chiudi")?.addEventListener("click", async () => { if (confirm("Chiudere la partita per tutti?")) { await sb.rpc("tombola_chiudi", { p_tombola: id }); aggiorna(); } });
     corpo.querySelector("#nuova")?.addEventListener("click", () => { location.hash = `#/tombola?c=${t.cerchia_id}`; });
     corpo.querySelector("#invita")?.addEventListener("click", async () => {
       const link = `${location.href.split("#")[0]}#/tombola?id=${id}`;
-      const testo = `🎄 Tombola di famiglia su Ancora! Prendi le tue cartelle, si parte tra poco: ${link}`;
-      if (navigator.share) { try { await navigator.share({ title: "Tombola di famiglia", text: testo }); return; } catch { /* annullato */ } }
+      const testo = `🎄 Tombola su Ancora! Prendi le tue cartelle, si parte tra poco: ${link}`;
+      if (navigator.share) { try { await navigator.share({ title: "Tombola", text: testo }); return; } catch { /* annullato */ } }
       window.open(`https://wa.me/?text=${encodeURIComponent(testo)}`, "_blank");
     });
   }
