@@ -53,7 +53,7 @@ export default async function ({ id, params }) {
       const ric = r.tipo === "ricetta" ? r.dettagli ?? {} : null;
       return `<section class="pag">
         <h2>${esc(r.titolo ?? (ric ? "Una ricetta" : "Un ricordo"))}</h2>
-        <div class="quando">${data(r.creato_il)}${ric ? " · ricetta di famiglia" : ""}</div>
+        <div class="quando">${data(r.creato_il)}${r.dettagli?.luogo?.nome ? ` · ${esc(r.dettagli.luogo.nome)}` : ""}${ric ? " · ricetta di famiglia" : ""}</div>
         ${f ? `<div class="img" style="background-image:url('${url[f.path]}')"></div>` : ""}
         ${ric ? `<div class="testo"><b>Ingredienti${ric.porzioni ? ` (per ${ric.porzioni})` : ""}</b>\n${(ric.ingredienti ?? []).map((i) => `· ${esc(i)}`).join("\n")}${ric.procedimento ? `\n\n<b>Come si fa</b>\n${esc(ric.procedimento)}` : ""}</div>` : ""}
         ${r.testo ? `<div class="testo">${esc(r.testo)}</div>` : voce && !ric ? `<div class="testo" style="color:#5D635F">Questa storia è solo a voce: inquadra il codice per ascoltarla.</div>` : ""}

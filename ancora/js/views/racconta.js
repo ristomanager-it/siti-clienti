@@ -56,6 +56,13 @@ export default async function ({ params }) {
           `<button type="button" class="chip ${k === quando ? "on" : ""}" data-q="${k}" ${k === "18" ? "hidden" : ""}>${t}</button>`).join("")}</div>
         <input id="qdata" type="date" hidden style="width:auto" min="${new Date(Date.now() + 86400_000).toISOString().slice(0, 10)}">
       </details>
+      <div id="luogo-box" style="margin-top:12px">
+        <button type="button" class="chip" id="luogo-btn" style="margin:0">📍 Aggiungi un luogo</button>
+        <div id="luogo-campo" hidden>
+          <label for="luogo">Dove</label>
+          <div class="riga" style="gap:8px"><input id="luogo" maxlength="80" placeholder="Orlando, Florida · la casa al mare" style="flex:1;margin:0" autocomplete="off">
+            <button type="button" class="chip" id="luogo-qui" style="margin:0;white-space:nowrap">📍 Qui</button></div>
+          <small class="tenue" id="luogo-stato"></small></div></div>
       <label class="riga" style="font-weight:700"><input id="memoria" type="checkbox" checked style="width:auto"> Entra nella memoria</label>
       <button id="salva" class="btn" style="margin-top:16px">${lettera ? "Chiudi la lettera" : "Condividi"}</button>
       <p id="esito" role="status"></p>
@@ -120,6 +127,29 @@ export default async function ({ params }) {
   rec.addEventListener("pointerup", ferma);
   rec.addEventListener("pointerleave", ferma);
 
+  // 📍 il luogo: scritto a mano, o "Qui" con la posizione del telefono (salvata arrotondata, circa 1 km)
+  let luogoQui = null;
+  document.getElementById("luogo-btn").onclick = (e) => { e.target.hidden = true; document.getElementById("luogo-campo").hidden = false; document.getElementById("luogo").focus(); };
+  document.getElementById("luogo-qui").onclick = () => {
+    const st = document.getElementById("luogo-stato");
+    if (!navigator.geolocation) { st.textContent = "Questo telefono non dà la posizione: scrivi il luogo."; return; }
+    st.textContent = "Cerco dove sei…";
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      const lat = Math.round(pos.coords.latitude * 100) / 100, lon = Math.round(pos.coords.longitude * 100) / 100;
+      let nome = "";
+      try {
+        const j = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=14&accept-language=it&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`).then((r) => r.json());
+        const a = j.address ?? {};
+        const posto = a.city ?? a.town ?? a.village ?? a.municipality ?? a.county ?? "";
+        const zona = a.country_code === "it" ? (a.county ?? a.state ?? "") : (a.state ?? a.country ?? "");
+        nome = [posto, zona && zona !== posto ? zona : ""].filter(Boolean).join(", ");
+      } catch { /* niente */ }
+      if (!nome) { st.textContent = "Non trovo il nome del posto: scrivilo tu."; return; }
+      luogoQui = { nome, lat, lon };
+      document.getElementById("luogo").value = nome; st.textContent = "";
+    }, () => { st.textContent = "Posizione non permessa: scrivi il luogo."; }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 });
+  };
+
   document.getElementById("salva").onclick = async () => {
     const esito = document.getElementById("esito");
     const testo = document.getElementById("testo").value.trim();
@@ -144,7 +174,12 @@ export default async function ({ params }) {
       tipo: ricetta ? "ricetta" : rispostaA ? "risposta" : (files.length && !blob ? "foto" : "racconto"),
       titolo: ricetta ? ricetta.nome : domandaSett ?? domanda?.testo ?? null, testo: testo || null,
       domanda_settimana: domandaSett ? params.settimana : null,
-      dettagli: ricetta ? { porzioni: ricetta.porzioni, ingredienti: ricetta.ingredienti, procedimento: ricetta.procedimento } : null,
+      dettagli: (() => {
+        const d = ricetta ? { porzioni: ricetta.porzioni, ingredienti: ricetta.ingredienti, procedimento: ricetta.procedimento } : {};
+        const nomeLuogo = document.getElementById("luogo")?.value.trim();
+        if (nomeLuogo) d.luogo = { nome: nomeLuogo, ...(luogoQui && luogoQui.nome === nomeLuogo ? { lat: luogoQui.lat, lon: luogoQui.lon } : {}) };
+        return Object.keys(d).length ? d : null;
+      })(),
       visibilita: scelta === "solo_io" ? "solo_io" : destinatario ? "diretto" : "cerchia",
       cerchia_id: scelta === "solo_io" || destinatario ? null : scelta,
       destinatario_id: destinatario,

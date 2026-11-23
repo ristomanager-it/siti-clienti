@@ -219,6 +219,8 @@ function post(r, url, i) {
   return `<article class="post" style="position:relative">
     <a class="post-testa" href="#/profilo/${r.autore_id}">${avatar(r.persone, 38, r.persone?.foto_path ? url[r.persone.foto_path] : null)}
       <div><b>${esc(nomeDi(r.persone))}</b><small>${quando(r.creato_il)}</small></div></a>
+    ${r.dettagli?.luogo?.nome ? `<a class="post-luogo" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(r.dettagli.luogo.lat != null ? `${r.dettagli.luogo.lat},${r.dettagli.luogo.lon}` : r.dettagli.luogo.nome)}"
+      style="display:block;margin:-6px 0 8px 62px;font-size:13px;font-weight:700;color:var(--salvia,#2F5A55);text-decoration:none">📍 ${esc(r.dettagli.luogo.nome)}</a>` : ""}
     ${r.autore_id === state.io.id ? `<button class="icona" data-menu-post="${r.id}" aria-label="Modifica o elimina" style="position:absolute;top:4px;right:8px;width:44px;height:44px;font-size:22px;font-weight:800;letter-spacing:1px">⋯</button>` : ""}
     ${media}
     <div class="azioni">
