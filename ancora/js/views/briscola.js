@@ -49,7 +49,8 @@ export default async function ({ params }) {
           <div class="tenue">${p.posti.map((x) => esc(x.nome ?? "posto libero")).join(" · ")}</div></a>`).join("")}
         <button class="btn ambra" data-n="2">Nuovo tavolo a 2</button>
         <button class="btn" data-n="4" style="margin-top:10px">Nuovo tavolo a 4 (a coppie)</button>
-        <p class="tenue" style="font-size:14px;margin-top:14px">La briscola a 5 chiamata arriva presto.</p>`}
+        <button class="btn" data-n="5" style="margin-top:10px">Nuovo tavolo a 5 (chiamata)</button>
+        <p class="tenue" style="font-size:14px;margin-top:14px">A 5: asta a punti da 61, chi vince chiama una carta (il suo seme è la briscola, chi la tiene è il socio segreto). Il chiamante prende doppio.</p>`}
       </div>`;
     document.querySelectorAll("[data-n]").forEach((b) => b.onclick = async () => {
       b.disabled = true;
@@ -151,7 +152,7 @@ export default async function ({ params }) {
       const creatore = p.creato_da === state.io.id;
       corpo.innerHTML = `
         <div class="pad" style="text-align:center"><div style="font-size:44px">🃏</div><h1 style="margin:4px 0">Briscola a ${p.n}</h1>
-          <p class="tenue" style="margin:0">${p.n === 4 ? "Si gioca a coppie: chi siede di fronte è in squadra con te." : "Uno contro uno."}</p></div>
+          <p class="tenue" style="margin:0">${p.n === 4 ? "Si gioca a coppie: chi siede di fronte è in squadra con te." : p.n === 5 ? "Chiamata: asta, carta chiamata, socio segreto." : "Uno contro uno."}</p></div>
         ${p.posti.map((x, i) => `<div class="card" style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
           <b style="flex:1">${p.n === 4 ? `<span class="tenue">Coppia ${i % 2 ? "B" : "A"} · </span>` : ""}${x.persona_id ? esc(x.nome) : `<span class="tenue">posto libero</span>`}</b>
           ${!x.persona_id ? `<button class="chip" data-siedi="${i}" style="margin:0">Siediti qui</button>` : x.persona_id === state.io.id ? `<span class="tenue">sei tu</span>` : ""}</div>`).join("")}
@@ -175,6 +176,53 @@ export default async function ({ params }) {
     }
 
     const turno = Number(pub.turno), tocca = turno === io && p.stato === "in_corso";
+    const manoHtml = (titolo) => io >= 0 && mia ? `<div style="margin:14px 16px 0;padding:10px;border-radius:16px;background:#F3EDE2"><div style="font-weight:800;margin-bottom:8px">${titolo}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center">${mia.carte.slice().sort().map((c) => carta(c, { piccola: true })).join("")}</div></div>` : "";
+    if (p.n === 5 && pub.fase === "asta") {
+      const a = pub.asta ?? {}; const att = Number(a.offerta ?? 60); const passati = a.passati ?? [];
+      corpo.innerHTML = `
+        ${pub.avviso ? `<div class="card" style="background:#FFF6E8">${esc(pub.avviso)}</div>` : ""}
+        <div class="pad" style="text-align:center"><div style="font-size:40px">🔨</div><h1 style="margin:4px 0">L'asta</h1>
+          <p style="margin:0;font-size:18px">${a.chi != null ? `Offerta più alta: <b>${att}</b> di ${a.chi === io ? "te" : nome(a.chi)}` : "Nessuna offerta: si parte da 61"}</p>
+          <p class="tenue" style="margin:4px 0 0">${p.posti.map((x, i) => `${passati.includes(i) ? "<s>" : ""}${i === io ? "tu" : nome(i)}${passati.includes(i) ? "</s>" : ""}${turno === i ? " ▶" : ""}`).join(" · ")}</p></div>
+        ${tocca ? `<div class="card"><b>Tocca a te: quanto fai?</b>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px">${[1, 2, 5, 10].map((k) => att + k <= 120 ? `<button class="chip on" data-offri="${Math.max(61, att + k)}" style="margin:0">${Math.max(61, att + k)}</button>` : "").join("")}
+            <button class="chip" data-offri="passo" style="margin:0">Passo</button></div>
+          <p class="tenue" style="font-size:13px;margin:8px 0 0">Offri i punti che pensi di fare con il tuo socio (su 120).</p></div>`
+          : `<p class="pad tenue" style="text-align:center">Tocca a ${nome(turno)}…</p>`}
+        ${manoHtml("Le tue carte")}`;
+      corpo.querySelectorAll("[data-offri]").forEach((b) => b.onclick = async () => {
+        corpo.querySelectorAll("[data-offri]").forEach((x) => x.disabled = true);
+        const { error } = await sb.rpc("briscola_offri", { p_partita: id, p_punti: b.dataset.offri === "passo" ? null : Number(b.dataset.offri) });
+        if (error) alert(error.message); ultimaFirma = ""; aggiorna();
+      });
+      return;
+    }
+    if (p.n === 5 && pub.fase === "chiamata") {
+      const io_ch = Number(pub.chiamante) === io;
+      let scelta = null;
+      corpo.innerHTML = `
+        <div class="pad" style="text-align:center"><div style="font-size:40px">📣</div>
+          <h1 style="margin:4px 0">${io_ch ? `Hai vinto l'asta a ${pub.offerta}` : `${nome(pub.chiamante)} ha vinto l'asta a ${pub.offerta}`}</h1>
+          <p class="tenue" style="margin:0">${io_ch ? "Chiama una carta che non hai: il suo seme diventa la briscola, chi la tiene è il tuo socio." : "Sta chiamando la carta…"}</p></div>
+        ${io_ch ? `<div class="card">
+          ${["D", "C", "S", "B"].map((sm) => `<div style="margin-bottom:8px"><b style="color:${COLORE[sm]}">${SEMI[sm]}</b>
+            <div style="display:flex;gap:4px;overflow-x:auto;padding:4px 0">${[1, 3, 10, 9, 8, 7, 6, 5, 4, 2].map((v) => sm + v).filter((c) => !mia?.carte.includes(c))
+              .map((c) => `<button data-chiama="${c}" style="border:0;background:none;padding:2px;cursor:pointer;border-radius:8px">${carta(c, { piccola: true })}</button>`).join("")}</div></div>`).join("")}
+          <button class="btn ambra" id="chiamo" disabled>Chiama la carta</button></div>` : ""}
+        ${manoHtml("Le tue carte")}`;
+      corpo.querySelectorAll("[data-chiama]").forEach((b) => b.onclick = () => {
+        corpo.querySelectorAll("[data-chiama]").forEach((x) => x.style.background = "none");
+        b.style.background = "#E8B56B"; scelta = b.dataset.chiama;
+        const bt = corpo.querySelector("#chiamo"); bt.disabled = false; bt.textContent = `Chiamo il ${nomeCarta(scelta)}`;
+      });
+      corpo.querySelector("#chiamo")?.addEventListener("click", async (e) => {
+        if (!scelta) return; e.target.disabled = true;
+        const { error } = await sb.rpc("briscola_chiama", { p_partita: id, p_carta: scelta });
+        if (error) { alert(error.message); e.target.disabled = false; } ultimaFirma = ""; aggiorna();
+      });
+      return;
+    }
     const punti = pub.punti ?? [0, 0];
     const etichettaSq = (s) => (p.n === 4 ? `${nome(s)} e ${nome(s + 2)}` : nome(s));
     // gli altri intorno al tavolo, dal mio punto di vista
@@ -186,7 +234,15 @@ export default async function ({ params }) {
     if (ultima) ultimaPresaVista = ultima.n;
 
     let risultato = "";
-    if (p.stato === "finita") {
+    if (p.stato === "finita" && p.n === 5 && pub.esito) {
+      const e = pub.esito, ch = Number(pub.chiamante), so = pub.socio;
+      const mioPunteggio = io >= 0 ? e.punteggio[io] : 0;
+      risultato = `<div class="card" style="text-align:center;background:#FFF6E8"><div style="font-size:42px">${mioPunteggio > 0 ? "🏆" : "🙂"}</div>
+        <b style="font-size:20px">${e.vinto ? `${nome(ch)}${so != null && so !== ch ? ` e ${nome(so)}` : ""} ce l'hanno fatta!` : `${nome(ch)} non ce l'ha fatta`}</b>
+        <div class="tenue" style="margin-top:4px">Hanno fatto ${e.fatti} su ${pub.offerta} offerti${so === ch ? " (si era chiamato da solo)" : ""}</div>
+        <div style="margin-top:8px">${p.posti.map((x, i) => `${i === io ? "tu" : nome(i)} <b>${e.punteggio[i] > 0 ? "+" : ""}${e.punteggio[i]}</b>`).join(" · ")}</div>
+        <a class="btn ambra" href="#/briscola?c=${p.cerchia_id}" style="margin-top:12px">Un'altra partita</a></div>`;
+    } else if (p.stato === "finita") {
       const [a, b] = punti, mio = io >= 0 ? squadra(io) : 0;
       risultato = `<div class="card" style="text-align:center;background:#FFF6E8"><div style="font-size:42px">${a === b ? "🤝" : (a > b ? 0 : 1) === mio ? "🏆" : "🙂"}</div>
         <b style="font-size:20px">${a === b ? "Pareggio: 60 a 60!" : `Vince ${a > b ? etichettaSq(0) : etichettaSq(1)}`}</b>
@@ -210,13 +266,15 @@ export default async function ({ params }) {
         ${pub.briscola ? `<div style="text-align:center">${carta(pub.briscola, { piccola: true })}<small class="tenue" style="display:block;font-size:11px">briscola</small></div>` : ""}
         <div style="flex:1">
           <div class="tenue" style="font-size:14px">Briscola: <b style="color:${COLORE[pub.briscola?.[0]]}">${SEMI[pub.briscola?.[0]] ?? ""}</b> · nel mazzo ${pub.restanti ?? 0}</div>
-          <div style="font-size:14px;margin-top:4px">${etichettaSq(0)}: <b>${punti[0]}</b> · ${etichettaSq(1)}: <b>${punti[1]}</b></div>
+          ${p.n === 5 ? `<div style="font-size:14px;margin-top:4px">📣 ${Number(pub.chiamante) === io ? "Tu" : nome(pub.chiamante)} a <b>${pub.offerta}</b> · chiamato il <b>${pub.chiamata ? nomeCarta(pub.chiamata) : ""}</b></div>
+            <div style="font-size:14px;margin-top:2px">Socio: <b>${pub.socio != null ? (Number(pub.socio) === io ? "tu" : nome(pub.socio)) : "ancora segreto 🤫"}</b>${mia?.carte.includes(pub.chiamata) ? " <span class='tenue'>(sei tu, ma non dirlo!)</span>" : ""}</div>`
+          : `<div style="font-size:14px;margin-top:4px">${etichettaSq(0)}: <b>${punti[0]}</b> · ${etichettaSq(1)}: <b>${punti[1]}</b></div>`}
           ${ultima && !mostraUltima ? `<div style="font-size:13px;margin-top:6px;display:flex;align-items:center;gap:4px;flex-wrap:wrap"><span class="tenue">Ultima mano:</span>${ultima.tavolo.map((x) => `<span style="font-weight:700;color:${COLORE[x.carta[0]]}">${nomeCarta(x.carta).replace(" di ", " ")}</span>`).join("<span class='tenue'>·</span>")}<span class="tenue">→ ${ultima.vince === io ? "tu" : nome(ultima.vince)}${ultima.punti ? ` +${ultima.punti}` : ""}</span></div>` : ""}
         </div></div>
 
       ${io >= 0 && mia ? `<div style="margin:14px 16px 0;padding:10px;border-radius:16px;background:${tocca ? "#FFF6E8" : "#F3EDE2"};${tocca ? "box-shadow:0 0 0 3px #E8B56B" : ""}">
         <div style="font-weight:800;margin-bottom:8px">${tocca ? "▶ Tocca a te: scegli la carta" : "Le tue carte"}</div>
-        <div style="display:flex;gap:10px;justify-content:center">${mia.carte.map((c) => `<button data-carta="${c}" aria-label="${nomeCarta(c)}" ${tocca ? "" : "disabled"} style="border:0;background:none;padding:0;cursor:${tocca ? "pointer" : "default"};${tocca ? "" : "opacity:.8"}">${carta(c, { attiva: tocca })}</button>`).join("") || `<span class="tenue">Nessuna carta</span>`}</div></div>`
+        <div style="display:flex;gap:${mia.carte.length > 3 ? 6 : 10}px;justify-content:center;flex-wrap:wrap">${mia.carte.slice().sort().map((c) => `<button data-carta="${c}" aria-label="${nomeCarta(c)}" ${tocca ? "" : "disabled"} style="border:0;background:none;padding:0;cursor:${tocca ? "pointer" : "default"};${tocca ? "" : "opacity:.8"}">${carta(c, { attiva: tocca, piccola: mia.carte.length > 3 })}</button>`).join("") || `<span class="tenue">Nessuna carta</span>`}</div></div>`
         : `<p class="pad tenue" style="text-align:center">Guardi la partita.</p>`}`;
 
     corpo.querySelectorAll("[data-carta]").forEach((b) => b.onclick = async () => {

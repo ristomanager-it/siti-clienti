@@ -3,7 +3,7 @@ import { state, $app, esc, ICONE } from "../app.js";
 
 const GIOCHI = [
   { icona: "🎄", nome: "Tombola", testo: "Uno fa il banco e scrive i premi, tutti con le cartelle sul telefono. Si segnano da sole, e l'app tiene la cassa.", link: "#/tombola", pronto: true },
-  { icona: "🃏", nome: "Briscola", testo: "A 2 o a 4 a coppie (la chiamata a 5 arriva presto). Chi apre il tavolo invita il gruppo; se manca qualcuno gioca il telefono.", link: "#/briscola", pronto: true },
+  { icona: "🃏", nome: "Briscola", testo: "A 2, a 4 a coppie e a 5 chiamata, con le carte napoletane. Segni al compagno e chat al tavolo; se manca qualcuno gioca il telefono.", link: "#/briscola", pronto: true },
   { icona: "♟️", nome: "Dama e scacchi", testo: "Una mossa la mattina, una la sera: il nonno contro il nipote.", pronto: false },
   { icona: "🏠", nome: "Il gioco della famiglia", testo: "Compra la casa della nonna e il mare del 2019: il tabellone lo fanno i vostri ricordi.", pronto: false },
 ];
