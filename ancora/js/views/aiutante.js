@@ -10,6 +10,8 @@ const PRONTE = [
   ["📷 Com'è messa questa pianta?", "📷Com'è messa questa pianta? Cosa devo fare?"],
   ["📷 Ricopia una ricetta", "📷Ricopia questa ricetta e salvala nel ricettario."],
   ["Cosa è successo questa settimana?", "Cosa è successo questa settimana?"],
+  ["Menu della settimana", "Fammi il menu della settimana per la mia famiglia."],
+  ["Racconta un ricordo", "Voglio raccontarti un ricordo da tenere: ti detto la storia, tu sistemala."],
   ["Compleanni in arrivo?", "Compleanni in arrivo?"],
   ["Cosa seminare questo mese?", "Cosa posso seminare o piantare questo mese?"],
 ];
@@ -31,6 +33,10 @@ function presentazione(cer) {
     ["🌿", "Il giardiniere", "Fotografi una pianta: ti dice cos'ha e come curarla, e cosa seminare questo mese."],
     ["📅", "Il segretario", "«Domenica pranzo dalla zia alle 13», «metti il latte nella spesa»: lo fa lui."],
     ["📖", "La memoria di casa", "Compleanni, cosa è successo, la ricetta della nonna ricopiata da una foto."],
+    ["🗓️", "Il menu della settimana", "Sette cene per la tua famiglia e la spesa completa con un tocco."],
+    ["✍️", "Scrive i ricordi con te", "Gli racconti una storia a voce: la sistema e la pubblica nel feed o nel tuo diario."],
+    ["☀️", "Il buongiorno", "Alle 8 un messaggio: compleanni e impegni di oggi e domani."],
+    ["🔊", "Ti legge le risposte", "Comodo per i nonni: parla e ascolta, senza leggere."],
     ["🏠", "E tutto il resto", "Macchie, piccoli lavori, gite, regali, compiti dei figli."]];
   $app().innerHTML = `
     <header class="testa"><a class="icona" href="#/" aria-label="Indietro">${ICONE.indietro}</a><b>L'aiutante di casa</b><span style="width:44px"></span></header>
@@ -94,6 +100,31 @@ async function chat(cer) {
       <button class="btn" style="width:auto;padding:0 16px;margin:0;min-height:44px">Invia</button>
     </form>`;
   const fili = document.getElementById("fili");
+  const leggi = (t) => {
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(String(t).replace(/\*\*/g, ""));
+    u.lang = "it-IT"; u.rate = 0.95;
+    const v = speechSynthesis.getVoices().find((x) => x.lang?.startsWith("it")); if (v) u.voice = v;
+    speechSynthesis.speak(u);
+  };
+  let leggiSempre = false; try { leggiSempre = localStorage.getItem("ancora_aiutante_voce") === "1"; } catch { /* niente */ }
+  // due interruttori: risposte lette ad alta voce, buongiorno alle 8
+  const opz = document.createElement("div");
+  opz.style.cssText = "display:flex;gap:6px;flex-wrap:wrap";
+  const chip = (attivo, testo) => `<button type="button" class="chip" style="margin:0;font-size:13px;${attivo ? "background:#2F5A55;color:#fff;border-color:#2F5A55" : ""}">${testo}</button>`;
+  const disegnaOpz = () => {
+    opz.innerHTML = ("speechSynthesis" in window ? chip(leggiSempre, `🔊 Leggimi le risposte: ${leggiSempre ? "sì" : "no"}`) : "")
+      + chip(state.io.aiutante_mattino !== false, `☀️ Buongiorno alle 8: ${state.io.aiutante_mattino !== false ? "sì" : "no"}`);
+    const [bv, bm] = "speechSynthesis" in window ? opz.children : [null, opz.children[0]];
+    if (bv) bv.onclick = () => { leggiSempre = !leggiSempre; try { localStorage.setItem("ancora_aiutante_voce", leggiSempre ? "1" : "0"); } catch { /* niente */ } disegnaOpz(); };
+    bm.onclick = async () => {
+      const nuovo = state.io.aiutante_mattino === false;
+      const { error } = await sb.from("persone").update({ aiutante_mattino: nuovo }).eq("id", state.io.id);
+      if (!error) { state.io.aiutante_mattino = nuovo; disegnaOpz(); }
+    };
+  };
+  disegnaOpz();
+  fili.appendChild(opz);
   // ognuno mette la foto che vuole al suo aiutante (la vede solo lui)
   document.getElementById("foto-aiutante").onchange = async (e) => {
     const file = e.target.files?.[0]; if (!file) return;
@@ -111,17 +142,24 @@ async function chat(cer) {
     for (const a of azioni ?? []) {
       const r = document.createElement("div");
       r.style.cssText = "display:flex;align-items:center;gap:8px;margin-top:8px;padding:8px 10px;border-radius:12px;background:#F3EDE2;font-size:14px;white-space:normal";
-      r.innerHTML = `<span aria-hidden="true">${a.tipo === "evento" ? "📅" : a.tipo === "ricetta" ? "🍝" : "📝"}</span><span style="flex:1">${esc(a.testo)}</span>
+      r.innerHTML = `<span aria-hidden="true">${a.tipo === "evento" ? "📅" : a.tipo === "ricetta" ? "🍝" : a.tipo === "ricordo" ? "📖" : "📝"}</span><span style="flex:1">${esc(a.testo)}</span>
         <a href="${esc(a.link)}" style="font-weight:700">Apri</a><button type="button" style="border:0;background:none;color:#B3402F;font-weight:700;cursor:pointer">Annulla</button>`;
       r.querySelector("button").onclick = async (e) => {
         const t = a.tipo === "evento" ? sb.from("eventi").delete().eq("id", a.id)
-          : a.tipo === "ricetta" ? sb.from("ricordi").delete().eq("id", a.id)
+          : a.tipo === "ricetta" || a.tipo === "ricordo" ? sb.from("ricordi").delete().eq("id", a.id)
           : sb.from("liste_voci").delete().in("id", a.ids ?? []);
         const { error } = await t;
         if (error) { alert("Non annullato: " + error.message); return; }
         r.style.opacity = ".5"; e.target.replaceWith(Object.assign(document.createElement("span"), { textContent: "annullato", style: "color:#888;font-size:13px" }));
       };
       d.appendChild(r);
+    }
+    if (!mio && "speechSynthesis" in window && testo !== "…") {
+      const s = document.createElement("button");
+      s.type = "button"; s.textContent = "🔊 Ascolta"; s.setAttribute("aria-label", "Leggi ad alta voce");
+      s.style.cssText = "display:block;margin-top:6px;border:0;background:none;color:#085041;font-weight:700;font-size:14px;padding:4px 0;cursor:pointer";
+      s.onclick = () => leggi(d.firstChild.textContent);
+      d.appendChild(s);
     }
     fili.appendChild(d);
     return d;
@@ -164,6 +202,7 @@ async function chat(cer) {
       else if (!r.ok) bolla("aiutante", j.errore ?? "Non riesco a rispondere ora. Riprova tra poco.");
       else {
         bolla("aiutante", j.testo, j.azioni);
+        if (leggiSempre) leggi(j.testo);
       }
     } catch { attesa.textContent = "Connessione assente. Riprova."; }
     occupato = false;
