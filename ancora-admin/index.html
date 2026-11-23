@@ -101,12 +101,12 @@ function disegna() {
   $("#radice").innerHTML = `
     <header><span class="logo">Ancora<small>gestione</small></span><span class="sp"></span>
       <button class="esci" id="esci">Esci</button></header>
-    <main><nav>${[["panoramica", "Panoramica"], ["famiglie", "Famiglie"], ["regali", "Regali"], ["ordini", "Ordini libri"], ["omaggi", "Omaggi"], ["messaggi", "Messaggi"], ["marketing", "Marketing"], ["privacy", "Privacy"], ["manifesto", "Manifesto"]]
+    <main><nav>${[["panoramica", "Panoramica"], ["famiglie", "Famiglie"], ["regali", "Regali"], ["ordini", "Ordini libri"], ["omaggi", "Omaggi"], ["assistenza", "Assistenza"], ["messaggi", "Messaggi"], ["marketing", "Marketing"], ["privacy", "Privacy"], ["manifesto", "Manifesto"]]
       .map(([k, t]) => `<button data-v="${k}" class="${k === vista ? "on" : ""}">${t}</button>`).join("")}</nav>
       <div id="corpo"><p class="tenue">Caricamento…</p></div></main>`;
   $("#esci").onclick = async () => { await sb.auth.signOut(); accesso(); };
   document.querySelectorAll("nav button").forEach((b) => b.onclick = () => { vista = b.dataset.v; disegna(); });
-  ({ panoramica, famiglie, regali, ordini, omaggi, messaggi, marketing, privacy, manifesto })[vista]().catch((e) => {
+  ({ panoramica, famiglie, regali, ordini, omaggi, assistenza, messaggi, marketing, privacy, manifesto })[vista]().catch((e) => {
     $("#corpo").innerHTML = `<p class="errore">Errore: ${esc(e.message)}</p>`;
   });
 }
@@ -242,6 +242,22 @@ async function omaggi() {
         <div class="tenue">${esc(o.nota ?? "")} · creato ${data(o.creato_il)}</div></div>`).join(""));
   $("#crea").onclick = async () => { await rpc("admin_crea_omaggi", { p_quanti: Number($("#quanti").value), p_nota: $("#nota").value || null }); disegna(); };
   document.querySelectorAll("[data-copia]").forEach((b) => b.onclick = async () => { await navigator.clipboard.writeText(b.dataset.copia); b.textContent = "Copiato ✓"; });
+}
+
+async function assistenza() {
+  const lista = await rpc("admin_assistenza");
+  $("#corpo").innerHTML = lista.map((c) => `<div class="card" style="${c.da_leggere ? "border-color:#B3402F" : ""}">
+      <div class="riga"><b>${esc(c.nome)}</b>${c.piu ? ` <span class="tenue">· Ancora+</span>` : ""}<span class="sp"></span>
+        ${c.da_leggere ? `<b style="color:#B3402F">${c.da_leggere} da leggere</b> · ` : ""}<span class="tenue">${data(c.ultimo)}</span></div>
+      <div style="display:flex;flex-direction:column;gap:6px;margin:10px 0;max-height:320px;overflow:auto">
+        ${c.messaggi.map((m) => `<div style="align-self:${m.da_noi ? "flex-end" : "flex-start"};max-width:80%;padding:8px 12px;border-radius:14px;white-space:pre-wrap;
+          ${m.da_noi ? "background:#2F5A55;color:#fff" : "background:#F3EDE2"}">${esc(m.testo)}<div class="tenue" style="font-size:11px;${m.da_noi ? "color:#DDE" : ""}">${data(m.il)}</div></div>`).join("")}</div>
+      <div class="riga" style="gap:8px"><textarea data-testo="${c.persona_id}" rows="2" placeholder="Rispondi…" style="flex:1"></textarea>
+        <button class="btn" data-rispondi="${c.persona_id}">Invia</button></div></div>`).join("") || `<p class="tenue">Nessuna richiesta di assistenza.</p>`;
+  document.querySelectorAll("[data-rispondi]").forEach((b) => b.onclick = async () => {
+    const t = document.querySelector(`[data-testo="${b.dataset.rispondi}"]`).value.trim(); if (!t) return;
+    b.disabled = true; await rpc("admin_assistenza_rispondi", { p_persona: b.dataset.rispondi, p_testo: t }); disegna();
+  });
 }
 
 async function messaggi() {

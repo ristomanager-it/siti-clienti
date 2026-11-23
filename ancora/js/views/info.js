@@ -5,10 +5,10 @@ import { sb, $app, esc, utm, consensoCookie } from "../app.js";
 
 // dati del titolare: da completare prima della vendita
 export const AZIENDA = {
-  nome: "[Ragione sociale da completare]",
+  nome: "Ristoflow",
   piva: "[P.IVA da completare]",
   sede: "[Sede legale da completare]",
-  email: "[email di contatto da completare]",
+  email: "la chat Assistenza nell'app (menu → Assistenza)",
   aggiornato: "21 novembre 2026",
 };
 

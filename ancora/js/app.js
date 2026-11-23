@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "88";
+const VER = "89";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 const ROTTE = {
@@ -47,6 +47,7 @@ const ROTTE = {
   "ricette": () => import(`./views/ricette.js?v=${VER}`),
   "libro": () => import(`./views/libro.js?v=${VER}`),
   "film": () => import(`./views/film.js?v=${VER}`),
+  "assistenza": () => import(`./views/assistenza.js?v=${VER}`),
   "archivio": () => import(`./views/archivio.js?v=${VER}`),
   "settimana": () => import(`./views/settimana.js?v=${VER}`),
   "servizi": () => import(`./views/servizi.js?v=${VER}`),
@@ -204,7 +205,8 @@ async function render() {
     await vista.default({ id, params });
     if (!PUBBLICHE.has(nome) && state.io && state.io.modalita !== "semplice") aggiungiMenu();
     if (!PUBBLICHE.has(nome) && nome === "") setTimeout(bentornato, 1200);
-    if (!PUBBLICHE.has(nome) && nome === "") setTimeout(() => invitoSchermataHome(), 2500);
+    if (!PUBBLICHE.has(nome) && nome === "") setTimeout(() => invitoSchermataHome() || ricordaPiu(), 2500);
+    if (!PUBBLICHE.has(nome) && state.io) setTimeout(controllaAssistenza, 1500);
   }
   catch (e) { console.error(e); $app().innerHTML = `<p class="errore">Qualcosa non ha funzionato. Riprova tra poco.</p>`; }
   window.scrollTo(0, 0);
@@ -224,12 +226,16 @@ export function istruzioniSchermataHome() {
   return `<ol style="margin:0;padding-left:20px;line-height:1.6"><li>tocca il menu <b>⋮</b> in alto a destra</li><li>tocca <b>Aggiungi a schermata Home</b> (o <b>Installa app</b>)</li><li>conferma</li></ol>`;
 }
 function invitoSchermataHome(forza = false) {
-  if (giaInstallata() || document.getElementById("schermata-home")) return;
+  if (giaInstallata() || document.getElementById("schermata-home")) return false;
   let quando = 0; try { quando = Number(localStorage.getItem("ancora_home_chiuso") ?? 0); } catch { /* niente */ }
-  if (!forza && Date.now() - quando < 7 * 86400_000) return;
+  // la prima volta subito e ben visibile; poi ogni 3 giorni finché non l'ha messa sulla Home
+  if (!forza && Date.now() - quando < 3 * 86400_000) return false;
+  const primaVolta = !quando;
   const el = document.createElement("div");
   el.id = "schermata-home";
-  el.style.cssText = "position:fixed;left:12px;right:12px;bottom:calc(100px + env(safe-area-inset-bottom));max-width:520px;margin:0 auto;z-index:30;background:#fff;border-radius:20px;box-shadow:0 10px 40px rgba(0,0,0,.25);padding:16px 18px;animation:entra .3s ease";
+  el.style.cssText = primaVolta
+    ? "position:fixed;left:16px;right:16px;top:50%;transform:translateY(-50%);max-width:460px;margin:0 auto;z-index:60;background:#fff;border-radius:24px;box-shadow:0 0 0 100vmax rgba(18,48,44,.55),0 10px 40px rgba(0,0,0,.25);padding:22px 20px;animation:entra .3s ease"
+    : "position:fixed;left:12px;right:12px;bottom:calc(100px + env(safe-area-inset-bottom));max-width:520px;margin:0 auto;z-index:30;background:#fff;border-radius:20px;box-shadow:0 10px 40px rgba(0,0,0,.25);padding:16px 18px;animation:entra .3s ease";
   el.innerHTML = `<button class="icona" aria-label="Chiudi" style="position:absolute;top:6px;right:6px;width:36px;height:36px">✕</button>
     <div style="display:flex;gap:12px;align-items:center;margin-bottom:10px"><img src="icons/icon-192.png" alt="" width="44" height="44" style="border-radius:11px">
       <b style="font-family:Fraunces,serif;font-size:19px;line-height:1.2">Metti Ancora sul telefono,<br>accanto alle altre app</b></div>
@@ -237,6 +243,38 @@ function invitoSchermataHome(forza = false) {
   document.body.appendChild(el);
   el.querySelector(".icona").onclick = () => { try { localStorage.setItem("ancora_home_chiuso", String(Date.now())); } catch { /* niente */ } el.remove(); };
   el.querySelector("#installa")?.addEventListener("click", async () => { await promptInstalla.prompt(); promptInstalla = null; el.remove(); });
+  return true;
+}
+
+// --- Ancora+ per chi ha 50 anni o più e non ce l'ha: un promemoria gentile, una volta a settimana ---
+// (non nei primi 2 giorni, al massimo 8 volte, mai insieme ad altri avvisi)
+function eta() {
+  const d = state.io?.data_nascita; if (!d) return null;
+  const n = new Date(d), o = new Date();
+  return o.getFullYear() - n.getFullYear() - (o < new Date(o.getFullYear(), n.getMonth(), n.getDate()) ? 1 : 0);
+}
+function ricordaPiu() {
+  if (state.piu || !state.io || document.querySelector("#foglio-piu, #schermata-home, #banner-cookie, [role=dialog]")) return;
+  const anni = eta(); if (anni === null || anni < 50) return;
+  if (state.io.creato_il && Date.now() - new Date(state.io.creato_il).getTime() < 2 * 86400_000) return;
+  let st = { volte: 0, ultima: 0 }; try { st = JSON.parse(localStorage.getItem("ancora_ricorda_piu") ?? "null") ?? st; } catch { /* niente */ }
+  if (st.volte >= 8 || Date.now() - st.ultima < 7 * 86400_000) return;
+  try { localStorage.setItem("ancora_ricorda_piu", JSON.stringify({ volte: st.volte + 1, ultima: Date.now() })); } catch { /* niente */ }
+  const d = document.createElement("div");
+  d.id = "foglio-piu";
+  d.innerHTML = `<div data-chiudi style="position:fixed;inset:0;background:rgba(18,48,44,.55);z-index:55"></div>
+    <div role="dialog" aria-label="Ancora+" style="position:fixed;left:16px;right:16px;top:50%;transform:translateY(-50%);max-width:460px;margin:0 auto;z-index:56;background:#12302C;color:#FBF3E2;border-radius:24px;padding:26px 22px;box-shadow:0 20px 50px rgba(0,0,0,.35)">
+      <button data-chiudi aria-label="Chiudi" style="position:absolute;top:10px;right:10px;width:38px;height:38px;border-radius:19px;border:0;background:rgba(255,255,255,.12);color:#fff;font-size:17px">✕</button>
+      <p style="margin:0 0 6px;font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#E7C48A">Per chi conta davvero</p>
+      <b style="display:block;font-family:Fraunces,serif;font-size:26px;line-height:1.15;margin-bottom:10px">«Tu che avresti fatto al posto mio?»</b>
+      <p style="margin:0 0 14px;line-height:1.5;color:#F3E6D2">Un giorno qualcuno te lo chiederà. Con Ancora<span style="color:#E7C48A">+</span> le tue storie, le tue scelte e la tua voce restano lì per la tua famiglia. E a fine anno diventano un libro da tenere in mano.</p>
+      <button class="btn ambra" id="rp-scopri">Scopri Ancora+</button>
+      <a class="btn" href="#/regala" style="margin-top:8px;background:transparent;border:1.5px solid rgba(255,255,255,.35);color:#fff">Regalalo alla famiglia · 99 €</a>
+      <button data-chiudi style="display:block;margin:12px auto 0;border:0;background:none;color:#CFC3AE;font-weight:700">Più tardi</button>
+    </div>`;
+  document.body.appendChild(d);
+  d.querySelectorAll("[data-chiudi], a").forEach((x) => x.addEventListener("click", () => d.remove()));
+  d.querySelector("#rp-scopri").onclick = () => { d.remove(); passaPiu(); };
 }
 
 sb.auth.onAuthStateChange((evento) => { if (evento === "SIGNED_IN" && !state.io) render(); });
@@ -387,7 +425,7 @@ function vociMenu() {
     ["La famiglia", [["#/calendario", "Calendario"], ["#/liste", "Liste e desideri"], ["#/spese", "Spese"], ["#/album", "Album degli eventi"], ["#/domande", "Domande per te"], ["#/albero", "L'albero"], ["#/cerchie", "Famiglie e cerchie"]]],
     ["I miei ricordi", [["#/archivio", "Il cloud dei ricordi"], ["#/racconta", "Racconta"], ["#/racconta?lettera=1", "Una lettera per più avanti"], ["#/diario", "Il diario"], ["#/ricette", "Il ricettario"], [`#/libro/${state.io.id}`, "Il mio libro"], ["#/libro?famiglia=", "Il libro della famiglia"], ["#/film", "Il film dell'anno"]]],
     ["Agenda", [["vacanze", "Vacanze"], ["compiti", "Compiti"], ["esami", "Esami"]].filter(([k]) => attivi(k)).map(([k, t]) => [`#/agenda?t=${k}`, t])],
-    ["Il mio account", [["#/invita", "Invita un amico · +1 GB"], ["#/profilo", "Profilo e impostazioni"], ["#/piano", "Il piano"], ["#/servizi", "Servizi"], ["#/omaggio", "Codice omaggio"], ["#/istruzioni", "Istruzioni"]]],
+    ["Il mio account", [["#/invita", "Invita un amico · +1 GB"], ["#/profilo", "Profilo e impostazioni"], ["#/piano", "Il piano"], ["#/servizi", "Servizi"], ["#/omaggio", "Codice omaggio"], ["#/istruzioni", "Istruzioni"], ["#/assistenza", "Assistenza · scrivici"]]],
   ].filter(([, v]) => v.length);
 }
 
@@ -396,10 +434,19 @@ function aggiungiMenu() {
   if (!testa || testa.querySelector(".apri-menu")) return;
   const b = document.createElement("button");
   b.className = "icona apri-menu"; b.setAttribute("aria-label", "Menu");
-  b.style.cssText = "border:0;background:transparent;cursor:pointer;color:inherit";
+  b.style.cssText = "border:0;background:transparent;cursor:pointer;color:inherit;position:relative";
   b.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>`;
   testa.appendChild(b);
   b.onclick = apriMenu;
+}
+
+let assistenzaDaLeggere = 0;
+async function controllaAssistenza() {
+  if (!state.io) return;
+  const { data } = await sb.rpc("assistenza_non_lette");
+  assistenzaDaLeggere = data ?? 0;
+  const b = document.querySelector(".apri-menu");
+  if (b) { b.querySelector(".pallino-menu")?.remove(); if (assistenzaDaLeggere) b.insertAdjacentHTML("beforeend", `<span class="pallino-menu" style="position:absolute;top:2px;right:0;width:10px;height:10px;border-radius:5px;background:#B3402F"></span>`); }
 }
 
 function apriMenu() {
@@ -419,7 +466,7 @@ function apriMenu() {
           <span style="display:block;font-size:14px;opacity:.9;margin-top:2px">Il libro e il film della famiglia, l'albero senza limiti, le storie e i consigli di ognuno sempre lì. Basta uno, e lo hanno tutti.</span></button>`}
       ${vociMenu().map(([gruppo, voci]) => `<div style="margin-top:18px;font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#8A5A17">${gruppo}</div>
         ${voci.map(([h, t]) => `<a href="${h}" style="display:block;padding:12px 10px;margin:2px -10px;border-radius:12px;text-decoration:none;font-size:17px;font-weight:700;
-          color:#12302C;${attuale === h ? "background:#F3E6CF" : ""}">${t}</a>`).join("")}`).join("")}
+          color:#12302C;${attuale === h ? "background:#F3E6CF" : ""}">${t}${h === "#/assistenza" && assistenzaDaLeggere ? ` <span class="pallino-assistenza" style="display:inline-block;min-width:20px;padding:1px 6px;border-radius:10px;background:#B3402F;color:#fff;font-size:12px;text-align:center">${assistenzaDaLeggere}</span>` : ""}</a>`).join("")}`).join("")}
       <button id="esci-app" style="margin-top:22px;border:0;background:transparent;color:#8A3B2E;font-weight:700;font-size:15px;cursor:pointer;padding:8px 0">Esci</button>
     </nav>`;
   document.body.appendChild(m);
