@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "102";
+const VER = "103";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 const ROTTE = {
@@ -47,6 +47,7 @@ const ROTTE = {
   "ricette": () => import(`./views/ricette.js?v=${VER}`),
   "libro": () => import(`./views/libro.js?v=${VER}`),
   "film": () => import(`./views/film.js?v=${VER}`),
+  "aiutante": () => import(`./views/aiutante.js?v=${VER}`),
   "assistenza": () => import(`./views/assistenza.js?v=${VER}`),
   "albero-veloce": () => import(`./views/albero-veloce.js?v=${VER}`),
   "archivio": () => import(`./views/archivio.js?v=${VER}`),
@@ -115,7 +116,7 @@ async function caricaIo() {
   const { data: io } = await sb.from("persone").select("*").eq("auth_user_id", user.id).maybeSingle();
   if (!io) return null;
   const { data: fm } = await sb.from("famiglia_membri").select("famiglia_id, ruolo, narratore, famiglie(nome)").eq("persona_id", io.id).maybeSingle();
-  const { data: cerchie } = await sb.from("cerchie").select("id, nome, tipo, proprietario_id, moduli, foto_path, copertina_path").order("creata_il");
+  const { data: cerchie } = await sb.from("cerchie").select("id, nome, tipo, proprietario_id, moduli, foto_path, copertina_path, aiutante_nome").order("creata_il");
   const [{ data: piu }, { data: adulto }] = await Promise.all([sb.rpc("sono_piu"), sb.rpc("sono_adulto")]);
   state.io = io; state.famiglia = fm; state.cerchie = cerchie ?? []; state.piu = !!piu; state.adulto = adulto !== false;
   state.accessoPrima = io.ultimo_accesso_app;   // per il "bentornato" (prima di aggiornarlo)
@@ -509,7 +510,7 @@ function vociMenu() {
   return [
     ["Le mie famiglie e i gruppi", [...famiglie.map((c) => [`#/?c=${c.id}`, c.nome]),
       ...(famiglie.length > 1 ? [["#/?c=tutti", "Tutte insieme"]] : []), ["#/?c=diretti", "Messaggi per me"]]],
-    ["La famiglia", [["#/calendario", "Calendario"], ["#/liste", "Liste e desideri"], ["#/spese", "Spese"], ["#/album", "Album degli eventi"], ["#/domande", "Domande per te"], ["#/albero", "L'albero"], ["#/cerchie", "Famiglie e cerchie"]]],
+    ["La famiglia", [["#/aiutante", `✨ ${famiglie.find((c) => c.tipo === "famiglia")?.aiutante_nome || "L'aiutante"}`], ["#/calendario", "Calendario"], ["#/liste", "Liste e desideri"], ["#/spese", "Spese"], ["#/album", "Album degli eventi"], ["#/domande", "Domande per te"], ["#/albero", "L'albero"], ["#/cerchie", "Famiglie e cerchie"]]],
     ["I miei ricordi", [["#/archivio", "Il cloud dei ricordi"], ["#/racconta", "Racconta"], ["#/racconta?lettera=1", "Una lettera per più avanti"], ["#/diario", "Il diario"], ["#/ricette", "Il ricettario"], [`#/libro/${state.io.id}`, "Il mio libro"], ["#/libro?famiglia=", "Il libro della famiglia"], ["#/film", "Il film dell'anno"]]],
     ["Agenda", [["vacanze", "Vacanze"], ["compiti", "Compiti"], ["esami", "Esami"]].filter(([k]) => attivi(k)).map(([k, t]) => [`#/agenda?t=${k}`, t])],
     ["Il mio account", [["#/invita", "Invita un amico · +1 GB"], ["#/profilo", "Profilo e impostazioni"], ["#/piano", "Il piano"], ["#/servizi", "Servizi"], ["#/regala", "Regala Ancora"], ["#/omaggio", "Codice omaggio"], ["#/istruzioni", "Istruzioni"], ["#/assistenza", "Assistenza · scrivici"]]],
@@ -651,6 +652,7 @@ export const VANTAGGI_PIU = [
   ["Gli alberi uniti", "la tua famiglia, quella dei tuoi genitori, quella dei suoceri"],
   ["Il libro intero della famiglia", "in PDF e stampato, con i QR per sentire le voci"],
   ["Il film dell'anno intero", "le foto e i video di tutti, montati con la musica (gratis: anteprima di 5 momenti)"],
+  ["L'aiutante della famiglia senza limiti", "il nome lo scegliete voi: segna gli impegni, fa la spesa, ricopia le ricette dalla foto (gratis: 5 domande al mese)"],
   ["Ricette, lettere e album senza limiti", "il ricettario di casa intero, le lettere da aprire più avanti per ognuno, un album per ogni evento"],
   ["200 GB per tutta la famiglia", "invece di 2 GB a testa"],
   ["Le storie e i consigli di ognuno", "sempre lì quando servono: «tu che avresti fatto?», «com'era quella volta?»"],

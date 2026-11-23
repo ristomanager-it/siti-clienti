@@ -7,7 +7,7 @@ const AGGIORNATE = "22 novembre 2026";
 
 const NOVITA = [
   ["22 novembre 2026 · sera tardi", "Storie: in basso «👁 Vista da…» con chi l'ha vista e come ha reagito; ⋯ in alto per eliminarle (le storie non si modificano: si rifanno). Il numerino rosso sull'icona di Ancora segna i messaggi non letti."],
-  ["23 novembre 2026", "L'albero in 2 minuti (mamma, papà, nonni, figli in una pagina) e le famiglie che si collegano con un tocco. Il film dell'anno e il libro della famiglia. La chat Assistenza nel menu. Regala Ancora anche a un'altra famiglia, con il 3x2. La pagina di vendita nella lingua del telefono."],
+  ["23 novembre 2026", "L'aiutante della famiglia: il nome lo scegliete voi. L'albero in 2 minuti (mamma, papà, nonni, figli in una pagina) e le famiglie che si collegano con un tocco. Il film dell'anno e il libro della famiglia. La chat Assistenza nel menu. Regala Ancora anche a un'altra famiglia, con il 3x2. La pagina di vendita nella lingua del telefono."],
   ["22 novembre 2026 · sera tardi", "Libreria musicale per le storie: 25 brani, anche rock e rap (allegri, di Natale, compleanno, dolci, emozionanti, viaggio). Si ascoltano prima di sceglierli."],
   ["22 novembre 2026 · sera", "Storie come su Instagram: testo (Aa) con colori, emoji da spostare e ingrandire, musica da un file del telefono. Guardando una storia: reazioni con le emoji e risposte, che arrivano anche in chat."],
   ["22 novembre 2026 · sera", "Foto dei post a scorrimento con doppio tocco per il cuore; ⋯ sui tuoi post per modificarli o eliminarli; le domande ora arrivano come notifica e stanno in Chat → Domande per te."],
@@ -64,6 +64,9 @@ const SEZIONI = [
   ["libro", "Il libro delle storie", `
     <p>Dal profilo di una persona: <b>Il libro</b>. Dal menu: <b>Il libro della famiglia</b>, l'anno di tutti mese per mese. Ogni pagina con una voce ha il codice QR: chi lo inquadra con il telefono la sente.</p>
     <p>Senza Ancora+ vedi le prime pagine; con Ancora+ il libro intero, il PDF e la stampa. Quello stampato si ordina anche dai <b>Servizi</b>.</p>`],
+  ["aiutante", "L'aiutante della famiglia", `
+    <p>Dal menu, sotto <b>La famiglia</b>: la prima volta gli date un nome (si cambia con «rinomina»). Poi gli scrivi o gli parli col 🎙: «domenica pranzo dalla zia alle 13», «aggiungi latte alla spesa», «quando è il compleanno del nonno?», «cosa è successo questa settimana?».</p>
+    <p>Col 📷 fotografi una ricetta scritta a mano e lui la ricopia nel ricettario. Quello che fa compare in un riquadro con <b>Apri</b> e <b>Annulla</b>. Vede solo quello che vedi tu e la tua chat con lui è solo tua. Senza Ancora+: 5 domande al mese.</p>`],
   ["film", "Il film dell'anno", `
     <p>Dal menu: <b>Il film dell'anno</b>. Scegli il gruppo, il periodo e la musica: il telefono monta foto e video e lo vedi nascere. Poi lo salvi o lo mandi a tutti. Tieni l'app aperta mentre si crea.</p>
     <p>Senza Ancora+ un'anteprima di 5 momenti; con Ancora+ il film intero.</p>`],

@@ -38,6 +38,7 @@ const COSA = [
   ["Il diario", "privato, con «accadeva oggi»"],
   ["Il libro della famiglia", "l'anno di tutti, mese per mese, con i QR per sentire le voci: in PDF e stampato"],
   ["Il film dell'anno", "le foto e i video di tutti, montati con la musica, da mandare a tutti"],
+  ["L'aiutante della famiglia", "gli date un nome voi: si ricorda compleanni e impegni, segna la spesa, ricopia la ricetta della nonna da una foto"],
 ];
 
 const CONTRO = [
@@ -59,6 +60,7 @@ const DOMANDE = [
   ["Come arriva il regalo?", "Subito dopo il pagamento ricevi il biglietto con il codice: lo mandi su WhatsApp il giorno che vuoi, oppure lo stampi e lo metti sotto l'albero. Chi lo riceve crea la sua famiglia e attiva il codice."],
   ["Quando arriva il libro?", "A fine anno, a casa: a colori, con copertina rigida, con le storie, le foto e i QR per ascoltare le voci. Il PDF si scarica quando volete. Copie in più: 35 € l'una."],
   ["E il film?", "Si crea nell'app con un tocco: le foto e i video dell'anno, montati con la musica. Lo salvate e lo mandate a tutti."],
+  ["Cos'è l'aiutante?", "Un assistente gentile che conosce solo quello che mettete su Ancora: gli chiedete «quando è il compleanno della zia?» o «metti pandoro nella spesa» e lo fa. Il nome lo scegliete voi. Vede solo ciò che vede chi chiede e le chat sono private."],
   ["E se il codice non viene usato?", "Se non viene attivato entro 30 giorni dalla data scelta, ti rimborsiamo per intero."],
 ];
 
@@ -221,7 +223,7 @@ export default async function ({ params } = {}) {
         <div class="tenue" style="margin-top:4px">Oppure 9,99 € al mese. Basta che paghi uno e lo ha tutta la famiglia: <b>albero senza limiti</b> e <b>alberi uniti</b> tra famiglie, <b>album degli eventi</b> con il QR, <b>il libro delle storie</b>, ricette e lettere senza limiti, le domande su misura, <b>200 GB</b>. Le storie e i consigli di ognuno, sempre lì quando servono.</div></div>
       <div style="border-radius:22px;padding:20px;background:${C.panna};border:1px solid #EAD9BF;margin-bottom:12px">
         <div class="riga"><b style="flex:1;font-size:18px">Gratis</b><b style="font-family:Fraunces,serif;font-size:26px;color:${C.notte}">0 €</b></div>
-        <div class="tenue" style="margin-top:4px">L'account, tutte le famiglie e i gruppi che vuoi: chat, foto, storie, calendario, liste, spese, diario e domanda della settimana senza limiti. E per provare il resto: 3 ricette, l'albero fino a 10 persone, una lettera da aprire più avanti, un album degli eventi, l'anteprima del libro e del film. 2 GB a testa, +1 GB per ogni amico che porti (fino a +10 GB).</div>
+        <div class="tenue" style="margin-top:4px">L'account, tutte le famiglie e i gruppi che vuoi: chat, foto, storie, calendario, liste, spese, diario e domanda della settimana senza limiti. E per provare il resto: 3 ricette, l'albero fino a 10 persone, una lettera da aprire più avanti, un album degli eventi, l'anteprima del libro e del film, 5 domande al mese all'aiutante. 2 GB a testa, +1 GB per ogni amico che porti (fino a +10 GB).</div>
         <a class="btn chiaro" href="#/iscriviti" style="margin-top:12px">Crea il tuo account gratis</a></div>
       <div style="padding:4px 4px 0;line-height:1.7">
         <b>Servizi in più, quando servono</b><br>
