@@ -287,7 +287,9 @@ function misuraLanding() {
   addEventListener("scroll", scorri, { passive: true });
   radice.addEventListener("click", (e) => {
     const b = e.target.closest("a, button"); if (!b) return;
-    const testo = (b.textContent || b.getAttribute("aria-label") || "").replace(/\s+/g, " ").trim().toLowerCase().slice(0, 40);
+    const h = b.getAttribute("href") ?? "";
+    const testo = b.classList.contains("vai-acquista") ? "regala" : h.includes("iscriviti") ? "inizia gratis" : h.includes("contatti") ? "contatti"
+      : (b.textContent || b.getAttribute("aria-label") || "").replace(/\s+/g, " ").trim().toLowerCase().slice(0, 40);
     if (testo) traccia("clic:" + testo);
   }, true);
   const inizio = Date.now();
