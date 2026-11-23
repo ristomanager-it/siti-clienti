@@ -5,8 +5,8 @@ import { sb, $app, esc, utm, consensoCookie } from "../app.js";
 
 // dati del titolare: da completare prima della vendita
 export const AZIENDA = {
-  nome: "Ristoflow",
-  piva: "[P.IVA da completare]",
+  nome: "Antonio Carullo",
+  piva: "",   // venditore privato (vendita occasionale): niente P.IVA per ora
   sede: "[Sede legale da completare]",
   email: "la chat Assistenza nell'app (menu → Assistenza)",
   aggiornato: "21 novembre 2026",
@@ -63,7 +63,7 @@ export const piePubblico = () => `
     <p style="margin:0 0 14px;font-size:14px;line-height:1.9">
       <a href="#/privacy" style="color:#C9D8D4">Privacy</a> · <a href="#/cookie" style="color:#C9D8D4">Cookie</a> ·
       <a href="#/condizioni" style="color:#C9D8D4">Condizioni di vendita</a> · <a href="#" id="pref-cookie" style="color:#C9D8D4">Preferenze cookie</a></p>
-    <p style="font-size:11px;color:#9FB3AC;margin:0">${esc(AZIENDA.nome)} · ${esc(AZIENDA.piva)} · Foto: Unsplash</p>
+    <p style="font-size:11px;color:#9FB3AC;margin:0">${esc(AZIENDA.nome)}${AZIENDA.piva ? ` · P.IVA ${esc(AZIENDA.piva)}` : ""} · Foto: Unsplash</p>
   </footer>`;
 
 export function collegaPie() {
@@ -88,7 +88,7 @@ export async function chisiamo() {
     <p><b>Privato per davvero.</b> Niente pubblicità, niente estranei. Chi lavora ad Ancora non vede i vostri ricordi.</p>
     <p><b>I ricordi sono vostri.</b> Restano gratis, per sempre: si paga per farli crescere, mai per non perderli.</p>
     ${h("Chi c'è dietro")}
-    <p>Ancora è un progetto di ${esc(AZIENDA.nome)}, ${esc(AZIENDA.sede)}.</p>
+    <p>Ancora è un progetto di ${esc(AZIENDA.nome)}.</p>
     <p><a class="btn ambra" href="#/contatti" style="margin-top:8px">Scrivici</a></p>`);
 }
 
@@ -120,7 +120,7 @@ export async function privacy() {
   pagina("Informativa privacy", `
     <p class="tenue">Bozza aggiornata al ${AZIENDA.aggiornato}. Ai sensi degli artt. 13-14 del Regolamento (UE) 2016/679 (GDPR).</p>
     ${h("Titolare del trattamento")}
-    <p>${esc(AZIENDA.nome)}, ${esc(AZIENDA.sede)}, P.IVA ${esc(AZIENDA.piva)}. Contatto: ${esc(AZIENDA.email)}.</p>
+    <p>${esc(AZIENDA.nome)}, ${esc(AZIENDA.sede)}${AZIENDA.piva ? `, P.IVA ${esc(AZIENDA.piva)}` : ""}. Contatto: ${esc(AZIENDA.email)}.</p>
     ${h("Quali dati trattiamo")}
     <p><b>Dati dell'account:</b> nome, email, numero di cellulare, data di nascita se la inserisci, foto profilo.<br>
     <b>Contenuti che carichi:</b> racconti, registrazioni vocali, foto, video, ricette, diario, albero genealogico (anche di persone che non usano Ancora, inseriti dai familiari).<br>
@@ -157,7 +157,7 @@ export async function condizioni() {
   pagina("Condizioni di vendita", `
     <p class="tenue">Bozza aggiornata al ${AZIENDA.aggiornato}.</p>
     ${h("1. Chi vende")}
-    <p>${esc(AZIENDA.nome)}, ${esc(AZIENDA.sede)}, P.IVA ${esc(AZIENDA.piva)} («Ancora»).</p>
+    <p>${esc(AZIENDA.nome)}, ${esc(AZIENDA.sede)}${AZIENDA.piva ? `, P.IVA ${esc(AZIENDA.piva)}` : ", in qualità di privato (vendita occasionale)"} («Ancora»).</p>
     ${h("2. Cosa compri")}
     <p><b>«La storia della tua famiglia» (129 €, prezzo di lancio 99 € fino al 25 dicembre 2026):</b> un biglietto con un codice personale. Chi lo riceve crea il suo account e la sua famiglia e attiva il codice: 12 mesi di Ancora+ per la sua famiglia dal giorno dell'attivazione, un libro a colori con copertina rigida delle storie dell'anno (con i QR per ascoltare le voci e la versione PDF), spedito in Italia a fine anno, e il film dell'anno da creare nell'app. Il codice si attiva una sola volta.<br>
     <b>Ancora+:</b> 99 € l'anno o 9,99 € al mese, con rinnovo automatico finché non lo disdici.<br>
