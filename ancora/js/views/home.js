@@ -37,6 +37,7 @@ export default async function ({ params }) {
   const scelta = state.cerchie.find((c) => c.id === filtro);   // la pagina della famiglia scelta
   if (scelta) paths.push(...[scelta.foto_path, scelta.copertina_path].filter(Boolean));
   if (state.io.foto_path) paths.push(state.io.foto_path);
+  if (state.io.aiutante_foto_path) paths.push(state.io.aiutante_foto_path);
   const url = await urlMediaMolti([...new Set(paths)]);
 
   // storie delle ultime 24 ore, raggruppate per persona (prima chi ha storie non ancora viste)
@@ -92,6 +93,16 @@ export default async function ({ params }) {
       <div style="padding:6px 0">${scelta.foto_path && scelta.copertina_path ? "✅" : "①"} <b>Foto e copertina</b> · tocca 📷 qui sopra</div>
       <div style="padding:6px 0">② <a href="#/racconta?c=${scelta.id}"><b>Scrivi il benvenuto</b></a> o metti una prima foto</div>
       <button class="btn ambra" data-invita="${scelta.id}" style="margin-top:10px">③ Invita la famiglia</button></div>` : ""}
+    ${fam ? (() => {
+      // l'aiutante di casa sempre a vista: nome della famiglia, foto scelta da ognuno
+      const chiedi = fam.aiutante_nome ? `Chiedi a ${esc(fam.aiutante_nome)}` : "Chiedi all'aiutante";
+      const fa = state.io.aiutante_foto_path ? url[state.io.aiutante_foto_path] : "";
+      return `<a href="#/aiutante?c=${fam.id}" class="card" style="margin:0 16px 16px;display:flex;align-items:center;gap:12px;text-decoration:none;color:inherit;background:#E1F5EE;border-color:#9FE1CB">
+        <span style="width:48px;height:48px;border-radius:24px;flex-shrink:0;display:grid;place-items:center;font-size:24px;background:#fff center/cover${fa ? ` url('${fa}')` : ""}">${fa ? "" : "✨"}</span>
+        <span style="flex:1;min-width:0"><b style="display:block;font-size:17px">${chiedi}</b>
+          <small style="color:#085041">Cosa cucino col frigo · com'è la pianta · la spesa · gli impegni</small></span>
+        <span aria-hidden="true" style="font-size:22px;color:#085041">›</span></a>`;
+    })() : ""}
     ${(() => {
       // prima i post; la domanda della settimana e gli inviti a raccontare arrivano dopo i primi due
       const extra = `<div id="mia-domanda" hidden></div><div id="per-chi-conta"></div>`;

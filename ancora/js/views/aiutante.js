@@ -1,6 +1,6 @@
 // L'aiutante della famiglia: il nome lo sceglie la famiglia. Chat privata di chi la fa.
 // Fa cose vere (calendario, liste, ricette anche dalla foto) e le mostra in un riquadro con Apri / Annulla.
-import { sb, state, $app, esc, passaPiu, ICONE } from "../app.js";
+import { sb, state, $app, esc, passaPiu, ICONE, urlMedia, cambiaImmagine } from "../app.js";
 import { SUPABASE_URL } from "../config.js";
 
 const SUGGERITI = ["Ancora", "Nonna Pina", "Il saggio", "Pippo", "Zia Rosa"];
@@ -51,7 +51,7 @@ function sceltaNome(cer) {
     <div class="pad" style="text-align:center;padding-top:20px">
       <div style="width:64px;height:64px;border-radius:32px;background:#E1F5EE;color:#085041;display:inline-grid;place-items:center;font-size:30px">✨</div>
       <h1 style="margin:12px 0 4px">Come lo chiamate?</h1>
-      <p class="tenue" style="margin:0 0 16px">L'aiutante di casa di ${esc(cer.nome)}: cuoco, giardiniere, segretario. Si ricorda quello che mettete su Ancora e vi dà una mano in tutto. Il nome lo scegliete voi, e si cambia quando volete.</p>
+      <p class="tenue" style="margin:0 0 16px">L'aiutante di casa di ${esc(cer.nome)}: cuoco, giardiniere, segretario. Si ricorda quello che mettete su Ancora e vi dà una mano in tutto. Il nome lo scegliete voi, e si cambia quando volete. La foto invece ognuno mette quella che vuole, toccando il tondo in alto nella chat.</p>
       <input id="nome" maxlength="30" value="${esc(cer.aiutante_nome ?? "")}" placeholder="Un nome per il vostro aiutante" style="text-align:center;font-size:18px">
       <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:10px 0 16px">
         ${SUGGERITI.map((n) => `<button type="button" class="chip" data-n="${esc(n)}" style="margin:0">${esc(n)}</button>`).join("")}</div>
@@ -75,10 +75,13 @@ async function chat(cer) {
     sb.from("aiutante_messaggi").select("ruolo, testo, azioni, creato_il").eq("cerchia_id", cer.id).order("creato_il", { ascending: false }).limit(40),
   ]);
   const altre = state.cerchie.filter((c) => c.id !== cer.id && c.tipo === "famiglia");
+  const fotoA = state.io.aiutante_foto_path ? await urlMedia(state.io.aiutante_foto_path) : "";
   $app().innerHTML = `
     <header class="testa" style="gap:10px">
       <a class="icona" href="#/" aria-label="Indietro">${ICONE.indietro}</a>
-      <div style="width:36px;height:36px;border-radius:18px;background:#E1F5EE;color:#085041;display:grid;place-items:center;flex-shrink:0">✨</div>
+      <label aria-label="Cambia la foto del tuo aiutante" style="position:relative;width:40px;height:40px;border-radius:20px;background:#E1F5EE center/cover${fotoA ? ` url('${fotoA}')` : ""};display:grid;place-items:center;flex-shrink:0;cursor:pointer">${fotoA ? "" : "✨"}
+        <i style="position:absolute;right:-4px;bottom:-4px;font-style:normal;font-size:11px;background:#fff;border-radius:9px;padding:1px 2px;border:1px solid var(--bordo)">📷</i>
+        <input type="file" id="foto-aiutante" accept="image/*" hidden></label>
       <div style="flex:1;min-width:0"><b style="display:block;font-size:17px">${esc(nome)}</b>
         <small class="tenue">${esc(cer.nome)} · <a href="#/aiutante?c=${cer.id}&rinomina=1">rinomina</a>${altre.length ? ` · <a href="#" id="altra">altra famiglia</a>` : ""}</small></div>
     </header>
@@ -91,6 +94,15 @@ async function chat(cer) {
       <button class="btn" style="width:auto;padding:0 16px;margin:0;min-height:44px">Invia</button>
     </form>`;
   const fili = document.getElementById("fili");
+  // ognuno mette la foto che vuole al suo aiutante (la vede solo lui)
+  document.getElementById("foto-aiutante").onchange = async (e) => {
+    const file = e.target.files?.[0]; if (!file) return;
+    const vecchia = state.io.aiutante_foto_path;
+    if (await cambiaImmagine({ file, tabella: "persone", id: state.io.id, campo: "aiutante_foto", cartella: "aiutante", vecchia })) {
+      const { data } = await sb.from("persone").select("aiutante_foto_path").eq("id", state.io.id).single();
+      state.io.aiutante_foto_path = data?.aiutante_foto_path; location.reload();
+    }
+  };
   const bolla = (ruolo, testo, azioni) => {
     const mio = ruolo === "utente";
     const d = document.createElement("div");
