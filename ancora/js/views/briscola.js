@@ -15,15 +15,20 @@ function simbolo(s, size = 22) {
   if (s === "S") return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2l2 12h-4z" fill="${c}"/><rect x="7" y="14" width="10" height="2.5" rx="1" fill="${c}"/><rect x="11" y="16" width="2" height="6" fill="${c}"/></svg>`;
   return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3c3-1 6 1 6 4l-2 15h-2L9 7z" fill="#8B5A2B" stroke="${c}" stroke-width="1.5"/></svg>`;
 }
+// le carte napoletane tradizionali (scansione di pubblico dominio, Wikimedia Commons: "Carte napoletane al completo")
 function carta(c, { piccola = false, attiva = false } = {}) {
-  const s = c[0], v = Number(c.slice(1));
-  const w = piccola ? 54 : 72, h = piccola ? 84 : 112;
-  return `<div style="width:${w}px;height:${h}px;border-radius:10px;background:#FFFDF7;border:2px solid ${attiva ? "#E8B56B" : "#d9cfbd"};box-shadow:0 2px 6px rgba(0,0,0,.15);display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:4px 2px;color:${COLORE[s]};flex-shrink:0">
-    <b style="font-size:${piccola ? 18 : 24}px;line-height:1">${v > 7 ? ["F", "C", "R"][v - 8] : v}</b>
-    ${simbolo(s, piccola ? 24 : 32)}
-    <small style="font-size:${piccola ? 9 : 11}px;font-weight:700;line-height:1">${v > 7 ? FIGURE[v] : SEMI[s]}</small></div>`;
+  const w = piccola ? 56 : 76;
+  return `<img src="img/carte/${c}.webp" alt="${nomeCarta(c)}" width="${w}" height="${Math.round(w * 1.733)}" draggable="false"
+    style="display:block;width:${w}px;height:auto;border-radius:${piccola ? 6 : 8}px;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.25);${attiva ? "outline:3px solid #E8B56B;outline-offset:1px;" : ""}flex-shrink:0">`;
 }
 const dorso = (piccola = true) => `<div style="width:${piccola ? 30 : 54}px;height:${piccola ? 46 : 84}px;border-radius:7px;background:repeating-linear-gradient(45deg,#8A1022,#8A1022 4px,#A8162E 4px,#A8162E 8px);border:2px solid #fff;box-shadow:0 1px 3px rgba(0,0,0,.2);flex-shrink:0"></div>`;
+const SEGNI = {
+  asso: { e: "😉", fa: "fa l'occhiolino", vuol: "ha l'asso di briscola", tasto: "Occhiolino" },
+  tre: { e: "😏", fa: "stringe la bocca di lato", vuol: "ha il tre di briscola", tasto: "Bocca di lato" },
+  re: { e: "🤨", fa: "alza le sopracciglia", vuol: "ha il re di briscola", tasto: "Sopracciglia" },
+  niente: { e: "😮", fa: "apre la bocca un istante", vuol: "non ha briscole", tasto: "Bocca aperta" },
+};
+const FRASI = ["Bella! 👏", "Carica!", "Vai liscio", "Prendi tu", "Che fortuna 😄", "Uffa 😅"];
 const nomeCarta = (c) => `${Number(c.slice(1)) > 7 ? FIGURE[Number(c.slice(1))] : c.slice(1)} di ${SEMI[c[0]]}`;
 
 export default async function ({ params }) {
@@ -58,7 +63,52 @@ export default async function ({ params }) {
   let ultimaFirma = "", ultimaPresaVista = null, timer = null;
   $app().innerHTML = `
     <header class="testa"><a class="icona" href="#/briscola" aria-label="Indietro">${ICONE.indietro}</a><b>🃏 Briscola</b><span style="width:44px"></span></header>
-    <div id="corpo" style="padding-bottom:130px"></div>`;
+    <div id="corpo"></div>
+    <div id="segni-box"></div>
+    <div id="chat" class="card" style="margin:12px 16px 130px" hidden>
+      <b>💬 Al tavolo</b>
+      <div id="chat-righe" style="margin:6px 0;max-height:150px;overflow-y:auto;font-size:15px;line-height:1.5"></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">${FRASI.map((f) => `<button class="chip" data-frase="${esc(f)}" style="margin:0;font-size:13px">${esc(f)}</button>`).join("")}</div>
+      <form id="chat-f" style="display:flex;gap:6px"><input id="chat-t" maxlength="200" placeholder="Scrivi al tavolo…" autocomplete="off" style="flex:1;margin:0">
+        <button type="button" id="chat-voce" class="chip" style="margin:0" aria-label="Detta">🎙</button><button class="chip on" style="margin:0">Invia</button></form>
+    </div>`;
+
+  let ultimoMsg = 0, posti = [], mioPosto = -1, primoGiro = true;
+  const righe = [];
+  async function messaggi() {
+    const { data } = await sb.from("partita_messaggi").select("id, posto, tipo, testo, solo_squadra").eq("partita_id", id).gt("id", ultimoMsg).order("id").limit(50);
+    for (const m of data ?? []) {
+      ultimoMsg = m.id;
+      const chi = m.posto === mioPosto ? "tu" : esc(posti[m.posto]?.nome ?? "");
+      if (m.tipo === "testo") righe.push(`<div><b>${chi}:</b> ${esc(m.testo)}</div>`);
+      else {
+        const sg = SEGNI[m.testo]; if (!sg) continue;
+        righe.push(`<div class="tenue">🤫 ${chi} ${sg.fa} ${sg.e}</div>`);
+        // il segno del compagno: compare grande per qualche secondo (non al primo caricamento)
+        if (m.posto !== mioPosto && !primoGiro) {
+          const b = document.createElement("div"); b.setAttribute("role", "status");
+          b.innerHTML = `<div style="font-size:64px;line-height:1">${sg.e}</div><b>${chi} ${sg.fa}</b><div style="font-size:14px;opacity:.85">vuol dire: ${sg.vuol}</div>`;
+          b.style.cssText = "position:fixed;left:50%;top:90px;transform:translateX(-50%);z-index:60;background:rgba(18,48,44,.95);color:#fff;text-align:center;padding:16px 22px;border-radius:20px;box-shadow:0 10px 30px rgba(0,0,0,.3);max-width:86%";
+          document.body.appendChild(b); setTimeout(() => b.remove(), 4000);
+          if (navigator.vibrate) navigator.vibrate([60, 60, 60]);
+        }
+      }
+    }
+    primoGiro = false;
+    const box = document.getElementById("chat-righe");
+    if (box) { box.innerHTML = righe.slice(-30).join("") || `<span class="tenue">Ancora nessuno ha parlato.</span>`; box.scrollTop = box.scrollHeight; }
+  }
+  const parla = async (t) => { if (!t.trim()) return; const { error } = await sb.rpc("partita_parla", { p_partita: id, p_testo: t }); if (error) alert(error.message); messaggi(); };
+  document.getElementById("chat-f").onsubmit = (e) => { e.preventDefault(); const c = document.getElementById("chat-t"); parla(c.value); c.value = ""; };
+  document.querySelectorAll("[data-frase]").forEach((b) => b.onclick = () => parla(b.dataset.frase));
+  const Riconosci = window.SpeechRecognition || window.webkitSpeechRecognition;
+  const bv = document.getElementById("chat-voce");
+  if (!Riconosci) bv.hidden = true;
+  else bv.onclick = () => {
+    const r = new Riconosci(); r.lang = "it-IT"; const c = document.getElementById("chat-t");
+    bv.textContent = "⏺"; r.onresult = (ev) => { c.value = [...ev.results].map((x) => x[0].transcript).join(""); };
+    r.onend = () => { bv.textContent = "🎙"; if (c.value.trim()) { parla(c.value); c.value = ""; } }; r.start();
+  };
 
   async function aggiorna() {
     const corpo = document.getElementById("corpo");
@@ -68,6 +118,22 @@ export default async function ({ params }) {
       sb.from("partita_mani").select("posto, carte").eq("partita_id", id),
     ]);
     if (!p) { corpo.innerHTML = `<p class="pad">Questo tavolo non c'è più.</p>`; clearInterval(timer); return; }
+    posti = p.posti; mioPosto = p.posti.findIndex((x) => x.persona_id === state.io.id);
+    document.getElementById("chat").hidden = p.stato === "attesa" || mioPosto < 0;
+    const sb4 = document.getElementById("segni-box");
+    if (p.n === 4 && p.stato === "in_corso" && mioPosto >= 0) {
+      if (!sb4.dataset.pronto) {
+        sb4.dataset.pronto = "1";
+        sb4.innerHTML = `<div class="card" style="margin:12px 16px 0"><b>🤫 Segni al compagno</b> <span class="tenue" style="font-size:13px">· li vede solo lui</span>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px">${Object.entries(SEGNI).map(([k, v]) => `<button data-segno="${k}" style="border:1px solid var(--bordo);background:#fff;border-radius:14px;padding:8px 2px;cursor:pointer"><div style="font-size:30px">${v.e}</div><small style="font-weight:700;font-size:11px">${v.tasto}</small></button>`).join("")}</div>
+          <p class="tenue" style="font-size:12px;margin:6px 0 0">😉 asso · 😏 tre · 🤨 re · 😮 niente briscola</p></div>`;
+        sb4.querySelectorAll("[data-segno]").forEach((b) => b.onclick = async () => {
+          const { error } = await sb.rpc("briscola_segno", { p_partita: id, p_segno: b.dataset.segno });
+          if (error) alert(error.message); else { b.style.background = "#E1F5EE"; setTimeout(() => { b.style.background = "#fff"; }, 800); messaggi(); }
+        });
+      }
+    } else { sb4.innerHTML = ""; delete sb4.dataset.pronto; }
+    messaggi();
     const firma = [p.aggiornata_il, p.stato, JSON.stringify(mani)].join("|");
     if (firma === ultimaFirma) return;
     ultimaFirma = firma;
