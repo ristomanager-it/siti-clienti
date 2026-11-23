@@ -10,6 +10,8 @@
 <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-title" content="Ancora Gestione">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.json">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,700&family=Manrope:wght@400;600;700;800&display=swap" rel="stylesheet">
 <style>
@@ -114,8 +116,36 @@ function disegna() {
 const rpc = async (nome, args) => { const { data, error } = await sb.rpc(nome, args); if (error) throw error; return data; };
 const kpi = (v, t, scuro) => `<div class="kpi ${scuro ? "scuro" : ""}"><b>${v}</b><span>${t}</span></div>`;
 
+// --- Avvisi su questo telefono (solo app "Ancora Gestione") ---
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+const chiaveB64 = (b) => { const p = "=".repeat((4 - b.length % 4) % 4); const r = atob((b + p).replace(/-/g, "+").replace(/_/g, "/")); return Uint8Array.from([...r].map((c) => c.charCodeAt(0))); };
+async function avvisiAttivi() {
+  try { const reg = await navigator.serviceWorker?.getRegistration(); return !!(await reg?.pushManager.getSubscription()) && Notification.permission === "granted"; } catch { return false; }
+}
+async function attivaAvvisi() {
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+    alert("Su iPhone gli avvisi funzionano solo dall'app sulla schermata Home: apri questa pagina in Safari, Condividi → Aggiungi alla schermata Home, poi aprila da lì."); return false;
+  }
+  if (await Notification.requestPermission() !== "granted") { alert("Notifiche non permesse: si attivano dalle impostazioni del telefono."); return false; }
+  const reg = await navigator.serviceWorker.ready;
+  const { publicKey } = await fetch("https://efhxgrszckfxxhecjtrl.supabase.co/functions/v1/notifiche").then((r) => r.json());
+  const sub = (await reg.pushManager.getSubscription()) ?? await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: chiaveB64(publicKey) });
+  const j = sub.toJSON();
+  await rpc("admin_push_iscrivi", { p_endpoint: j.endpoint, p_p256dh: j.keys.p256dh, p_auth: j.keys.auth });
+  return true;
+}
+
 async function panoramica() {
   const p = await rpc("admin_panoramica");
+  setTimeout(async () => {
+    const ok = await avvisiAttivi();
+    const box = document.createElement("div");
+    box.className = "card";
+    box.innerHTML = ok ? `<b>🔔 Avvisi attivi su questo telefono</b><p class="tenue" style="margin:4px 0 0;font-size:13px">Nuovi iscritti, regali venduti, Ancora+, assistenza e messaggi dal sito arrivano qui, nell'app Ancora Gestione.</p>`
+      : `<b>🔔 Ricevi gli avvisi su questo telefono</b><p class="tenue" style="margin:4px 0 8px;font-size:13px">Nuovi iscritti, regali venduti, Ancora+, assistenza e messaggi dal sito. Arrivano solo qui, non sull'app Ancora.</p><button class="btn" id="attiva-avvisi">Attiva gli avvisi</button>`;
+    document.getElementById("corpo")?.prepend(box);
+    box.querySelector("#attiva-avvisi")?.addEventListener("click", async (e) => { e.target.disabled = true; if (await attivaAvvisi()) disegna(); else e.target.disabled = false; });
+  }, 50);
   const abb = p.abb_attivi ?? {};
   const reg = p.regali ?? {};
   const totAbb = Object.values(abb).reduce((a, b) => a + b, 0);
