@@ -50,5 +50,5 @@ Ciò che ci tiene saldi resta con noi, ancora e ancora.</div>
       <li><b>Il libro</b> delle storie: digitale incluso, stampato su richiesta.</li>
     </ul></div>
     <div class="pad"><a class="btn ambra" href="#/scopri">Scopri Ancora</a>
-      <a class="btn chiaro" style="margin-top:10px" href="#/regala">Regala Ancora · 129 €</a></div>`;
+      <a class="btn chiaro" style="margin-top:10px" href="#/regala">Regala «La storia della tua famiglia» · 99 €</a></div>`;
 }

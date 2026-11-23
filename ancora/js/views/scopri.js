@@ -51,7 +51,7 @@ const CONTRO = [
 
 const DOMANDE = [
   ["Le domande arrivano solo ai nonni?", "No, a tutti: ognuno ha la sua domanda della settimana, dai nonni ai ragazzi. E chiunque può farne una a un familiare dal suo profilo."],
-  ["È facile per i nonni?", "Sì: si usa come le app di messaggi che conoscono già. Di solito sono i nipoti a fargliela vedere la prima volta. E chi proprio non vuole l'app può rispondere anche da un messaggio sul telefono."],
+  ["È facile per i nonni?", "Sì: si usa come le app di messaggi che conoscono già. Di solito sono i nipoti a fargliela vedere la prima volta."],
   ["Chi può entrare?", "Tutta la famiglia, senza pagare: figli, nipoti, cugini, anche chi vive all'estero. Chi riceve il regalo crea la sua famiglia e invita chi vuole: basta uno, e Ancora+ ce l'hanno tutti."],
   ["Posso stare in più famiglie?", "Sì: la tua, quella dei tuoi genitori, quella di tua moglie o di tuo marito, gli amici. Gli alberi si collegano tra loro."],
   ["Cosa succede dopo 12 mesi?", "Si continua solo se volete, a 99 € l'anno o 9,99 € al mese. I ricordi restano gratis per sempre."],

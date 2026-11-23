@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "98";
+const VER = "99";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 const ROTTE = {
@@ -649,11 +649,9 @@ export function temaDelPeriodo(oggi = new Date()) {
 export const VANTAGGI_PIU = [
   ["L'albero senza limiti", "il gratuito arriva a 10 persone per albero"],
   ["Gli alberi uniti", "la tua famiglia, quella dei tuoi genitori, quella dei suoceri"],
-  ["Gli album degli eventi con il QR", "matrimoni, battesimi, il pranzo di Natale"],
   ["Il libro intero della famiglia", "in PDF e stampato, con i QR per sentire le voci"],
-  ["Il film dell'anno", "le foto e i video di tutti, montati con la musica"],
+  ["Il film dell'anno intero", "le foto e i video di tutti, montati con la musica (gratis: anteprima di 5 momenti)"],
   ["Ricette, lettere e album senza limiti", "il ricettario di casa intero, le lettere da aprire più avanti per ognuno, un album per ogni evento"],
-  ["Le domande sul telefono", "per i nonni che non usano l'app"],
   ["200 GB per tutta la famiglia", "invece di 2 GB a testa"],
   ["Le storie e i consigli di ognuno", "sempre lì quando servono: «tu che avresti fatto?», «com'era quella volta?»"],
 ];

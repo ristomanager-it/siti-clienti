@@ -168,7 +168,7 @@ async function ascolta(codice) {
       <div class="card" style="margin:16px 0 0;background:var(--ambra-chiaro);border-color:#EAD2AA">
         <b style="font-family:Fraunces,serif;font-size:21px;color:#4A3410">Vuoi che la sua voce resti, per sempre?</b>
         <p style="color:#5A3E12">Con Ancora ${esc(p.per_nome)} riceve una domanda a settimana e risponde così, a voce. Tutta la famiglia ascolta, e a fine anno c'è il libro con le sue storie.</p>
-        <a class="btn ambra" href="#/regala?per=${encodeURIComponent(p.per_nome)}&prova=${codice}">Regala Ancora · 129 €</a>
+        <a class="btn ambra" href="#/regala?per=${encodeURIComponent(p.per_nome)}&prova=${codice}">Regala «La storia della tua famiglia» · 99 €</a>
         <p class="tenue" style="text-align:center;margin-bottom:0">Questa prima risposta la ritrovi nel vostro album.</p>
       </div>
       <a class="btn chiaro" style="margin-top:12px" href="#/prova">Fai un'altra domanda</a>

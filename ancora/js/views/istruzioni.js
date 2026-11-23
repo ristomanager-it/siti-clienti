@@ -7,6 +7,7 @@ const AGGIORNATE = "22 novembre 2026";
 
 const NOVITA = [
   ["22 novembre 2026 · sera tardi", "Storie: in basso «👁 Vista da…» con chi l'ha vista e come ha reagito; ⋯ in alto per eliminarle (le storie non si modificano: si rifanno). Il numerino rosso sull'icona di Ancora segna i messaggi non letti."],
+  ["23 novembre 2026", "L'albero in 2 minuti (mamma, papà, nonni, figli in una pagina) e le famiglie che si collegano con un tocco. Il film dell'anno e il libro della famiglia. La chat Assistenza nel menu. Regala Ancora anche a un'altra famiglia, con il 3x2. La pagina di vendita nella lingua del telefono."],
   ["22 novembre 2026 · sera tardi", "Libreria musicale per le storie: 25 brani, anche rock e rap (allegri, di Natale, compleanno, dolci, emozionanti, viaggio). Si ascoltano prima di sceglierli."],
   ["22 novembre 2026 · sera", "Storie come su Instagram: testo (Aa) con colori, emoji da spostare e ingrandire, musica da un file del telefono. Guardando una storia: reazioni con le emoji e risposte, che arrivano anche in chat."],
   ["22 novembre 2026 · sera", "Foto dei post a scorrimento con doppio tocco per il cuore; ⋯ sui tuoi post per modificarli o eliminarli; le domande ora arrivano come notifica e stanno in Chat → Domande per te."],
@@ -61,10 +62,15 @@ const SEZIONI = [
     <p>Ognuno può spegnerle per sé dal <b>Profilo → Le mie impostazioni</b>: se spegni una voce, non la vedi tu e nessuno vede la tua.</p>
     <p><b>Vacanze:</b> date, posto, chi viene, chi porta cosa. <b>Compiti</b> ed <b>esami</b>: l'esito è facoltativo e puoi tenerlo privato.</p>`],
   ["libro", "Il libro delle storie", `
-    <p>Dal profilo di una persona: <b>Il libro</b>. Ogni pagina ha il codice QR: chi lo inquadra con il telefono sente la voce del racconto.</p>
-    <p>Il libro digitale è incluso. Quello stampato si ordina dai <b>Servizi</b>.</p>`],
+    <p>Dal profilo di una persona: <b>Il libro</b>. Dal menu: <b>Il libro della famiglia</b>, l'anno di tutti mese per mese. Ogni pagina con una voce ha il codice QR: chi lo inquadra con il telefono la sente.</p>
+    <p>Senza Ancora+ vedi le prime pagine; con Ancora+ il libro intero, il PDF e la stampa. Quello stampato si ordina anche dai <b>Servizi</b>.</p>`],
+  ["film", "Il film dell'anno", `
+    <p>Dal menu: <b>Il film dell'anno</b>. Scegli il gruppo, il periodo e la musica: il telefono monta foto e video e lo vedi nascere. Poi lo salvi o lo mandi a tutti. Tieni l'app aperta mentre si crea.</p>
+    <p>Senza Ancora+ un'anteprima di 5 momenti; con Ancora+ il film intero.</p>`],
   ["piano", "Il piano e i servizi", `
-    <p>Ancora+ dà lo spazio grande e le domande sul telefono per chi non usa l'app. Se ti hanno regalato Ancora o ti hanno invitato, sei già in un piano: apri il link dell'invito.</p>
+    <p><b>Gratis, senza limiti:</b> chat, gruppi, foto, storie, inviti, calendario, liste, spese, diario e domanda della settimana.</p>
+    <p><b>Gratis, per provare:</b> 3 ricette per famiglia, l'albero fino a 10 persone, una lettera da aprire più avanti, un album degli eventi, le prime pagine del libro e 5 momenti del film. Quello che hai già fatto resta sempre: si ferma solo l'aggiunta oltre il limite.</p>
+    <p><b>Ancora+</b> (99 € l'anno o 9,99 € al mese): tutto senza limiti, gli alberi uniti tra famiglie, il libro intero e il film, le domande su misura, 200 GB per la famiglia. Basta che lo prenda uno e ce l'hanno tutti. Se ti hanno regalato Ancora, attiva il codice da <b>Il mio account → Codice omaggio</b>.</p>
     <p>I ricordi restano gratis per sempre. I servizi (libro stampato, una persona in più con le domande sul telefono, spazio in più) li prendi solo se ti servono.</p>`],
   ["privacy", "Chi vede cosa", `
     <p>Ogni ricordo lo vedono solo le persone e le famiglie che scegli. Chi gestisce Ancora non vede i vostri contenuti. Il diario è solo tuo.</p>
