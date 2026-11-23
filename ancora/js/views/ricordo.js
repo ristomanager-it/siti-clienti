@@ -98,7 +98,7 @@ export async function condivisioneRicetta(r) {
   const disegna = async (token) => {
     if (!token) {
       box.innerHTML = `<button class="btn ambra" id="cond-crea" style="margin:0">Crea il link e condividi</button>`;
-      document.getElementById("cond-crea").onclick = async () => {
+      box.querySelector("#cond-crea").onclick = async () => {
         const { data, error } = await sb.rpc("ricetta_condividi", { p_ricordo: r.id, p_attiva: true });
         if (error) { alert("Non riuscito. Riprova."); return; }
         r.link_pubblico = data; await disegna(data); manda(data);
@@ -108,8 +108,8 @@ export async function condivisioneRicetta(r) {
     const { data: letture } = await sb.rpc("ricetta_letture", { p_ricordo: r.id });
     box.innerHTML = `<button class="btn ambra" id="cond-manda" style="margin:0">Manda il link</button>
       <p class="tenue" style="margin:10px 0 0;font-size:14px">Link attivo${letture ? ` · letta da ${letture} ${letture === 1 ? "persona" : "persone"}` : ""} · <a href="#" id="cond-stop" style="color:var(--rosso)">smetti di condividere</a></p>`;
-    document.getElementById("cond-manda").onclick = () => manda(token);
-    document.getElementById("cond-stop").onclick = async (e) => {
+    box.querySelector("#cond-manda").onclick = () => manda(token);
+    box.querySelector("#cond-stop").onclick = async (e) => {
       e.preventDefault();
       if (!confirm("Il link smette di funzionare per tutti. Continuare?")) return;
       await sb.rpc("ricetta_condividi", { p_ricordo: r.id, p_attiva: false });
