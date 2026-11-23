@@ -2,6 +2,7 @@
 // Perché, come, cosa; più di una chat di gruppo; prezzi; modulo d'acquisto. Toni leggeri e vivi: si racconta adesso, insieme.
 // Foto: Unsplash (licenza Unsplash, uso libero).
 import { $app, traccia } from "../app.js";
+import { traduciSempre } from "../lingua.js";
 import { NEL_REGALO, montaModulo } from "./regala.js";
 import { testataPubblica, collegaMenu, piePubblico, collegaPie } from "./info.js";
 
@@ -88,7 +89,7 @@ export default async function ({ params } = {}) {
     </div>
 
     <div style="background:${C.panna};padding:14px 16px;display:flex;gap:8px;overflow-x:auto;font-size:13px;font-weight:700;color:${C.notte}">
-      ${["🔒 Privato, niente pubblicità", "🇮🇹 Fatto in Italia", "↩︎ Rimborso se non accetta", "✓ I ricordi restano vostri"]
+      ${["🔒 Privato, niente pubblicità", "🇮🇹 Fatto in Italia", "↩︎ Rimborso se il codice non viene usato", "✓ I ricordi restano vostri"]
         .map((t) => `<span style="flex-shrink:0;background:#fff;border:1px solid #EAD9BF;border-radius:999px;padding:7px 12px">${t}</span>`).join("")}
     </div>
 
@@ -199,6 +200,7 @@ export default async function ({ params } = {}) {
     <section id="eredita" style="padding:34px 20px">
       <p style="margin:0 0 6px;font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:${C.oro}">Lo scrigno della famiglia</p>
       ${titolo("I tuoi ricordi, all'infinito. E ancora.")}
+      <p style="margin:-4px 0 16px;font-size:17px;line-height:1.5">Ogni foto, ogni vocale, ogni ricetta è una pagina. Un giorno dopo l'altro, senza accorgertene, scrivi la storia della tua vita.</p>
       <div style="display:grid;gap:14px">
         ${[["panettone", "Le tue ricette, in eredità.", "Le dosi giuste, i trucchi, la tua voce mentre le spieghi."],
            ["compiti", "La tua storia, in eredità ai nipoti.", "Le scelte, le avventure, il tuo modo di vedere le cose. Raccontate da te."],
@@ -270,6 +272,7 @@ export default async function ({ params } = {}) {
   };
   addEventListener("scroll", aggiornaBarra, { passive: true });
   misuraLanding();
+  traduciSempre($app());   // nella lingua del telefono (inglese, spagnolo, tedesco, francese)
 }
 
 // Cosa fanno le persone qui (per campagna, con il consenso): sezioni viste, quanto scorrono, clic, tempo

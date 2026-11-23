@@ -1,6 +1,7 @@
 // Regala Ancora: "La storia della tua famiglia". Chi compra riceve un biglietto con un codice; la famiglia la crea chi riceve.
 import { $app, esc, utm, state, sb } from "../app.js";
 import { traccia } from "../app.js";
+import { lingua, traduciSempre } from "../lingua.js";
 import { SUPABASE_URL } from "../config.js";
 
 export default async function ({ params }) {
@@ -9,6 +10,7 @@ export default async function ({ params }) {
     <header class="testa"><span><span class="logo" style="font-size:22px">Regala Ancora</span><div class="tenue" style="font-size:12px;font-weight:700">La storia della tua famiglia</div></span><span></span></header>
     <div id="modulo-regalo"></div>`;
   montaModulo(document.getElementById("modulo-regalo"), params);
+  traduciSempre($app());
 }
 
 export const PREZZO = 99, PREZZO_PIENO = 129;
@@ -88,7 +90,7 @@ export function montaModulo(el, params = {}) {
     try {
       const res = await fetch(`${SUPABASE_URL}/functions/v1/crea-checkout`, {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tipo: "regalo", utm: utm(), termini: el.querySelector("#termini").checked,
+        body: JSON.stringify({ tipo: "regalo", utm: utm(), lingua: lingua(), termini: el.querySelector("#termini").checked,
           quantita: quanti, destinatari: quanti === 3 ? [v("dest2"), v("dest3")] : [],
           destinatario_nome: v("dest"), messaggio: v("mg") || null, data_invio: dd.value, acquirente_nome: v("an"), acquirente_email: v("ae") }),
       });
