@@ -222,6 +222,13 @@ export default async function ({ params } = {}) {
       ${DOMANDE.map(([q, r]) => `<details style="border-bottom:1px solid var(--bordo);padding:14px 0"><summary style="font-weight:800;cursor:pointer">${q}</summary>
         <p style="margin:8px 0 0;line-height:1.5">${r}</p></details>`).join("")}
       <p style="margin-top:16px">Altre domande? <a href="#/contatti">Scrivici</a>.</p>`, "transparent", "inherit", "faq")}
+    <section id="contatti" style="padding:34px 20px;background:#F3E9D8">
+      ${titolo("Parliamone")}
+      <p style="margin:0 0 16px;font-size:17px;line-height:1.5">Un dubbio sul regalo, una domanda, un'idea? Rispondiamo noi, di persona, di solito in giornata.</p>
+      <div style="display:grid;gap:10px;max-width:520px">
+        <a class="btn ambra" href="#/contatti">✉️ Scrivici un messaggio</a>
+        <a class="btn chiaro" href="#/assistenza">💬 Sei già su Ancora? Scrivici in chat</a>
+      </div></section>
 
     ${piePubblico()}
     <div id="barra-acquisto" style="position:fixed;left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom));max-width:540px;margin:0 auto;z-index:20;

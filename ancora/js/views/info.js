@@ -94,7 +94,8 @@ export async function chisiamo() {
 
 export async function contatti() {
   pagina("Contatti", `
-    <p>Domande, un regalo particolare, un'idea? Scrivici: rispondiamo di persona.</p>
+    <p>Domande, un regalo particolare, un'idea? Scrivici: rispondiamo di persona, di solito in giornata.</p>
+    <p class="tenue" style="font-size:15px">Sei già su Ancora? Più comodo dalla chat: <a href="#/assistenza">menu → Assistenza</a>.</p>
     <form id="fc">
       <label for="c-nome">Nome</label><input id="c-nome" required maxlength="80" autocomplete="name">
       <label for="c-email">Email</label><input id="c-email" type="email" required maxlength="120" autocomplete="email">

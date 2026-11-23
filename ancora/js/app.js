@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "90";
+const VER = "91";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 const ROTTE = {
@@ -159,6 +159,34 @@ export async function attivaNotifiche() {
 }
 
 // bentornato: se mancavi da qualche giorno, cosa è successo in famiglia (una volta per sessione)
+export const SPUNTI = [
+  "Che foto hai scattato questa settimana? Mettila, con due righe.",
+  "Una cosa che ti ha fatto ridere in questi giorni.",
+  "Il piatto che hai cucinato di recente, e per chi.",
+  "Un posto dove sei stato e dove vorresti tornare.",
+  "Una canzone che ti riporta a un momento preciso.",
+  "Una cosa che hai imparato da qualcuno della famiglia.",
+  "Com'era la casa dove sei cresciuto? Una stanza, un odore.",
+  "Una decisione di cui oggi sei contento.",
+  "Il regalo più bello che hai ricevuto, e da chi.",
+  "Una persona che ti ha aiutato quando non te lo aspettavi.",
+];
+async function spuntoPerScrivere() {
+  let ultima = 0; try { ultima = Number(localStorage.getItem("ancora_spunto") ?? 0); } catch { /* niente */ }
+  if (Date.now() - ultima < 3 * 864e5) return false;
+  const { data } = await sb.from("ricordi").select("creato_il").eq("autore_id", state.io.id).neq("tipo", "storia").order("creato_il", { ascending: false }).limit(1);
+  const giorni = data?.[0] ? (Date.now() - new Date(data[0].creato_il)) / 864e5 : 99;
+  if (giorni < 5) return false;
+  try { localStorage.setItem("ancora_spunto", String(Date.now())); } catch { /* niente */ }
+  const spunto = SPUNTI[Math.floor(Date.now() / 864e5) % SPUNTI.length];
+  popup({
+    titolo: "Uno spunto per te",
+    testo: `<span style="font-family:Fraunces,serif;font-size:20px;line-height:1.35">«${spunto}»</span><br><span class="tenue" style="font-size:14px">Bastano due righe, o un vocale. Lo vede chi scegli tu.</span>`,
+    azioni: [{ t: "Racconta", fn: () => { location.hash = "#/racconta?spunto=" + encodeURIComponent(spunto); } }, { t: "Un'altra volta" }],
+  });
+  return true;
+}
+
 async function bentornato() {
   if (sessionStorage.getItem("ancora_bentornato")) return;
   sessionStorage.setItem("ancora_bentornato", "1");
@@ -174,6 +202,8 @@ async function bentornato() {
     });
     return;
   }
+  // uno spunto per scrivere, se non racconta da 5 giorni (al massimo ogni 3 giorni)
+  if (await spuntoPerScrivere()) return;
   // una volta sola: proponi le notifiche, con il perché
   if (!localStorage.getItem("ancora_chiesto_notifiche") && !(await notificheAttive())) {
     localStorage.setItem("ancora_chiesto_notifiche", "1");

@@ -21,7 +21,8 @@ export default async function ({ params }) {
   const persone = await personeConosciute();
   let scelta = lettera ? "persona" : params.c || rispostaA?.cerchia_id || cerchie.find((c) => c.tipo === "famiglia")?.id || "solo_io";
   let quando = lettera ? "1" : "subito";
-  const invito = lettera ? "Scrivi una lettera a chi vuoi tu. Resta chiusa fino al giorno che scegli: prima, vede solo che c'è." : domandaSett ?? domanda?.testo
+  const spunto = params.spunto ? String(params.spunto).slice(0, 200) : null;
+  const invito = lettera ? "Scrivi una lettera a chi vuoi tu. Resta chiusa fino al giorno che scegli: prima, vede solo che c'è." : domandaSett ?? domanda?.testo ?? spunto
     ?? (rispostaA ? `Rispondi a ${rispostaA.persone?.soprannome ?? rispostaA.persone?.nome}` : null)
     ?? (params.ricetta ? "La ricetta di famiglia: racconta come si fa, e chi te l'ha insegnata."
       : params.foto ? "Chi c'è in questa foto? Dove eravate?" : "Racconta una cosa che vuoi ricordare.");
