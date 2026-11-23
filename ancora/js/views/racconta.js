@@ -62,6 +62,7 @@ export default async function ({ params }) {
           <label for="luogo">Dove</label>
           <div class="riga" style="gap:8px"><input id="luogo" maxlength="80" placeholder="Orlando, Florida · la casa al mare" style="flex:1;margin:0" autocomplete="off">
             <button type="button" class="chip" id="luogo-qui" style="margin:0;white-space:nowrap">📍 Qui</button></div>
+          <div id="luogo-proposte" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px"></div>
           <small class="tenue" id="luogo-stato"></small></div></div>
       <label class="riga" style="font-weight:700"><input id="memoria" type="checkbox" checked style="width:auto"> Entra nella memoria</label>
       <button id="salva" class="btn" style="margin-top:16px">${lettera ? "Chiudi la lettera" : "Condividi"}</button>
@@ -127,27 +128,57 @@ export default async function ({ params }) {
   rec.addEventListener("pointerup", ferma);
   rec.addEventListener("pointerleave", ferma);
 
-  // 📍 il luogo: scritto a mano, o "Qui" con la posizione del telefono (salvata arrotondata, circa 1 km)
-  let luogoQui = null;
-  document.getElementById("luogo-btn").onclick = (e) => { e.target.hidden = true; document.getElementById("luogo-campo").hidden = false; document.getElementById("luogo").focus(); };
+  // 📍 il luogo: un locale, un posto, una città. Si cerca mentre scrivi, oppure "Qui" propone i locali intorno (OpenStreetMap).
+  // Si salva il nome e le coordinate del posto (per un locale le sue; per "Qui" arrotondate a circa 1 km).
+  let luogoQui = null, vicino = null, giro = 0;
+  const box = document.getElementById("luogo-proposte"), campo = document.getElementById("luogo"), st = document.getElementById("luogo-stato");
+  const TAG = ["amenity:restaurant", "amenity:cafe", "amenity:bar", "amenity:pub", "amenity:fast_food", "amenity:ice_cream", "amenity:pizzeria",
+    "tourism:hotel", "tourism:attraction", "tourism:museum", "tourism:viewpoint", "leisure:park", "leisure:beach_resort", "natural:beach", "shop:bakery", "amenity:place_of_worship"]
+    .map((t) => `&osm_tag=${t}`).join("");
+  const nomeDiPosto = (p) => { const x = p.properties ?? {}; const dove = x.city ?? x.town ?? x.village ?? x.county ?? "";
+    return x.name ? (dove && dove !== x.name ? `${x.name}, ${dove}` : x.name) : dove; };
+  const proponi = (lista, intestazione = "") => {
+    box.innerHTML = (intestazione ? `<small class="tenue" style="width:100%">${intestazione}</small>` : "") + lista.map((p, i) => `<button type="button" class="chip" data-p="${i}" style="margin:0">${esc(p.nome)}</button>`).join("");
+    box.querySelectorAll("[data-p]").forEach((b) => b.onclick = () => { luogoQui = lista[Number(b.dataset.p)]; campo.value = luogoQui.nome; box.innerHTML = ""; });
+  };
+  const daPhoton = (feats) => [...new Map((feats ?? []).map((f) => { const n = nomeDiPosto(f); const [lon, lat] = f.geometry?.coordinates ?? []; return [n, { nome: n, lat: Math.round(lat * 1e4) / 1e4, lon: Math.round(lon * 1e4) / 1e4 }]; })
+    .filter(([n]) => n)).values()].slice(0, 8);
+  document.getElementById("luogo-btn").onclick = (e) => { e.target.hidden = true; document.getElementById("luogo-campo").hidden = false; campo.focus(); };
+  // mentre scrivi: locali e posti che si chiamano così (vicino a te, se hai toccato "Qui")
+  campo.oninput = () => {
+    luogoQui = null; const q = campo.value.trim(); const io = ++giro;
+    if (q.length < 3) { box.innerHTML = ""; return; }
+    setTimeout(async () => {
+      if (io !== giro) return;
+      try {
+        const j = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=8${vicino ? `&lat=${vicino.lat}&lon=${vicino.lon}` : ""}`).then((r) => r.json());
+        if (io === giro) proponi(daPhoton(j.features));
+      } catch { /* senza proposte si scrive a mano */ }
+    }, 350);
+  };
+  // "Qui": la città e i locali intorno a te
   document.getElementById("luogo-qui").onclick = () => {
-    const st = document.getElementById("luogo-stato");
     if (!navigator.geolocation) { st.textContent = "Questo telefono non dà la posizione: scrivi il luogo."; return; }
     st.textContent = "Cerco dove sei…";
     navigator.geolocation.getCurrentPosition(async (pos) => {
-      const lat = Math.round(pos.coords.latitude * 100) / 100, lon = Math.round(pos.coords.longitude * 100) / 100;
-      let nome = "";
+      const { latitude: la, longitude: lo } = pos.coords;
+      vicino = { lat: la, lon: lo };
+      const citta = { nome: "", lat: Math.round(la * 100) / 100, lon: Math.round(lo * 100) / 100 };
       try {
-        const j = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=14&accept-language=it&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`).then((r) => r.json());
+        const j = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=14&accept-language=it&lat=${la}&lon=${lo}`).then((r) => r.json());
         const a = j.address ?? {};
-        const posto = a.city ?? a.town ?? a.village ?? a.municipality ?? a.county ?? "";
+        const posto = a.city ?? a.town ?? a.municipality ?? a.village ?? a.county ?? "";
         const zona = a.country_code === "it" ? (a.county ?? a.state ?? "") : (a.state ?? a.country ?? "");
-        nome = [posto, zona && zona !== posto ? zona : ""].filter(Boolean).join(", ");
+        citta.nome = [posto, zona && zona !== posto ? zona : ""].filter(Boolean).join(", ");
       } catch { /* niente */ }
-      if (!nome) { st.textContent = "Non trovo il nome del posto: scrivilo tu."; return; }
-      luogoQui = { nome, lat, lon };
-      document.getElementById("luogo").value = nome; st.textContent = "";
-    }, () => { st.textContent = "Posizione non permessa: scrivi il luogo."; }, { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 });
+      let locali = [];
+      try { locali = daPhoton((await fetch(`https://photon.komoot.io/reverse?lat=${la}&lon=${lo}&limit=12&radius=0.4${TAG}`).then((r) => r.json())).features); } catch { /* niente */ }
+      st.textContent = "";
+      if (citta.nome) { luogoQui = citta; campo.value = citta.nome; }
+      const lista = [...(citta.nome ? [citta] : []), ...locali.filter((x) => x.nome !== citta.nome)];
+      if (lista.length) proponi(lista, locali.length ? "Sei in uno di questi posti?" : "");
+      else st.textContent = "Non trovo il nome del posto: scrivilo tu.";
+    }, () => { st.textContent = "Posizione non permessa: scrivi il luogo."; }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 });
   };
 
   document.getElementById("salva").onclick = async () => {
