@@ -15,6 +15,11 @@ export default async function ({ id, params }) {
     return;
   }
   sessionStorage.removeItem("ancora_attesa_biglietto");
+  // 3x2: più biglietti nello stesso acquisto → prima l'elenco, poi ogni biglietto
+  if (!params?.uno) {
+    const { data: gruppo } = await sb.rpc("regali_del_gruppo", { p_id: rid });
+    if ((gruppo ?? []).length > 1) return elencoBiglietti(gruppo);
+  }
   const quando = new Date(b.quando + "T12:00").toLocaleDateString("it-IT", { day: "numeric", month: "long" });
   const link = `${location.origin}${location.pathname}#/omaggio/${b.codice}`;
   const qr = qrcode(0, "M"); qr.addData(link); qr.make();
@@ -44,7 +49,8 @@ export default async function ({ id, params }) {
       <p style="margin-top:0">Mandalo a ${esc(b.a)} ${b.quando > new Date().toISOString().slice(0, 10) ? `il <b>${quando}</b>` : "quando vuoi"}, oppure stampalo e mettilo sotto l'albero.${b.usato ? " <b>✓ Il regalo è già stato attivato.</b>" : ""}</p>
       <div style="display:grid;gap:8px">
         <a class="btn ambra" id="wa" href="https://wa.me/?text=${encodeURIComponent(testoWa)}" target="_blank" rel="noopener">Mandalo su WhatsApp</a>
-        <div class="riga" style="gap:8px"><button class="btn chiaro" id="copia" style="flex:1">Copia il link</button><button class="btn chiaro" id="stampa" style="flex:1">Stampa o PDF</button></div></div>
+        <div class="riga" style="gap:8px"><button class="btn chiaro" id="copia" style="flex:1">Copia il link</button><button class="btn chiaro" id="stampa" style="flex:1">Stampa o PDF</button></div>
+        <a class="btn" href="#/regala" style="margin-top:4px">🎁 Regalane un altro, a un'altra famiglia</a></div>
     </div>
     <div class="bg">
       <div class="marchio"><img src="icons/apple-touch-icon.png" alt=""><b>Ancora</b></div>
@@ -60,4 +66,21 @@ export default async function ({ id, params }) {
     </div>`;
   document.getElementById("stampa").onclick = () => window.print();
   document.getElementById("copia").onclick = async (e) => { try { await navigator.clipboard.writeText(link); e.target.textContent = "Copiato ✓"; } catch { prompt("Copia il link", link); } };
+}
+
+function elencoBiglietti(gruppo) {
+  const base = `${location.origin}${location.pathname}`;
+  $app().innerHTML = `<div class="pad">
+    <h1 style="margin-bottom:4px">Grazie! Ecco i tuoi ${gruppo.length} regali 🎁</h1>
+    <p class="tenue" style="margin-top:0">Ognuno ha il suo codice. Mandali su WhatsApp, o apri il biglietto per stamparlo.</p>
+    ${gruppo.map((b, i) => {
+      const link = `${base}#/omaggio/${b.codice}`;
+      const wa = `🎁 ${b.a}, questo è per te: *La storia della tua famiglia* su Ancora.${b.messaggio ? `\n\n«${b.messaggio}»` : ""}\n\nUn anno per raccontarla insieme, e alla fine il libro da tenere in mano. Apri qui, crea la tua famiglia e attiva il regalo:\n${link}\n\n${b.da}`;
+      return `<div class="card" style="margin:10px 0">
+        <div class="riga"><b style="flex:1;font-family:Fraunces,serif;font-size:20px">${i + 1}. Per ${esc(b.a)}</b>${b.usato ? `<span class="chip on" style="margin:0">✓ attivato</span>` : ""}</div>
+        <p class="tenue" style="margin:2px 0 10px">Codice ${esc(b.codice ?? "in arrivo…")}</p>
+        <div class="riga" style="gap:8px"><a class="btn ambra" style="flex:1" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(wa)}">WhatsApp</a>
+          <a class="btn chiaro" style="flex:1" href="#/biglietto?r=${b.id}&uno=1">Biglietto</a></div></div>`;
+    }).join("")}
+    <a class="btn" href="#/regala" style="margin-top:6px">🎁 Regalane altri</a></div>`;
 }

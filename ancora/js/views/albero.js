@@ -33,6 +33,10 @@ export default async function ({ params }) {
     ${famiglie.length > 1 ? `<div class="storie" style="gap:6px;padding-bottom:8px">${famiglie.map((c) =>
       `<a class="chip ${c.id === cerchiaId ? "on" : ""}" style="flex-shrink:0;text-decoration:none" href="#/albero?c=${c.id}">${esc(c.nome)}</a>`).join("")}
       <a class="chip ${uniti ? "on" : ""}" style="flex-shrink:0;text-decoration:none" href="#/albero?c=tutti" ${state.piu ? "" : 'data-piu="1"'}>🔗 Tutti uniti${state.piu ? "" : " +"}</a></div>` : ""}
+    ${uniti ? "" : `<div class="riga pad" style="padding-top:0;padding-bottom:6px;gap:6px">
+      <a class="chip on" href="#/albero-veloce?c=${cerchiaId}" style="margin:0;text-decoration:none">⚡ Completa in 2 minuti</a>
+      <button class="chip" id="come-collega" style="margin:0">🔗 Collegare le famiglie</button></div>
+      <div id="proposte"></div>`}
     <div class="riga pad" style="padding-top:0;gap:6px"><span class="tenue" id="conta" style="flex:1"></span>
       <button class="chip" id="meno" style="margin:0" aria-label="Rimpicciolisci">−</button>
       <button class="chip" id="adatta" style="margin:0">Tutto</button>
@@ -42,7 +46,8 @@ export default async function ({ params }) {
 
   if (!nodi?.length && !uniti) {
     document.getElementById("tela").innerHTML = `<div class="pad"><div class="lettera" style="margin:0;font-size:19px">Ogni albero comincia da una persona. Comincia da te: poi aggiungi i tuoi genitori, i nonni, i figli.</div>
-      <button class="btn ambra" id="inizia" style="margin-top:14px">Inizia da me</button></div>`;
+      <a class="btn ambra" href="#/albero-veloce?c=${cerchiaId}" style="margin-top:14px">Fallo in 2 minuti: mamma, papà, nonni, figli</a>
+      <button class="btn chiaro" id="inizia" style="margin-top:8px">Inizia da me, una persona alla volta</button></div>`;
     document.getElementById("inizia").onclick = async () => {
       await sb.from("albero_nodi").insert({ cerchia_id: cerchiaId, persona_id: state.io.id, nome: state.io.nome,
         cognome: state.io.cognome, nascita: state.io.data_nascita, creato_da: state.io.id });
@@ -52,6 +57,7 @@ export default async function ({ params }) {
   }
 
   disegna(nodi, legami ?? [], (n) => uniti ? (n.alberi?.length > 1) : altrove(n).length > 0);
+  if (!uniti) proponiCollegamenti(nodi, tuttiN ?? [], altrove, nomeAlbero, famiglie.length);
   // zoom: con 30, 50 persone l'albero è largo; si rimpicciolisce, si ingrandisce, si vede tutto
   const svg = document.querySelector("#tela svg");
   const larga = Number(svg.getAttribute("width")), alta = Number(svg.getAttribute("height"));
@@ -69,6 +75,44 @@ export default async function ({ params }) {
   document.querySelectorAll("[data-nodo]").forEach((g) => g.addEventListener("click", () =>
     uniti ? schedaUnita(nodi.find((n) => n.id === g.dataset.nodo), nomeAlbero)
           : scheda(nodi.find((n) => n.id === g.dataset.nodo), nodi, legami ?? [], cerchiaId, { tuttiN: tuttiN ?? [], altrove, nomeAlbero })));
+}
+
+// --- Collegare le famiglie: spiegazione semplice + proposte con un tocco (stesso nome e cognome in un altro albero) ---
+function proponiCollegamenti(nodi, tuttiN, altrove, nomeAlbero, quanteFamiglie) {
+  document.getElementById("come-collega").onclick = () => {
+    const f = document.getElementById("foglio");
+    f.innerHTML = `<div style="position:fixed;inset:0;background:rgba(18,48,44,.45);z-index:20" id="velo"></div>
+      <div class="card" style="position:fixed;left:0;right:0;bottom:0;margin:0;border-radius:24px 24px 0 0;z-index:21;max-height:88vh;overflow:auto;padding-bottom:calc(20px + env(safe-area-inset-bottom))">
+        <div class="riga"><b style="flex:1;font-size:20px;font-family:Fraunces,serif">Come si collegano le famiglie</b><button class="chip" id="chiudi">Chiudi</button></div>
+        <ol style="padding-left:20px;line-height:1.55;margin:10px 0">
+          <li><b>Ogni famiglia ha il suo albero.</b> La tua (con moglie o marito e figli), quella dei tuoi genitori, quella dei suoceri.</li>
+          <li><b>Si collegano da soli</b> quando la stessa persona è in tutti e due: per esempio tu sei nell'albero della tua famiglia e in quello dei tuoi genitori. Se ha un account Ancora, il collegamento è automatico.</li>
+          <li><b>Per chi non ha l'account</b> (i bisnonni, chi non c'è più): se in due alberi ha lo stesso nome, cognome e anno di nascita, si collega da solo. Altrimenti ti propongo io il collegamento qui sopra, o tocca la persona e scegli «È anche in un altro albero?».</li>
+          <li><b>Per vederli tutti insieme</b> tocca «🔗 Tutti uniti» in alto${state.piu ? "" : " (con Ancora+)"}.</li></ol>
+        ${quanteFamiglie > 1 ? "" : `<p class="tenue">Per ora sei in una sola famiglia. Fatti invitare in quella dei tuoi genitori o dei suoceri, oppure creala tu da <a href="#/cerchie">Famiglie e cerchie</a>.</p>`}
+      </div>`;
+    const chiudi = () => { f.innerHTML = ""; };
+    document.getElementById("velo").onclick = chiudi; document.getElementById("chiudi").onclick = chiudi;
+  };
+  // proposte: stesso nome e cognome in un altro albero, non ancora collegati
+  const proposte = [];
+  for (const n of nodi) {
+    if (!n.cognome || altrove(n).length) continue;
+    const gemello = tuttiN.find((x) => x.cerchia_id !== n.cerchia_id && x.cognome
+      && x.nome.trim().toLowerCase() === n.nome.trim().toLowerCase() && x.cognome.trim().toLowerCase() === n.cognome.trim().toLowerCase());
+    if (gemello) proposte.push([n, gemello]);
+  }
+  if (!proposte.length) return;
+  document.getElementById("proposte").innerHTML = `<div class="card" style="margin:0 16px 10px;background:var(--ambra-chiaro);border-color:#EAD2AA">
+    <b>🔗 Sono le stesse persone?</b>
+    ${proposte.slice(0, 5).map(([n, g], i) => `<div class="riga" style="gap:8px;margin-top:8px"><span style="flex:1">${esc(n.nome)} ${esc(n.cognome)} è anche in <b>${esc(nomeAlbero(g.cerchia_id))}</b>?</span>
+      <button class="chip on" data-collega="${i}" style="margin:0">Sì, collega</button></div>`).join("")}</div>`;
+  document.querySelectorAll("[data-collega]").forEach((b) => b.onclick = async () => {
+    const [n, g] = proposte[Number(b.dataset.collega)];
+    const { error } = await sb.from("albero_nodi").update({ collegato_a: g.id }).eq("id", n.id);
+    if (error) { if (!seServePiu(error)) alert("Non collegato: " + error.message); return; }
+    location.reload();
+  });
 }
 
 // --- la stessa persona in più alberi: stesso account, collegata a mano, oppure stesso nome, cognome e anno ---

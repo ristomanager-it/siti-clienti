@@ -1,5 +1,5 @@
 // Regala Ancora: "La storia della tua famiglia". Chi compra riceve un biglietto con un codice; la famiglia la crea chi riceve.
-import { $app, esc, utm } from "../app.js";
+import { $app, esc, utm, state, sb } from "../app.js";
 import { traccia } from "../app.js";
 import { SUPABASE_URL } from "../config.js";
 
@@ -33,7 +33,15 @@ export function montaModulo(el, params = {}) {
           <b style="font-family:Fraunces,serif;font-size:38px">${PREZZO} €</b><span style="font-size:14px">una volta sola</span></div>
         <p style="margin:6px 0 0;font-size:13px">Dopo il primo anno si continua solo se volete, a 99 € l'anno. Tutto quello che avete caricato resta vostro. Copie del libro in più: 35 € l'una.</p>
       </div>
+      <label>Quanti regali?</label>
+      <div class="riga" style="gap:6px;flex-wrap:wrap" id="quanti">
+        <button type="button" class="chip on" data-q="1">1 regalo · ${PREZZO} €</button>
+        <button type="button" class="chip" data-q="3">3 regali · ${PREZZO * 2} € <b style="color:#B3402F">· 3x2</b></button></div>
+      <p class="tenue" id="nota-3x2" hidden style="font-size:14px;margin:6px 0 0">Uno per la tua famiglia, uno per i fratelli, uno per gli amici: ne regali 3, ne paghi 2. Ogni regalo ha il suo biglietto e il suo codice.</p>
       <label for="dest">A chi lo regali?</label><input id="dest" required placeholder="Mamma e papà, Giulia, i nonni…" value="${esc(params.per ?? "")}" maxlength="80">
+      <div id="altri-dest" hidden>
+        <label for="dest2">Il secondo regalo</label><input id="dest2" placeholder="Mio fratello e famiglia (puoi decidere dopo)" maxlength="80">
+        <label for="dest3">Il terzo regalo</label><input id="dest3" placeholder="I miei suoceri (puoi decidere dopo)" maxlength="80"></div>
       <label for="mg">Il tuo messaggio sul biglietto</label>
       <textarea id="mg" rows="3" maxlength="400" placeholder="Raccontiamo la nostra storia, insieme. Buon Natale!"></textarea>
       <label>Quando lo ricevono</label>
@@ -47,11 +55,25 @@ export function montaModulo(el, params = {}) {
       <p class="tenue" style="font-size:14px;margin:4px 0 12px">Dopo il pagamento ricevi subito il biglietto con il codice: lo mandi su WhatsApp il giorno scelto o lo stampi. Chi lo riceve crea la sua famiglia e la costruisce come vuole.</p>
       <label style="display:flex;gap:10px;align-items:flex-start;font-weight:600;margin:0 0 12px"><input type="checkbox" id="termini" required style="width:22px;height:22px;flex-shrink:0">
         <span>Ho letto e accetto le <a href="#/condizioni" target="_blank">condizioni di vendita</a> e l'<a href="#/privacy" target="_blank">informativa privacy</a>.</span></label>
-      <button class="btn ambra">Regala · ${PREZZO} €</button>
+      <button class="btn ambra" id="paga">Regala · ${PREZZO} €</button>
       <p class="tenue" style="text-align:center;font-size:14px">Se il codice non viene usato entro 30 giorni dal giorno scelto, ti rimborsiamo.</p>
       <p id="esito" role="status"></p>
     </form>`;
   const dd = el.querySelector("#dd");
+  let quanti = Number(params.q) === 3 ? 3 : 1;
+  const segnaQuanti = () => {
+    el.querySelectorAll("#quanti .chip").forEach((x) => x.classList.toggle("on", Number(x.dataset.q) === quanti));
+    el.querySelector("#altri-dest").hidden = el.querySelector("#nota-3x2").hidden = quanti !== 3;
+    el.querySelector("#paga").textContent = quanti === 3 ? `Regala 3 · ${PREZZO * 2} € invece di ${PREZZO * 3} €` : `Regala · ${PREZZO} €`;
+    el.querySelector('label[for="dest"]').textContent = quanti === 3 ? "Il primo regalo" : "A chi lo regali?";
+  };
+  el.querySelectorAll("#quanti .chip").forEach((b) => b.onclick = () => { quanti = Number(b.dataset.q); segnaQuanti(); });
+  segnaQuanti();
+  // chi è già su Ancora non riscrive nome ed email
+  if (state.io) {
+    el.querySelector("#an").value = [state.io.nome, state.io.cognome].filter(Boolean).join(" ");
+    sb.auth.getUser().then(({ data }) => { if (data?.user?.email && !el.querySelector("#ae").value) el.querySelector("#ae").value = data.user.email; });
+  }
   el.querySelectorAll("#quando .chip").forEach((b) => b.onclick = () => {
     el.querySelectorAll("#quando .chip").forEach((x) => x.classList.toggle("on", x === b));
     dd.hidden = !!b.dataset.d; if (b.dataset.d) dd.value = b.dataset.d; else dd.focus();
@@ -67,6 +89,7 @@ export function montaModulo(el, params = {}) {
       const res = await fetch(`${SUPABASE_URL}/functions/v1/crea-checkout`, {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ tipo: "regalo", utm: utm(), termini: el.querySelector("#termini").checked,
+          quantita: quanti, destinatari: quanti === 3 ? [v("dest2"), v("dest3")] : [],
           destinatario_nome: v("dest"), messaggio: v("mg") || null, data_invio: dd.value, acquirente_nome: v("an"), acquirente_email: v("ae") }),
       });
       const j = await res.json();

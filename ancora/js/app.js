@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "94";
+const VER = "95";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 const ROTTE = {
@@ -48,6 +48,7 @@ const ROTTE = {
   "libro": () => import(`./views/libro.js?v=${VER}`),
   "film": () => import(`./views/film.js?v=${VER}`),
   "assistenza": () => import(`./views/assistenza.js?v=${VER}`),
+  "albero-veloce": () => import(`./views/albero-veloce.js?v=${VER}`),
   "archivio": () => import(`./views/archivio.js?v=${VER}`),
   "settimana": () => import(`./views/settimana.js?v=${VER}`),
   "servizi": () => import(`./views/servizi.js?v=${VER}`),
@@ -293,8 +294,33 @@ function eta() {
   const n = new Date(d), o = new Date();
   return o.getFullYear() - n.getFullYear() - (o < new Date(o.getFullYear(), n.getMonth(), n.getDate()) ? 1 : 0);
 }
+function ricordaRegalo() {
+  const oggi = new Date();
+  if (!state.piu || oggi.getMonth() !== 11 || oggi.getDate() > 23 || document.querySelector("#foglio-piu, #schermata-home, #banner-cookie, [role=dialog]")) return;
+  let st = { volte: 0, ultima: 0 }; try { st = JSON.parse(localStorage.getItem("ancora_ricorda_regalo") ?? "null") ?? st; } catch { /* niente */ }
+  if (st.volte >= 3 || Date.now() - st.ultima < 7 * 86400_000) return;
+  try { localStorage.setItem("ancora_ricorda_regalo", JSON.stringify({ volte: st.volte + 1, ultima: Date.now() })); } catch { /* niente */ }
+  const d = document.createElement("div");
+  d.id = "foglio-piu";
+  d.innerHTML = `<div data-chiudi style="position:fixed;inset:0;background:rgba(18,48,44,.6);z-index:55"></div>
+    <div role="dialog" aria-label="Regala Ancora" style="position:fixed;left:16px;right:16px;top:50%;transform:translateY(-50%);max-width:440px;max-height:92vh;overflow:auto;margin:0 auto;z-index:56;background:#12302C;color:#FBF3E2;border-radius:24px;box-shadow:0 20px 50px rgba(0,0,0,.35)">
+      <div style="position:relative;aspect-ratio:900/560;background:#2F5A55 url('img/promo/nonna-nipote.jpg') center/cover">
+        <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(18,48,44,0) 45%,#12302C)"></div>
+        <button data-chiudi aria-label="Chiudi" style="position:absolute;top:10px;right:10px;width:38px;height:38px;border-radius:19px;border:0;background:rgba(0,0,0,.35);color:#fff;font-size:17px">✕</button></div>
+      <div style="padding:4px 22px 22px">
+        <p style="margin:0 0 6px;font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#E7C48A">Un regalo di Natale che resta</p>
+        <b style="display:block;font-family:Fraunces,serif;font-size:26px;line-height:1.12;margin-bottom:10px;color:#fff">La storia della loro famiglia, da regalare.</b>
+        <p style="margin:0 0 16px;line-height:1.5;color:#F3E6D2">Ai tuoi fratelli, ai suoceri, agli amici di sempre: un anno di Ancora+ per tutta la loro famiglia, il libro a fine anno e il film. Il biglietto arriva il giorno che scegli.</p>
+        <a class="btn ambra" href="#/regala?q=3">3 regali al prezzo di 2 · 198 €</a>
+        <a class="btn" href="#/regala" style="margin-top:8px;background:transparent;border:1.5px solid rgba(255,255,255,.35);color:#fff">Un regalo · 99 €</a>
+        <button data-chiudi style="display:block;margin:12px auto 0;border:0;background:none;color:#CFC3AE;font-weight:700">Più tardi</button></div>
+    </div>`;
+  document.body.appendChild(d);
+  d.querySelectorAll("[data-chiudi], a").forEach((x) => x.addEventListener("click", () => d.remove()));
+}
 function ricordaPiu() {
-  if (state.piu || !state.io || document.querySelector("#foglio-piu, #schermata-home, #banner-cookie, [role=dialog]")) return;
+  if (state.piu) return ricordaRegalo();
+  if (!state.io || document.querySelector("#foglio-piu, #schermata-home, #banner-cookie, [role=dialog]")) return;
   if (state.io.creato_il && Date.now() - new Date(state.io.creato_il).getTime() < 2 * 86400_000) return;
   const adulto = (eta() ?? 0) >= 50;
   const ogni = adulto ? 7 : 14, max = adulto ? 8 : 4;
@@ -486,7 +512,7 @@ function vociMenu() {
     ["La famiglia", [["#/calendario", "Calendario"], ["#/liste", "Liste e desideri"], ["#/spese", "Spese"], ["#/album", "Album degli eventi"], ["#/domande", "Domande per te"], ["#/albero", "L'albero"], ["#/cerchie", "Famiglie e cerchie"]]],
     ["I miei ricordi", [["#/archivio", "Il cloud dei ricordi"], ["#/racconta", "Racconta"], ["#/racconta?lettera=1", "Una lettera per più avanti"], ["#/diario", "Il diario"], ["#/ricette", "Il ricettario"], [`#/libro/${state.io.id}`, "Il mio libro"], ["#/libro?famiglia=", "Il libro della famiglia"], ["#/film", "Il film dell'anno"]]],
     ["Agenda", [["vacanze", "Vacanze"], ["compiti", "Compiti"], ["esami", "Esami"]].filter(([k]) => attivi(k)).map(([k, t]) => [`#/agenda?t=${k}`, t])],
-    ["Il mio account", [["#/invita", "Invita un amico · +1 GB"], ["#/profilo", "Profilo e impostazioni"], ["#/piano", "Il piano"], ["#/servizi", "Servizi"], ["#/omaggio", "Codice omaggio"], ["#/istruzioni", "Istruzioni"], ["#/assistenza", "Assistenza · scrivici"]]],
+    ["Il mio account", [["#/invita", "Invita un amico · +1 GB"], ["#/profilo", "Profilo e impostazioni"], ["#/piano", "Il piano"], ["#/servizi", "Servizi"], ["#/regala", "Regala Ancora"], ["#/omaggio", "Codice omaggio"], ["#/istruzioni", "Istruzioni"], ["#/assistenza", "Assistenza · scrivici"]]],
   ].filter(([, v]) => v.length);
 }
 
@@ -521,7 +547,10 @@ function apriMenu() {
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">${avatar(state.io, 40)}
         <b style="flex:1;font-size:17px">${esc(nomeDi(state.io))}</b>
         <button data-chiudi aria-label="Chiudi" style="width:40px;height:40px;border-radius:20px;border:0;background:#EFE8DC;font-size:18px;cursor:pointer">✕</button></div>
-      ${state.piu ? `<div style="display:inline-block;margin-top:2px;padding:5px 12px;border-radius:999px;background:#E3EDE2;color:#2F5A3A;font-weight:800;font-size:13px">Ancora<span style="color:#C9832E">+</span> attivo ✓</div>`
+      ${state.piu ? `<div style="display:inline-block;margin-top:2px;padding:5px 12px;border-radius:999px;background:#E3EDE2;color:#2F5A3A;font-weight:800;font-size:13px">Ancora<span style="color:#C9832E">+</span> attivo ✓</div>
+        <a href="#/regala" style="display:block;margin-top:10px;border-radius:16px;padding:14px 16px;background:linear-gradient(135deg,#8E2F22,#B3402F);color:#FBF3E2;text-decoration:none">
+          <b style="font-family:Fraunces,serif;font-size:19px">🎁 Regalalo a un'altra famiglia</b>
+          <span style="display:block;font-size:14px;opacity:.92;margin-top:2px">Ai tuoi fratelli, ai suoceri, agli amici: la storia della loro famiglia, con il libro. 99 €, oppure 3 regali al prezzo di 2.</span></a>`
         : `<button id="menu-piu" style="display:block;width:100%;text-align:left;margin-top:10px;border:0;cursor:pointer;border-radius:16px;padding:14px 16px;background:linear-gradient(135deg,#12302C,#2F5A55);color:#FBF3E2">
           <b style="font-family:Fraunces,serif;font-size:20px">Scopri Ancora<span style="color:#E7C48A">+</span></b>
           <span style="display:block;font-size:14px;opacity:.9;margin-top:2px">Il libro e il film della famiglia, l'albero senza limiti, le storie e i consigli di ognuno sempre lì. Basta uno, e lo hanno tutti.</span></button>`}

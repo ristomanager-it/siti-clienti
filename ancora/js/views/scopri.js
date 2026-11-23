@@ -70,7 +70,7 @@ const foto = (src, alt, alta = 300, posizione = "center") =>
 export default async function ({ params } = {}) {
   $app().innerHTML = `
     <a href="#acquista" class="vai-acquista" style="display:block;background:${C.rosso};color:${C.panna};text-align:center;font-weight:800;font-size:14px;padding:10px 14px;text-decoration:none;letter-spacing:.02em">
-      🎄 La storia della tua famiglia · <s>129 €</s> 99 € fino a Natale · <u>Regala</u></a>
+      🎄 La storia della tua famiglia · 99 € · <b>3x2</b> fino a Natale · <u>Regala</u></a>
     <div style="position:relative">
     ${testataPubblica({ trasparente: true })}
 
@@ -141,7 +141,7 @@ export default async function ({ params } = {}) {
         </ul>
         <div style="padding:10px 20px 20px">
           <a href="#acquista" class="btn vai-acquista" style="background:${C.oro};color:${C.notte}">Regalala · 99 €</a>
-          <p class="tenue" style="margin:10px 0 0;text-align:center;font-size:13px">Chi la riceve crea la sua famiglia e la costruisce come vuole. Arriva il giorno che scegli. Prezzo di lancio fino al 25 dicembre, poi 129 €.</p>
+          <p class="tenue" style="margin:10px 0 0;text-align:center;font-size:13px"><b style="color:#B3402F">3x2: ne regali 3, ne paghi 2 (198 €).</b> Chi la riceve crea la sua famiglia e la costruisce come vuole. Arriva il giorno che scegli. Prezzo di lancio fino al 25 dicembre, poi 129 €.</p>
         </div>
       </div>
     </section>

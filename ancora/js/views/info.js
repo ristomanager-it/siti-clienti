@@ -160,7 +160,7 @@ export async function condizioni() {
     ${h("1. Chi vende")}
     <p>${esc(AZIENDA.nome)}, ${esc(AZIENDA.sede)}${AZIENDA.piva ? `, P.IVA ${esc(AZIENDA.piva)}` : ", in qualità di privato (vendita occasionale)"} («Ancora»).</p>
     ${h("2. Cosa compri")}
-    <p><b>«La storia della tua famiglia» (129 €, prezzo di lancio 99 € fino al 25 dicembre 2026):</b> un biglietto con un codice personale. Chi lo riceve crea il suo account e la sua famiglia e attiva il codice: 12 mesi di Ancora+ per la sua famiglia dal giorno dell'attivazione, un libro a colori con copertina rigida delle storie dell'anno (con i QR per ascoltare le voci e la versione PDF), spedito in Italia a fine anno, e il film dell'anno da creare nell'app. Il codice si attiva una sola volta.<br>
+    <p><b>«La storia della tua famiglia» (129 €, prezzo di lancio 99 € fino al 25 dicembre 2026):</b> un biglietto con un codice personale. Chi lo riceve crea il suo account e la sua famiglia e attiva il codice: 12 mesi di Ancora+ per la sua famiglia dal giorno dell'attivazione, un libro a colori con copertina rigida delle storie dell'anno (con i QR per ascoltare le voci e la versione PDF), spedito in Italia a fine anno, e il film dell'anno da creare nell'app. Il codice si attiva una sola volta. Con l'offerta 3x2 (fino al 25 dicembre 2026) acquisti tre regali al prezzo di due: ricevi tre codici, ognuno vale per una famiglia diversa.<br>
     <b>Ancora+:</b> 99 € l'anno o 9,99 € al mese, con rinnovo automatico finché non lo disdici.<br>
     <b>Servizi:</b> libro stampato (49 € b/n, 69 € a colori), narratore in più (1,99 €/mese), spazio +100 GB (2,99 €/mese).<br>
     Prezzi IVA inclusa.</p>
