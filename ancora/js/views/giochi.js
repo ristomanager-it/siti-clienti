@@ -6,6 +6,7 @@ const GIOCHI = [
   { icona: "🃏", nome: "Briscola", testo: "A 2, a 4 a coppie e a 5 chiamata, con le carte napoletane. Segni al compagno e chat al tavolo; se manca qualcuno gioca il telefono.", link: "#/briscola", pronto: true },
   { icona: "🂡", nome: "Tressette", testo: "A 4 a coppie o a 2, con le napoletane. Busso, striscio e volo al compagno; se manca qualcuno gioca il telefono.", link: "#/tressette", pronto: true },
   { icona: "🎱", nome: "Biliardo", testo: "Palla 8 con le buche: piene contro spezzate, vince chi imbuca la nera. Contro il telefono o sfidando un parente, anche da casa sua.", link: "#/biliardo", pronto: true },
+  { icona: "🏎️", nome: "Corse", testo: "In 3D, con tre visuali: da dietro, dal cofano, dall'alto. Contro il telefono, sul giro veloce con la classifica del gruppo, o in gara dal vivo fino a 6.", link: "#/auto", pronto: true },
   { icona: "⚽", nome: "Calciobalilla", testo: "Uno contro uno o due contro due. Il campo sul televisore e i telefoni come manopole, oppure ognuno da casa sua.", link: "#/calcio", pronto: true },
   { icona: "♟️", nome: "Dama e scacchi", testo: "Una mossa la mattina, una la sera: il nonno contro il nipote.", pronto: false },
   { icona: "🏠", piu: true, nome: "Il gioco della famiglia", testo: "Compra la casa della nonna e il mare del 2019: il tabellone lo rinominate voi, con i vostri posti e le vostre carte.", link: "#/tabellone", pronto: true },

@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "150";
+const VER = "151";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 const ROTTE = {
@@ -59,6 +59,7 @@ const ROTTE = {
   "biliardo": () => import(`./views/biliardo.js?v=${VER}`),
   "tavolo": () => import(`./views/tavolo.js?v=${VER}`),
   "calcio": () => import(`./views/calcio.js?v=${VER}`),
+  "auto": () => import(`./views/auto.js?v=${VER}`),
   "tabellone": () => import(`./views/tabellone.js?v=${VER}`),
   "assistenza": () => import(`./views/assistenza.js?v=${VER}`),
   "albero-veloce": () => import(`./views/albero-veloce.js?v=${VER}`),
@@ -247,7 +248,7 @@ async function render() {
   const vista = await carica();
   $app().innerHTML = "";
   // arrivato da un invito a giocare: appena al tavolo, gli chiediamo di salvare Ancora sulla schermata Home (per gli inviti e le notifiche)
-  if (["briscola", "tressette", "biliardo", "calcio", "tombola", "stop"].includes(nome)) {
+  if (["briscola", "tressette", "biliardo", "calcio", "tombola", "stop", "auto"].includes(nome)) {
     let dopoTavolo = false; try { dopoTavolo = sessionStorage.getItem("ancora_dopo_tavolo") === "1"; sessionStorage.removeItem("ancora_dopo_tavolo"); } catch { /* niente */ }
     if (dopoTavolo) setTimeout(() => invitoSchermataHome(true), 2500);
   }
