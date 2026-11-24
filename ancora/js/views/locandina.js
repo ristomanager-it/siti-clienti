@@ -32,13 +32,13 @@ export default async function ({ params } = {}) {
         <div><b>Inquadra con la fotocamera</b><br>e crea la tua famiglia.<br><span>È gratis, senza carta di credito.</span></div></div>
     </div>`;
   const stile = `
-    .loc{background:#FBF3E2;color:#12302C;font-family:Nunito,system-ui,sans-serif;padding:14mm 14mm 12mm;border-radius:6px;aspect-ratio:210/297;box-sizing:border-box;display:flex;flex-direction:column}
+    .loc{background:#FBF3E2;color:#12302C;font-family:Nunito,system-ui,sans-serif;padding:22px 20px;border-radius:14px;box-sizing:border-box;display:flex;flex-direction:column}
     .loc-marchio{font-family:Fraunces,Georgia,serif;font-weight:700;font-size:26px;color:#B5652E}
-    .loc h1{font-family:Fraunces,Georgia,serif;font-size:40px;line-height:1.1;margin:8mm 0 4mm}
+    .loc h1{font-family:Fraunces,Georgia,serif;font-size:32px;line-height:1.1;margin:14px 0 8px}
     .loc-sotto{font-size:17px;line-height:1.45;margin:0}
-    .loc ul{list-style:none;padding:0;margin:8mm 0;font-size:18px;line-height:1.9;font-weight:700}
-    .loc-qr{margin-top:auto;display:flex;gap:6mm;align-items:center;background:#fff;border-radius:4mm;padding:5mm;font-size:17px;line-height:1.4}
-    .loc-qr span{color:#5b6b66;font-size:14px}.loc-codice{width:42mm;height:42mm;flex-shrink:0}`;
+    .loc ul{list-style:none;padding:0;margin:16px 0;font-size:18px;line-height:1.9;font-weight:700}
+    .loc-qr{margin-top:auto;display:flex;gap:14px;align-items:center;background:#fff;border-radius:12px;padding:12px;font-size:17px;line-height:1.4}
+    .loc-qr span{color:#5b6b66;font-size:14px}.loc-codice{width:120px;height:120px;flex-shrink:0}`;
 
   $app().innerHTML = `
     <header class="testa"><a class="icona" href="#/" aria-label="Indietro">${ICONE.indietro}</a><b style="flex:1">Porta Ancora fuori casa</b></header>
@@ -53,7 +53,7 @@ export default async function ({ params } = {}) {
   document.getElementById("stampa").onclick = () => {
     const w = open("", "_blank");
     w.document.write(`<html><head><title>Ancora</title><link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@700&family=Nunito:wght@500;700&display=swap" rel="stylesheet">
-      <style>@page{size:A4;margin:0}body{margin:0}${stile}.loc{width:210mm;height:297mm;border-radius:0;aspect-ratio:auto}.loc h1{font-size:56px}.loc-sotto{font-size:22px}.loc ul{font-size:24px}.loc-qr{font-size:22px}.loc-codice{width:60mm;height:60mm}</style></head>
+      <style>@page{size:A4;margin:0}body{margin:0}${stile}.loc{width:210mm;height:297mm;border-radius:0;padding:18mm 16mm 14mm}.loc h1{margin:12mm 0 6mm}.loc ul{margin:12mm 0}.loc-qr{padding:6mm;gap:8mm;border-radius:5mm}.loc h1{font-size:56px}.loc-sotto{font-size:22px}.loc ul{font-size:24px}.loc-qr{font-size:22px}.loc-codice{width:60mm;height:60mm}</style></head>
       <body>${foglio}<script>setTimeout(()=>print(),900)<\/script></body></html>`);
     w.document.close();
   };
