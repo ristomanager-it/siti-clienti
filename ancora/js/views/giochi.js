@@ -20,6 +20,8 @@ export default async function ({ params } = {}) {
     <div class="pad" style="padding-bottom:120px">
       <p class="tenue" style="margin-top:0">Si gioca tra voi, anche da case diverse. Con chi giochi?</p>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin:0 0 16px">${state.cerchie.map((c) => `<a href="#/giochi?c=${c.id}" class="chip ${c.id === fam?.id ? "on" : ""}" style="margin:0;text-decoration:none">${esc(c.nome)}</a>`).join("")}</div>
+      ${fam ? `<a href="#/tornei?c=${fam.id}" class="card" style="display:flex;gap:14px;align-items:center;margin:0 0 16px;text-decoration:none;color:#FBF3E2;background:#12302C;border-color:#12302C">
+        <span style="font-size:36px">🏆</span><span style="flex:1"><b style="display:block;font-size:18px">Campionati e tornei</b><span style="opacity:.85;font-size:14px">Fate il vostro campionato o torneo di ${esc(fam.nome)}: classifica e tabellone si aggiornano da soli.</span></span><span style="font-size:22px">›</span></a>` : ""}
       ${GIOCHI.map((g) => `<${g.pronto ? `a href="${g.link}${fam ? `?c=${fam.id}` : ""}"` : "div"} class="card" style="display:flex;gap:14px;align-items:center;margin:0 0 12px;text-decoration:none;color:inherit;${g.pronto ? "" : "opacity:.6"}">
         <span style="font-size:36px" aria-hidden="true">${g.icona}</span>
         <span style="flex:1"><b style="display:block;font-size:18px">${g.nome}${g.piu ? ` <small style="font-size:12px;background:#E8B56B;color:#fff;border-radius:8px;padding:1px 6px;vertical-align:middle">Ancora+</small>` : ` <small style="font-size:12px;background:#E1F5EE;color:#085041;border-radius:8px;padding:1px 6px;vertical-align:middle">gratis</small>`}</b><span class="tenue">${g.testo}</span></span>

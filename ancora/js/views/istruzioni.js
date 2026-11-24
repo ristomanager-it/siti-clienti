@@ -6,6 +6,7 @@ import { $app, esc } from "../app.js";
 const AGGIORNATE = "24 novembre 2026";
 
 const NOVITA = [
+  ["24 novembre 2026 · sera", "Le corse in 3D (tre visuali, giro veloce con classifica, gara dal vivo fino a 6), i campionati e i tornei del gruppo, il calciobalilla con due pollici e il biliardo a schermo intero."],
   ["24 novembre 2026", "Biliardo e calciobalilla (anche col campo sul televisore). Ai tavoli ci si parla dal vivo con 🎙️ Parla. Gli inviti a giocare compaiono anche in home. Cartoline dei ricordi da mandare su WhatsApp, l'album della festa per gli invitati, la locandina col tuo codice e i premi per chi porta famiglie su Ancora."],
   ["22 novembre 2026 · sera tardi", "Storie: in basso «👁 Vista da…» con chi l'ha vista e come ha reagito; ⋯ in alto per eliminarle (le storie non si modificano: si rifanno). Il numerino rosso sull'icona di Ancora segna i messaggi non letti."],
   ["23 novembre 2026", "L'aiutante della famiglia: il nome lo scegliete voi. L'albero in 2 minuti (mamma, papà, nonni, figli in una pagina) e le famiglie che si collegano con un tocco. Il film dell'anno e il libro della famiglia. La chat Assistenza nel menu. Regala Ancora anche a un'altra famiglia, con il 3x2. La pagina di vendita nella lingua del telefono."],
@@ -76,6 +77,9 @@ const SEZIONI = [
   ["notifiche", "Le notifiche (e la schermata Home)", `
     <p>Prima metti Ancora sulla schermata Home (vedi sopra): su iPhone le notifiche arrivano solo così. Poi apri Ancora dall'icona e, dal <b>Profilo</b>, alla voce <b>Notifiche</b> tocca <b>Attiva</b> (o dal riquadro di benvenuto).</p>
     <p>Ti arrivano gli inviti ai tavoli, i messaggi, le foto e le domande della famiglia. Gli inviti a giocare li trovi anche in home, nella fascia «Ti aspettano al tavolo».</p>`],
+  ["tornei", "Campionati e tornei", `
+    <p>Da <b>🎲 Giochi</b> → <b>🏆 Campionati e tornei</b>: scegli il gioco (briscola, tressette, biliardo, calciobalilla, corse), chi partecipa e la formula. <b>Campionato</b>: tutti contro tutti, 3 punti a chi vince e 1 a testa se si pareggia; nelle corse si fanno più gare con i punti della Formula 1. <b>Torneo</b>: tabellone a sorteggio, chi perde esce fino alla finale.</p>
+    <p>Quando tocca a te trovi la sfida in home: premi <b>Gioca ora</b> e la partita si apre con l'avversario già seduto (gli arriva la notifica). A fine partita il risultato entra da solo nella classifica o nel tabellone, e il gruppo riceve l'avviso.</p>`],
   ["voce", "Parlarsi ai tavoli", `
     <p>In ogni gioco, in basso, c'è <b>🎙️ Parla</b>: chi lo preme entra nella voce del tavolo e si sente con gli altri, come in una chiamata. 🔇 per il muto, ✕ per uscire. La prima volta il telefono chiede il permesso del microfono. L'audio va diretto da telefono a telefono.</p>`],
   ["premi", "Invita e guadagna Ancora+", `

@@ -528,6 +528,14 @@ async function tavoliAperti() {
     const seduto = posti.some((x) => x?.persona_id === io);
     if (f.stato === "attesa" || seduto) righe.push([`#/tabellone?id=${f.id}`, "🏠", seduto ? "La tua partita al gioco della famiglia" : `${esc(nomeDi2(posti, f.creato_da))} gioca al gioco della famiglia`, esc(gruppo(f.cerchia_id)), seduto ? "Torna" : "Entra"]);
   }
+  // le sfide dei campionati e dei tornei che toccano a me
+  const { data: sfide } = await sb.from("tornei_incontri").select("id, a, b, turno, stato, partita_id, tornei!inner(id, nome, gioco, stato, partecipanti)")
+    .or(`a.eq.${io},b.eq.${io}`).in("stato", ["da_giocare", "in_corso"]).eq("tornei.stato", "in_corso").limit(5);
+  for (const x of sfide ?? []) {
+    const t = x.tornei, altro = x.a === io ? x.b : x.a; if (!altro) continue;
+    const nomeAltro = t.partecipanti.find((p) => p.persona_id === altro)?.nome ?? "?";
+    righe.push([`#/tornei?id=${t.id}`, "🏆", `${esc(t.nome)}: tocca a te contro ${esc(nomeAltro)}`, x.stato === "in_corso" ? "la partita è aperta" : "sfida da giocare", "Gioca"]);
+  }
   if (!righe.length) return;
   const chip = document.getElementById("chip-giochi");
   if (chip) chip.innerHTML = `🎲 Giochi <span style="display:inline-grid;place-items:center;min-width:20px;height:20px;border-radius:10px;background:#C8102E;color:#fff;font-size:12px;font-weight:800;margin-left:4px;padding:0 5px">${righe.length}</span>`;
