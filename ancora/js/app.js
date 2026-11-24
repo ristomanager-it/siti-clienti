@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "118";
+const VER = "119";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 const ROTTE = {
@@ -705,10 +705,33 @@ setTimeout(aggiornaBadgeChat, 2500);
 /** Crea un invito per una famiglia/gruppo e apre la condivisione (WhatsApp o il menu del telefono). */
 export async function invitaInCerchia(cerchiaId) {
   const c = state.cerchie.find((x) => x.id === cerchiaId);
-  const { data: inv, error } = await sb.from("inviti").insert({ invitato_da: state.io.id, cerchia_id: cerchiaId }).select("codice").single();
-  if (error) { alert("Invito non creato: " + error.message); return; }
-  const link = `${location.origin}${location.pathname}#/iscriviti?invito=${inv.codice}`;
-  const testo = `Ti ho preparato un posto in "${c?.nome ?? "Ancora"}" su Ancora.\n\nÈ come un social, ma solo per noi: foto, storie, vocali e chat, senza pubblicità e senza estranei. Le cose belle restano in ordine invece di perdersi nella chat. È gratis.\n\nEntra da qui: ${link}`;
+  // si sceglie: un link per tutto un gruppo WhatsApp (vale per tanti) o un invito per una persona
+  const scelta = await new Promise((ok) => {
+    const f = document.createElement("div");
+    f.style.cssText = "position:fixed;inset:0;z-index:80;background:rgba(0,0,0,.4);display:flex;align-items:flex-end";
+    f.innerHTML = `<div style="background:#FBF8F2;width:100%;max-width:720px;margin:0 auto;border-radius:22px 22px 0 0;padding:20px 16px calc(20px + env(safe-area-inset-bottom))">
+      <b style="font-size:20px;display:block;margin-bottom:12px">Invita in ${esc(c?.nome ?? "Ancora")}</b>
+      <button class="btn ambra" data-s="gruppo" style="text-align:left">📣 Un link per tutto un gruppo<br><small style="font-weight:500">Lo mandi una volta nella chat WhatsApp della famiglia e ognuno entra (fino a 30, vale 14 giorni)</small></button>
+      <button class="btn chiaro" data-s="uno" style="margin-top:10px;text-align:left">👤 Una persona sola<br><small style="font-weight:500">Un invito personale, vale per chi lo apre per primo</small></button>
+      <button class="btn chiaro" data-s="" style="margin-top:10px">Annulla</button></div>`;
+    f.onclick = (e) => { const b = e.target.closest("[data-s]"); if (b || e.target === f) { f.remove(); ok(b?.dataset.s ?? ""); } };
+    document.body.appendChild(f);
+  });
+  if (!scelta) return;
+  let codice;
+  if (scelta === "gruppo") {
+    const { data, error } = await sb.rpc("invito_di_gruppo", { p_cerchia: cerchiaId });
+    if (error) { alert("Invito non creato: " + error.message); return; }
+    codice = data;
+  } else {
+    const { data: inv, error } = await sb.from("inviti").insert({ invitato_da: state.io.id, cerchia_id: cerchiaId }).select("codice").single();
+    if (error) { alert("Invito non creato: " + error.message); return; }
+    codice = inv.codice;
+  }
+  const link = `${location.origin}${location.pathname}#/iscriviti?invito=${codice}`;
+  const testo = scelta === "gruppo"
+    ? `Vi ho preparato un posto in "${c?.nome ?? "Ancora"}" su Ancora.\n\nÈ come un social, ma solo per noi: foto, storie, vocali e chat, senza pubblicità e senza estranei. Le cose belle restano in ordine invece di perdersi nella chat. È gratis.\n\nEntrate tutti da qui (ognuno col suo telefono): ${link}`
+    : `Ti ho preparato un posto in "${c?.nome ?? "Ancora"}" su Ancora.\n\nÈ come un social, ma solo per noi: foto, storie, vocali e chat, senza pubblicità e senza estranei. Le cose belle restano in ordine invece di perdersi nella chat. È gratis.\n\nEntra da qui: ${link}`;
   try { if (navigator.share) { await navigator.share({ title: c?.nome ?? "Ancora", text: testo }); return; } } catch { return; }
   window.open(`https://wa.me/?text=${encodeURIComponent(testo)}`, "_blank");
 }
