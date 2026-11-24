@@ -109,7 +109,7 @@ export default async function ({ params }) {
       const natale = (m === 10 && g >= 20) || m === 11 || (m === 0 && g <= 6);
       const tasti = [...(natale ? [[`#/tombola?c=${fam.id}`, "🎄 Tombola"]] : []), ["#/giochi", "🎲 Giochi"], ["#/calendario", "📅 Calendario"], ["#/liste", "📝 Liste"], ["#/ricette", "🍝 Ricette"]];
       return `<nav aria-label="Scorciatoie" style="display:flex;gap:8px;overflow-x:auto;padding:0 16px 14px;scrollbar-width:none">${tasti.map(([h, t]) =>
-        `<a href="${h}" class="chip" style="margin:0;white-space:nowrap;text-decoration:none;flex-shrink:0">${t}</a>`).join("")}</nav>`;
+        `<a href="${h}" class="chip" ${h === "#/giochi" ? 'id="chip-giochi"' : ""} style="margin:0;white-space:nowrap;text-decoration:none;flex-shrink:0">${t}</a>`).join("")}</nav><div id="tavoli-aperti"></div>`;
     })() : ""}
     ${(() => {
       // prima i post; la domanda della settimana e gli inviti a raccontare arrivano dopo i primi due
@@ -119,6 +119,7 @@ export default async function ({ params }) {
       return posts.slice(0, 2).join("") + extra + posts.slice(2).join("");
     })()}`;
   perChiConta();
+  tavoliAperti();
   collegaStorie(perPersona, url, filtro);
   document.querySelectorAll("[data-invita]").forEach((b) => b.onclick = () => invitaInCerchia(b.dataset.invita));
   document.querySelectorAll("input[data-img]").forEach((i) => i.onchange = async () => {
@@ -493,3 +494,43 @@ function controllaNovita(ultimo, filtro) {
 
 // la parte da guardare di una storia (la musica è un media in più)
 function visivo(r) { return (r.ricordi_media ?? []).find((m) => m.tipo === "foto" || m.tipo === "video") ?? r.ricordi_media?.[0]; }
+
+// "Ti aspettano al tavolo": gli inviti ai giochi si vedono anche dentro l'app, non solo come notifica sul telefono
+async function tavoliAperti() {
+  const box = document.getElementById("tavoli-aperti"); if (!box || !state.io) return;
+  const ids = state.cerchie.map((c) => c.id); if (!ids.length) return;
+  const da = new Date(Date.now() - 8 * 3600e3).toISOString();
+  const [{ data: carte }, { data: tomb }, { data: tab }] = await Promise.all([
+    sb.from("partite").select("id, gioco, n, posti, stato, creato_da, cerchia_id").in("cerchia_id", ids).in("stato", ["attesa", "in_corso"]).gte("aggiornata_il", da).order("creata_il", { ascending: false }).limit(10),
+    sb.from("tombole").select("id, stato, banco_id, cerchia_id, programmata_il, persone:banco_id(nome, soprannome)").in("cerchia_id", ids).in("stato", ["attesa", "in_corso"]).gte("creata_il", new Date(Date.now() - 2 * 864e5).toISOString()).limit(5),
+    sb.from("famiglia_partite").select("id, stato, posti, creato_da, cerchia_id").in("cerchia_id", ids).in("stato", ["attesa", "in_corso"]).gte("aggiornata_il", da).limit(5),
+  ]);
+  const io = state.io.id, gruppo = (id) => state.cerchie.find((c) => c.id === id)?.nome ?? "";
+  const nomeDi2 = (posti, pid) => posti?.find?.((x) => x.persona_id === pid)?.nome ?? "Qualcuno";
+  const NOMI = { briscola: ["🃏", "a briscola"], tressette: ["🂡", "a tressette"], biliardo: ["🎱", "a biliardo"], calcio: ["⚽", "a calciobalilla"], stop: ["🃏", "a Stop"] };
+  const righe = [];
+  for (const p of carte ?? []) {
+    const seduto = p.posti.some((x) => x.persona_id === io), liberi = p.posti.filter((x) => !x.persona_id).length;
+    const [ic, cosa] = NOMI[p.gioco] ?? ["🎲", "a giocare"];
+    if (p.stato === "attesa" && !seduto && liberi) righe.push([`#/${p.gioco}?id=${p.id}`, ic, `${esc(nomeDi2(p.posti, p.creato_da))} ti invita ${cosa}`, `${liberi} ${liberi === 1 ? "posto libero" : "posti liberi"} · ${esc(gruppo(p.cerchia_id))}`, "Siediti"]);
+    else if (seduto) righe.push([`#/${p.gioco}?id=${p.id}`, ic, `La tua partita ${cosa}`, p.stato === "attesa" ? "si aspettano gli altri" : "in corso", "Torna al tavolo"]);
+  }
+  for (const t of tomb ?? []) {
+    const banco = t.persone?.soprannome || t.persone?.nome || "Qualcuno";
+    const quando = t.programmata_il && new Date(t.programmata_il) > new Date() ? `alle ${new Date(t.programmata_il).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })} del ${new Date(t.programmata_il).toLocaleDateString("it-IT", { day: "numeric", month: "short" })}` : t.stato === "in_corso" ? "si sta giocando" : "prendi le cartelle";
+    righe.push([`#/tombola?id=${t.id}`, "🎄", t.banco_id === io ? "La tua tombola" : `${esc(banco)} fa la tombola`, `${quando} · ${esc(gruppo(t.cerchia_id))}`, "Entra"]);
+  }
+  for (const f of tab ?? []) {
+    const posti = Array.isArray(f.posti) ? f.posti : [];
+    const seduto = posti.some((x) => x?.persona_id === io);
+    if (f.stato === "attesa" || seduto) righe.push([`#/tabellone?id=${f.id}`, "🏠", seduto ? "La tua partita al gioco della famiglia" : `${esc(nomeDi2(posti, f.creato_da))} gioca al gioco della famiglia`, esc(gruppo(f.cerchia_id)), seduto ? "Torna" : "Entra"]);
+  }
+  if (!righe.length) return;
+  const chip = document.getElementById("chip-giochi");
+  if (chip) chip.innerHTML = `🎲 Giochi <span style="display:inline-grid;place-items:center;min-width:20px;height:20px;border-radius:10px;background:#C8102E;color:#fff;font-size:12px;font-weight:800;margin-left:4px;padding:0 5px">${righe.length}</span>`;
+  box.innerHTML = `<div style="margin:0 16px 14px;border-radius:16px;background:#12302C;color:#FBF3E2;overflow:hidden">
+    ${righe.slice(0, 3).map(([h, ic, tit, sotto, az], i) => `<a href="${h}" style="display:flex;align-items:center;gap:10px;padding:10px 12px;color:inherit;text-decoration:none;${i ? "border-top:1px solid rgba(255,255,255,.12)" : ""}">
+      <span style="font-size:26px">${ic}</span><span style="flex:1;min-width:0"><b style="display:block;font-size:15px">${tit}</b><small style="opacity:.8">${sotto}</small></span>
+      <span style="background:#E8B56B;color:#12302C;border-radius:999px;padding:6px 12px;font-weight:800;font-size:14px;white-space:nowrap">${az}</span></a>`).join("")}
+    ${righe.length > 3 ? `<a href="#/giochi" style="display:block;text-align:center;padding:8px;color:#E8B56B;font-weight:700;text-decoration:none;border-top:1px solid rgba(255,255,255,.12)">Altri ${righe.length - 3} tavoli</a>` : ""}</div>`;
+}
