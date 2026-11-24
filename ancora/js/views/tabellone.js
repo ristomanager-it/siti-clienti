@@ -142,25 +142,27 @@ async function partita(id) {
     }
 
     const g = p.gioco, mioTurno = g.turno === io && p.stato === "in_corso";
+    const L = Math.min(document.documentElement.clientWidth - 16, 560), lato = (L - 4 - 10) / 11;
     const qui = (i) => p.posti.map((x, k) => (g.pos[k] === i ? x.pedina : "")).join("");
     const caselle = BASE.caselle.map((c, i) => {
       const [r, col] = cella(i), o = g.propr[i], h = g.case[i] ?? 0;
       const angolo = i % 10 === 0;
       return `<button data-cas="${i}" style="grid-row:${r};grid-column:${col};position:relative;border:1px solid #d9cfbd;background:${o != null ? "#FFF6E8" : "#fff"};padding:0;margin:0;overflow:hidden;cursor:pointer;min-width:0;border-radius:3px">
-        ${c.t === "prop" ? `<div style="height:7px;background:${BASE.colori[c.g]}"></div>` : `<div style="font-size:${angolo ? 16 : 11}px;line-height:1.2">${ICONA[c.t] ?? ""}</div>`}
-        ${h ? `<div style="font-size:7px;line-height:1">${h === 5 ? "🏨" : "🏠".repeat(h)}</div>` : ""}
+        ${c.t === "prop" ? `<div style="height:7px;background:${BASE.colori[c.g]}"></div>` : `<div style="font-size:${angolo ? lato * 0.55 : lato * 0.36}px;line-height:1.2">${ICONA[c.t] ?? ""}</div>`}
+        ${h ? `<div style="font-size:7px;line-height:1">${h === 5 ? "🏨" : "🏠".repeat(h)}</div>` : c.prezzo && o == null ? `<div style="font-size:${Math.max(7, lato * 0.22)}px;line-height:1;font-weight:700;color:#555">${c.prezzo}€</div>` : ""}
         ${o != null ? `<div style="position:absolute;left:1px;bottom:1px;width:6px;height:6px;border-radius:3px;background:${["#C8102E", "#1F4E9C", "#2E8B57", "#B8860B", "#7B2CBF", "#333"][o]}"></div>` : ""}
-        <div style="font-size:13px;line-height:1;position:absolute;right:0;bottom:0">${qui(i)}</div></button>`;
+        <div style="font-size:${lato * 0.4}px;line-height:1;position:absolute;right:0;bottom:0">${qui(i)}</div></button>`;
     }).join("");
 
     const fine = p.stato === "finita";
     const cartaHtml = g.carta ? `<div style="background:#FFF6E8;border:2px solid #E8B56B;border-radius:10px;padding:6px 8px;font-size:13px;margin:4px 0">📜 ${esc(g.carta)}</div>` : "";
-    const centro = `<div style="grid-row:2 / 11;grid-column:2 / 11;padding:6px;display:flex;flex-direction:column;gap:4px;overflow:hidden;text-align:center;justify-content:center">
+    const centro = `<div style="grid-row:2 / 11;grid-column:2 / 11;padding:6px;min-height:0;display:flex;flex-direction:column;gap:4px;overflow:hidden;text-align:center;justify-content:center">
       ${fine ? `<div style="font-size:30px">🏆</div><b>Vince ${chi(g.vincitore)}!</b><small class="tenue">${g.patrimoni?.[g.vincitore]} € di patrimonio</small>`
         : `<div style="font-size:13px">Tocca a <b>${p.posti[g.turno].pedina} ${chi(g.turno)}</b></div>
            <div style="font-size:30px;line-height:1.1">${g.dadi ? `${["⚀", "⚁", "⚂", "⚃", "⚄", "⚅"][g.dadi[0] - 1]}${["⚀", "⚁", "⚂", "⚃", "⚄", "⚅"][g.dadi[1] - 1]}` : "🎲🎲"}</div>`}
       ${cartaHtml}
-      <div style="font-size:11px;color:#555;text-align:left;line-height:1.35;overflow:hidden;max-height:92px">${g.registro.slice(0, 5).map((r) => `<div>${esc(r)}</div>`).join("")}</div></div>`;
+      <div style="display:flex;flex-wrap:wrap;gap:4px;justify-content:center">${p.posti.map((x, i) => `<span style="background:${i === g.turno ? "#FFF6E8" : "#fff"};border:1px solid ${i === g.turno ? "#E8B56B" : "#d9cfbd"};border-radius:10px;padding:1px 6px;font-size:12px;font-weight:700">${x.pedina} 💶 ${g.soldi[i]}</span>`).join("")}</div>
+      <div style="font-size:11px;color:#555;text-align:left;line-height:1.35;overflow:hidden;max-height:${Math.max(40, lato * 3)}px">${g.registro.slice(0, 4).map((r) => `<div>${esc(r)}</div>`).join("")}</div></div>`;
 
     const k = g.pos[io] ?? 0, cc = BASE.caselle[k];
     let azioni = "";
@@ -174,7 +176,7 @@ async function partita(id) {
     } else if (!fine) azioni = `<p class="tenue" style="text-align:center;margin:0">Tocca a ${chi(g.turno)}…</p>`;
 
     corpo.innerHTML = `
-      <div style="display:grid;grid-template-columns:repeat(11,1fr);grid-template-rows:repeat(11,1fr);aspect-ratio:1;margin:8px;gap:1px;background:#E8F1E4;border-radius:10px;padding:2px">${caselle}${centro}</div>
+      <div style="display:grid;grid-template-columns:repeat(11,${lato}px);grid-template-rows:repeat(11,${lato}px);width:${L}px;height:${L}px;margin:8px auto;gap:1px;background:#E8F1E4;border-radius:10px;padding:2px;box-sizing:border-box;overflow:hidden">${caselle}${centro}</div>
       <div class="card" style="margin-top:4px">${azioni}</div>
       <div class="card">${p.posti.map((x, i) => `<div style="display:flex;align-items:center;gap:8px;padding:3px 0;${i === g.turno && !fine ? "font-weight:800" : ""}">
         <span style="width:10px;height:10px;border-radius:5px;background:${["#C8102E", "#1F4E9C", "#2E8B57", "#B8860B", "#7B2CBF", "#333"][i]}"></span><span>${x.pedina}</span>
