@@ -142,6 +142,7 @@ function campo({ riga = null, solo = false, livello = 0.6 }) {
     return vert ? [ox + y * k, oy + (C.W - x) * k] : [ox + x * k, oy + y * k];
   };
   addEventListener("resize", misura); document.addEventListener("fullscreenchange", () => setTimeout(misura, 120));
+  try { new ResizeObserver(() => misura()).observe(cv.parentElement); } catch { /* vecchi browser: basta resize */ }
   setTimeout(misura, 0);
 
   function disegna(s) {

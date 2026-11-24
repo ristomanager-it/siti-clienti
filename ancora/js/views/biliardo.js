@@ -106,7 +106,7 @@ async function partita({ id = null, solo = false, livello = 0.6 }) {
           <a href="#/biliardo" aria-label="Esci" style="color:#FBF3E2;font-size:24px;text-decoration:none;padding:0 6px">‹</a>
           <div id="gioc" style="display:flex;gap:6px;flex:1"></div>
           <button id="grande2" aria-label="Schermo intero" style="border:0;background:none;color:#FBF3E2;font-size:20px">⛶</button></div>
-        <div id="area" style="flex:1;min-height:0;display:grid;place-items:center"><canvas id="tav" style="display:block;touch-action:none;border-radius:14px"></canvas></div>
+        <div id="area" style="flex:1;min-height:0;overflow:hidden;display:grid;place-items:center"><canvas id="tav" style="display:block;touch-action:none;border-radius:14px"></canvas></div>
         <p id="msg" style="text-align:center;min-height:20px;margin:6px 0 4px;font-weight:700;font-size:15px"></p>
         <div id="comandi" style="width:100%;max-width:560px;margin:0 auto;max-height:46vh;overflow:auto"></div>
       </div>`;
@@ -124,6 +124,8 @@ async function partita({ id = null, solo = false, livello = 0.6 }) {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0); disegna();
     };
     addEventListener("resize", misura); document.addEventListener("fullscreenchange", () => setTimeout(misura, 120));
+    // il tavolo si adatta allo spazio che resta (anche quando cambiano i comandi sotto o la barra del browser)
+    try { new ResizeObserver(() => misura()).observe(document.getElementById("area")); } catch { /* vecchi browser: basta resize */ }
     misura();
     // mira: si tocca il tavolo nel punto dove si vuole mandare la bianca. Con la palla in mano si trascina la bianca.
     let trascino = false;
