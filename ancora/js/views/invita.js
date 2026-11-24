@@ -1,14 +1,14 @@
 // "Invita e guadagna": il tuo link personale e i premi per chi porta gente su Ancora.
 // Ogni 3 persone: 1 mese di Ancora+ (fino a 12) · alla quinta famiglia nuova: 1 anno · quando una famiglia portata
 // passa ad Ancora+: il 20% (rimborsato sulla carta a chi paga Ancora+, in giorni di Ancora+ a chi non paga). E +1 GB a persona.
-import { sb, state, $app, esc, ANCORA_UNA_RIGA } from "../app.js";
+import { sb, state, $app, esc, ANCORA_UNA_RIGA, SALVALA, saluto } from "../app.js";
 
 const euro = (c) => (c / 100).toFixed(2).replace(".", ",") + " €";
 
 export default async function () {
   const [{ data: codice }, { data: spazio }, { data: pr }] = await Promise.all([sb.rpc("mio_codice_amico"), sb.rpc("spazio_mio"), sb.rpc("premi_miei")]);
   const link = `${location.origin}${location.pathname}#/iscriviti?amico=${codice}`;
-  const testo = `Ti invito su Ancora 👉 ${link}\n\n${ANCORA_UNA_RIGA}`;
+  const testo = `${saluto()}\nTi invito su Ancora 👉 ${link}\n\n${ANCORA_UNA_RIGA}\n${SALVALA}`;
   const persone = pr?.persone ?? 0, famiglie = pr?.famiglie ?? 0, mesi = pr?.mesi ?? 0;
   const versoMese = mesi >= 12 ? 3 : persone % 3;
   const barra = (pieni, tot, colore = "#C9832E") => `<div style="display:flex;gap:4px;margin-top:8px">${Array.from({ length: tot }, (_, i) =>

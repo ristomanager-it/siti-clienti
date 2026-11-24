@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "140";
+const VER = "141";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 const ROTTE = {
@@ -252,6 +252,11 @@ async function render() {
     if (!PUBBLICHE.has(nome) && nome === "") setTimeout(() => benvenutoNuovo() || bentornato(), 1200);
     if (!PUBBLICHE.has(nome) && nome === "") setTimeout(() => invitoSchermataHome() || ricordaPiu(), 2500);
     if (!PUBBLICHE.has(nome) && state.io) setTimeout(controllaAssistenza, 1500);
+    // arrivato da un invito a giocare: appena al tavolo, gli chiediamo di salvare Ancora sulla schermata Home (per gli inviti e le notifiche)
+    if (["briscola", "tressette", "biliardo", "calcio", "tombola", "stop"].includes(nome)) {
+      let dopoTavolo = false; try { dopoTavolo = sessionStorage.getItem("ancora_dopo_tavolo") === "1"; sessionStorage.removeItem("ancora_dopo_tavolo"); } catch { /* niente */ }
+      if (dopoTavolo) setTimeout(() => invitoSchermataHome(true), 2500);
+    }
   }
   catch (e) { console.error(e); $app().innerHTML = `<p class="errore">Qualcosa non ha funzionato. Riprova tra poco.</p>`; }
   window.scrollTo(0, 0);
@@ -749,6 +754,8 @@ export const ANCORA_IN_BREVE = `*Ancora* è la prima app social privata della fa
 ✨ Con Ancora+: l'aiutante di casa (cucina, piante, compiti, viaggi), il libro stampato e il film della vostra famiglia
 È gratis, si entra in un minuto.`;
 export const ANCORA_UNA_RIGA = "📲 Ancora è la prima app social privata della famiglia e dei gruppi: ti iscrivi gratis in un minuto.";
+export const SALVALA = "📌 Quando la apri, salvala sulla schermata Home del telefono: così ti arrivano gli inviti e i messaggi.";
+export const saluto = () => `Ciao! 👋 Sono ${state.io?.soprannome || state.io?.nome || "io"}${state.io?.cognome && !state.io?.soprannome ? ` ${state.io.cognome}` : ""}.`;
 
 /** "Chiedilo in famiglia": chi è gratis (spesso i ragazzi che giocano) manda a mamma, papà o ai nonni i motivi veri per prendere Ancora+. */
 export async function chiediPiu() {
@@ -787,13 +794,13 @@ export async function invitaAlGioco({ tipo = null, id = null, cerchiaId, torna, 
   if (tipo) {
     const [{ data: codice, error }, { data: amico }] = await Promise.all([sb.rpc("ospite_codice", { p_tipo: tipo, p_id: id }), sb.rpc("mio_codice_amico")]);
     if (error) { alert("Invito non creato: " + error.message); return; }
-    link = `${location.origin}${location.pathname}#/iscriviti?amico=${amico ?? ""}&torna=${encodeURIComponent(`#/tavolo?t=${codice}`)}${perche ? `&perche=${encodeURIComponent(perche)}` : ""}&utm_source=invito_gioco`;
+    link = `${location.origin}${location.pathname}#/iscriviti?amico=${amico ?? ""}&torna=${encodeURIComponent(`#/tavolo?t=${codice}`)}${perche ? `&perche=${encodeURIComponent(perche)}` : ""}&da=${encodeURIComponent(state.io?.soprannome || state.io?.nome || "")}&utm_source=invito_gioco`;
   } else {
     const { data: codice, error } = await sb.rpc("invito_di_gruppo", { p_cerchia: cerchiaId, p_persone: 20 });
     if (error) { alert("Invito non creato: " + error.message); return; }
     link = `${location.origin}${location.pathname}#/iscriviti?invito=${codice}&torna=${encodeURIComponent(torna)}${perche ? `&perche=${encodeURIComponent(perche)}` : ""}`;
   }
-  const msg = `${testo}\n\n👉 ${link}\n\n${ANCORA_UNA_RIGA}`;
+  const msg = `${saluto()}\n${testo}\n\n👉 ${link}\n\n${ANCORA_UNA_RIGA}\n${SALVALA}`;
   try { if (navigator.share) { await navigator.share({ title: titolo, text: msg }); return; } } catch { return; }
   window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
 }
@@ -817,7 +824,7 @@ export async function invitaInCerchia(cerchiaId) {
   document.body.appendChild(f);
   const manda = async (codice, persone) => {
     const link = `${location.origin}${location.pathname}#/iscriviti?invito=${codice}`;
-    const testo = `${persone > 1 ? "Vi ho" : "Ti ho"} preparato un posto in "${c?.nome ?? "Ancora"}" su Ancora.\n\n👉 ${persone > 1 ? "Entrate da qui, ognuno col suo telefono" : "Entra da qui"}: ${link}\n\n${ANCORA_UNA_RIGA}`;
+    const testo = `${saluto()}\n${persone > 1 ? "Vi ho" : "Ti ho"} preparato un posto in "${c?.nome ?? "Ancora"}" su Ancora.\n\n👉 ${persone > 1 ? "Entrate da qui, ognuno col suo telefono" : "Entra da qui"}: ${link}\n\n${ANCORA_UNA_RIGA}\n${SALVALA}`;
     try { if (navigator.share) { await navigator.share({ title: c?.nome ?? "Ancora", text: testo }); return; } } catch { return; }
     window.open(`https://wa.me/?text=${encodeURIComponent(testo)}`, "_blank");
   };

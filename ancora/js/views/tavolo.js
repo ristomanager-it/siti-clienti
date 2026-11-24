@@ -11,5 +11,6 @@ export default async function ({ params } = {}) {
       <a class="btn ambra" href="#/giochi">Vai ai giochi</a></div>`;
     return;
   }
+  try { sessionStorage.setItem("ancora_dopo_tavolo", "1"); } catch { /* niente */ }
   location.replace(data.url);
 }
