@@ -3,6 +3,15 @@
 import { passaPiu, state, sb, $app, esc, nomeDi, urlMediaMolti, urlMedia } from "../app.js";
 import qrcode from "https://esm.sh/qrcode-generator@1.4.4";
 
+// l'ultima pagina: "Fatto con Ancora · crea il tuo", col QR e il codice amico di chi fa il libro
+const firma = async () => {
+  const { data: codice } = await sb.rpc("mio_codice_amico");
+  const link = `${location.origin}${location.pathname}#/iscriviti?amico=${codice ?? ""}&utm_source=libro`;
+  return `<section class="pag capitolo firma"><h2 style="font-size:34px">La storia continua.</h2>
+    <div style="width:34mm;height:34mm;margin:10mm auto 4mm">${qrSvg(link).replace("<svg", '<svg style="width:100%;height:100%"')}</div>
+    <p style="font-size:15px;margin:0"><b>Fatto con Ancora</b></p>
+    <p class="tenue" style="font-size:13px;max-width:80mm;margin:2mm auto 0">Il libro della tua famiglia, con le voci di chi ami. Inquadra il codice: si comincia gratis.</p></section>`;
+};
 const qrSvg = (testo) => { const q = qrcode(0, "M"); q.addData(testo); q.make(); return q.createSvgTag({ cellSize: 3, margin: 0, scalable: true }); };
 const data = (d) => new Date(d).toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" });
 
@@ -59,7 +68,7 @@ export default async function ({ id, params }) {
         ${r.testo ? `<div class="testo">${esc(r.testo)}</div>` : voce && !ric ? `<div class="testo" style="color:#5D635F">Questa storia è solo a voce: inquadra il codice per ascoltarla.</div>` : ""}
         <div class="piede"><div class="qr">${qrSvg(base + r.id)}</div><div>${voce ? "Inquadra e ascolta la sua voce" : "Inquadra per aprire il ricordo"}<br>su Ancora</div></div>
       </section>`;
-    }).join("") || `<section class="pag"><p>Ancora nessuna storia: il libro si riempie con le risposte alle domande.</p></section>`}`;
+    }).join("") || `<section class="pag"><p>Ancora nessuna storia: il libro si riempie con le risposte alle domande.</p></section>`}`${await firma()}`;
   if (!anteprima()) document.getElementById("stampa").onclick = () => window.print();
 }
 
@@ -143,7 +152,7 @@ async function libroFamiglia(params) {
     ${perMese.map((rr, i) => rr.length ? `<section class="pag capitolo"><p style="letter-spacing:2px;font-size:12px;color:#5D635F">${anno}</p><h2>${MESI[i]}</h2>
       <p class="tenue">${rr.length} ${rr.length === 1 ? "ricordo" : "ricordi"}</p></section>${rr.map(pagina).join("")}` : "").join("")
       || `<section class="pag"><p class="testo">Il libro si riempie con le foto, le storie e le voci di tutti. Comincia oggi: anche una foto con due righe è un ricordo.</p></section>`}
-    <section class="pag capitolo"><h2 style="font-size:34px">La storia continua.</h2><p class="tenue">${esc(c.nome)} · Ancora</p></section>`;
+    ${await firma()}`;
   if (!anteprima()) document.getElementById("stampa").onclick = () => window.print();
   const vai = () => location.hash = `#/libro?famiglia=${document.getElementById("lf-c").value}&anno=${document.getElementById("lf-a").value}`;
   document.getElementById("lf-c").onchange = vai; document.getElementById("lf-a").onchange = vai;

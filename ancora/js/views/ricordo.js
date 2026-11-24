@@ -3,7 +3,7 @@ import { sb, state, $app, esc, quando, nomeDi, avatar, pulsanteVoce, urlMediaMol
 
 export default async function ({ id }) {
   const { data: r } = await sb.from("ricordi")
-    .select("id, tipo, titolo, testo, dettagli, creato_il, autore_id, link_pubblico, visibilita, cerchia_id, persone:autore_id(id, nome, soprannome, foto_path), ricordi_media(path, tipo, durata_sec, ordine)")
+    .select("id, tipo, titolo, testo, dettagli, creato_il, autore_id, link_pubblico, condiviso_da, sblocco, destinatario_id, domanda_settimana, visibilita, cerchia_id, persone:autore_id(id, nome, soprannome, foto_path), ricordi_media(path, tipo, durata_sec, ordine)")
     .eq("id", id).maybeSingle();
   if (!r) { $app().innerHTML = `<p class="pad">Ricordo non trovato.</p>`; return; }
 
@@ -41,6 +41,10 @@ export default async function ({ id }) {
       <b style="display:block">🔗 Condividi questa ricetta</b>
       <p class="tenue" style="margin:4px 0 10px">Solo questa, con chi vuoi tu. Chi la riceve vede foto e titolo e, per leggerla tutta, si iscrive gratis ad Ancora. Il resto della famiglia resta privato.</p>
       <div id="cond-azioni"></div></div>` : ""}` : ""}
+    ${cartolinaPossibile(r) ? `<div class="card" style="background:#FFF6E8;border-color:#F0D5A8;margin-top:12px">
+      <b style="display:block">💌 Fanne una cartolina</b>
+      <p class="tenue" style="margin:4px 0 10px">Da mandare su WhatsApp o mettere negli stati. Chi la riceve vede la foto e le prime righe${audio ? " e, per sentire la voce," : "; per leggerlo tutto"} si iscrive gratis. Il resto della famiglia resta privato.</p>
+      <div id="cart-azioni"></div></div>` : ""}
     <div class="pad tenue">${cuori.length ? `♥ ${cuori.map((c) => esc(nomeDi(c.persone))).join(", ")}` : ""}</div>
 
     ${(risposte ?? []).length ? `<h2>Risposte</h2>` + risposte.map((x) => {
@@ -89,6 +93,93 @@ export default async function ({ id }) {
     location.reload();
   };
   if (r.tipo === "ricetta" && r.autore_id === state.io.id) condivisioneRicetta(r);
+  if (cartolinaPossibile(r)) cartolina(r, { foto: foto[0] ? url[foto[0].path] : null, voce: !!audio });
+}
+
+// --- Cartolina: un ricordo (non le ricette, non il diario, non le lettere chiuse) condiviso con un link + immagine ---
+const cartolinaPossibile = (r) => r.tipo !== "ricetta" && r.tipo !== "diario" && r.visibilita === "cerchia" && !r.destinatario_id && (r.sblocco ?? "subito") === "subito";
+
+async function cartolina(r, { foto, voce }) {
+  const box = document.getElementById("cart-azioni"); if (!box) return;
+  const base = location.href.split("#")[0];
+  const posso = r.autore_id === state.io.id || r.condiviso_da === state.io.id;
+  const disegna = async (token) => {
+    if (!token) {
+      box.innerHTML = `<button class="btn ambra" id="cart-crea" style="margin:0">Crea la cartolina</button>`;
+      box.querySelector("#cart-crea").onclick = async (e) => {
+        e.target.disabled = true; e.target.textContent = "Un attimo…";
+        const { data, error } = await sb.rpc("ricordo_condividi", { p_ricordo: r.id, p_attiva: true });
+        if (error) { alert(error.message); e.target.disabled = false; return; }
+        r.link_pubblico = data; if (!r.condiviso_da) r.condiviso_da = state.io.id;
+        await disegna(data); manda(data);
+      };
+      return;
+    }
+    const { data: letture } = await sb.rpc("ricordo_letture", { p_ricordo: r.id });
+    box.innerHTML = `<button class="btn ambra" id="cart-manda" style="margin:0">Manda la cartolina</button>
+      <p class="tenue" style="margin:10px 0 0;font-size:14px">Link attivo${letture ? ` · aperta da ${letture} ${letture === 1 ? "persona" : "persone"}` : ""}${posso || r.autore_id === state.io.id ? ` · <a href="#" id="cart-stop" style="color:var(--rosso)">smetti di condividere</a>` : ""}</p>`;
+    box.querySelector("#cart-manda").onclick = () => manda(token);
+    box.querySelector("#cart-stop")?.addEventListener("click", async (e) => {
+      e.preventDefault();
+      if (!confirm("Il link smette di funzionare per tutti. Continuare?")) return;
+      const { error } = await sb.rpc("ricordo_condividi", { p_ricordo: r.id, p_attiva: false });
+      if (error) { alert(error.message); return; }
+      r.link_pubblico = null; disegna(null);
+    });
+  };
+  const manda = async (token) => {
+    const link = `${base}#/cartolina?t=${token}`;
+    const chi = nomeDi(r.persone);
+    const testo = voce ? `${chi} racconta${r.titolo ? `: "${r.titolo}"` : ""} 💌 Ascolta la sua voce qui 👇
+${link}` : `${chi} racconta${r.titolo ? `: "${r.titolo}"` : ""} 💌 Leggilo qui 👇
+${link}`;
+    try {
+      const png = await immagineCartolina(r, { foto, voce, link });
+      const file = new File([png], "cartolina-ancora.png", { type: "image/png" });
+      if (navigator.canShare?.({ files: [file] })) { await navigator.share({ files: [file], text: testo }); return; }
+    } catch (e) { if (e?.name === "AbortError") return; }
+    if (navigator.share) { try { await navigator.share({ title: r.titolo ?? "Un ricordo", text: testo }); return; } catch { return; } }
+    window.open(`https://wa.me/?text=${encodeURIComponent(testo)}`, "_blank");
+  };
+  await disegna(r.link_pubblico);
+}
+
+// l'immagine della cartolina (1080×1350, va bene per gli stati): foto, chi racconta, le prime parole, il QR
+async function immagineCartolina(r, { foto, voce, link }) {
+  const { default: qrcode } = await import("https://esm.sh/qrcode-generator@1.4.4");
+  await document.fonts?.ready;
+  const W = 1080, H = 1350, c = document.createElement("canvas"); c.width = W; c.height = H;
+  const g = c.getContext("2d");
+  g.fillStyle = "#FBF3E2"; g.fillRect(0, 0, W, H);
+  const altoFoto = foto ? 720 : 0;
+  if (foto) {
+    const img = await new Promise((ok, ko) => { const i = new Image(); i.crossOrigin = "anonymous"; i.onload = () => ok(i); i.onerror = ko; i.src = foto; }).catch(() => null);
+    if (img) { const s = Math.max(W / img.width, altoFoto / img.height); g.drawImage(img, (W - img.width * s) / 2, (altoFoto - img.height * s) / 2, img.width * s, img.height * s); }
+    else { g.fillStyle = "#7FA37E"; g.fillRect(0, 0, W, altoFoto); }
+  }
+  const y0 = foto ? altoFoto + 70 : 160;
+  g.fillStyle = "#B5652E"; g.font = "800 34px Nunito, system-ui, sans-serif";
+  g.fillText(`${nomeDi(r.persone).toUpperCase()} RACCONTA`, 70, y0);
+  g.fillStyle = "#12302C"; g.font = "600 58px Fraunces, Georgia, serif";
+  const parole = (r.titolo || r.domanda_settimana || (r.testo ?? "").split(/[.!?\n]/)[0] || "Un ricordo di famiglia").split(/\s+/);
+  let riga = "", y = y0 + 80, righe = 0;
+  for (const p of parole) {
+    const prova = riga ? riga + " " + p : p;
+    if (g.measureText(prova).width > W - 140 - (foto ? 0 : 0)) { g.fillText(riga, 70, y); y += 70; riga = p; if (++righe >= (foto ? 3 : 6)) { riga += "…"; break; } }
+    else riga = prova;
+  }
+  if (riga) g.fillText(riga, 70, y);
+  // QR e invito in basso
+  const q = qrcode(0, "M"); q.addData(link); q.make();
+  const n = q.getModuleCount(), lato = 210, cella = lato / n, qx = W - 70 - lato, qy = H - 70 - lato;
+  g.fillStyle = "#fff"; g.fillRect(qx - 14, qy - 14, lato + 28, lato + 28); g.fillStyle = "#12302C";
+  for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) if (q.isDark(i, j)) g.fillRect(qx + j * cella, qy + i * cella, Math.ceil(cella), Math.ceil(cella));
+  g.fillStyle = "#12302C"; g.font = "700 40px Nunito, system-ui, sans-serif";
+  g.fillText(voce ? "🔊 Ascolta la sua voce" : "📖 Leggilo tutto", 70, H - 190);
+  g.font = "500 30px Nunito, system-ui, sans-serif"; g.fillStyle = "#5b6b66";
+  g.fillText("inquadra il codice o apri il link", 70, H - 140);
+  g.font = "700 44px Fraunces, Georgia, serif"; g.fillStyle = "#B5652E"; g.fillText("Ancora", 70, H - 78);
+  return await new Promise((ok) => c.toBlob(ok, "image/png"));
 }
 
 // la ricetta condivisa con un link: crea, manda su WhatsApp, smetti di condividere

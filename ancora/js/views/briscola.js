@@ -1,7 +1,7 @@
 // Briscola a 2 e a 4 (a coppie): #/briscola?c=<gruppo>  oppure  #/briscola?id=<partita>
 // Chi crea il tavolo sceglie in quanti; il gruppo riceve l'invito sul telefono. I posti vuoti li prende il telefono.
 // Le carte di ognuno le vede solo lui; regole, mazzo e mosse del telefono stanno sul server.
-import { sb, state, $app, esc, ICONE } from "../app.js";
+import { sb, state, $app, esc, ICONE, invitaAlGioco } from "../app.js";
 
 const SEMI = { D: "Denari", C: "Coppe", S: "Spade", B: "Bastoni" };
 const FIGURE = { 8: "Fante", 9: "Cavallo", 10: "Re" };
@@ -180,7 +180,10 @@ export default async function ({ params, gioco = "briscola" }) {
           ${!x.persona_id ? `<button class="chip" data-siedi="${i}" style="margin:0">Siediti qui</button>` : x.persona_id === state.io.id ? `<span class="tenue">sei tu</span>` : ""}</div>`).join("")}
         <div class="pad">
           ${creatore ? `<button class="btn ambra" id="inizia">Si gioca${p.posti.some((x) => !x.persona_id) ? " (i posti liberi li prende il telefono)" : ""}</button>` : `<p class="tenue" style="text-align:center">${io >= 0 ? "Sei seduto: si parte quando lo decide chi ha aperto il tavolo." : "Scegli un posto libero."}</p>`}
-          <button class="btn chiaro" id="invita" style="margin-top:10px">🔔 Invita di nuovo il gruppo</button></div>`;
+          <button class="btn chiaro" id="invita" style="margin-top:10px">🔔 Invita di nuovo il gruppo</button>
+          <button class="btn chiaro" id="invita-wa" style="margin-top:10px">📲 Invita su WhatsApp (anche chi non è su Ancora)</button></div>`;
+      corpo.querySelector("#invita-wa").onclick = () => invitaAlGioco({ cerchiaId: p.cerchia_id, torna: `#/${gioco}?id=${id}`, titolo: TRE ? "Tressette" : "Briscola",
+        testo: `🃏 ${TRE ? "Tressette" : "Briscola"} a ${p.n} su Ancora, con le carte napoletane: manchi tu al tavolo.`, perche: "Manchi tu al tavolo: un minuto e ti siedi." });
       corpo.querySelectorAll("[data-siedi]").forEach((b) => b.onclick = async () => {
         const { error } = await sb.rpc("briscola_siedi", { p_partita: id, p_posto: Number(b.dataset.siedi) });
         if (error) alert(error.message); ultimaFirma = ""; aggiorna();

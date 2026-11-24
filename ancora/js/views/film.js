@@ -6,12 +6,14 @@ import { sb, state, $app, esc, urlMediaMolti, passaPiu } from "../app.js";
 const W = 720, H = 1280, FPS = 30;
 const FOTO_SEC = 3.2, VIDEO_SEC = 5, DISSOLVENZA = 0.7, TITOLO_SEC = 3.5, FINE_SEC = 3;
 const MAX_PIU = 60, MAX_ANTEPRIMA = 5;
+let FIRMA = null;   // il QR "Fatto con Ancora · crea il tuo" della chiusura (col codice amico di chi crea il film)
 
 export default async function ({ params }) {
   const fam = state.cerchie.filter((c) => c.tipo === "famiglia");
   const cerchie = fam.length ? fam : state.cerchie;
   const anno = new Date().getFullYear();
   const brani = await fetch("musica/elenco.json").then((r) => r.json()).catch(() => []);
+  preparaFirma();
   $app().innerHTML = `
     <header class="testa"><a href="#/" aria-label="Indietro" style="font-size:22px;text-decoration:none">←</a><span class="logo" style="font-size:22px">Il film dell'anno</span><span></span></header>
     <div class="pad">
@@ -257,8 +259,15 @@ function copertina(ctx, titolo, primo, s = 0) {
 function fineFilm(ctx, alfa) {
   ctx.fillStyle = "#12302C"; ctx.fillRect(0, 0, W, H);
   ctx.save(); ctx.globalAlpha = Math.max(0, alfa); ctx.textAlign = "center"; ctx.fillStyle = "#FBF3E2";
-  ctx.font = "700 60px Fraunces, Georgia, serif"; ctx.fillText("La storia continua.", W / 2, H / 2);
-  ctx.font = "600 30px Manrope, system-ui, sans-serif"; ctx.fillStyle = "#E7C48A"; ctx.fillText("Ancora", W / 2, H / 2 + 70);
+  ctx.font = "700 60px Fraunces, Georgia, serif"; ctx.fillText("La storia continua.", W / 2, H / 2 - 170);
+  ctx.font = "600 30px Manrope, system-ui, sans-serif"; ctx.fillStyle = "#E7C48A"; ctx.fillText("Fatto con Ancora", W / 2, H / 2 - 100);
+  if (FIRMA) {
+    const n = FIRMA.getModuleCount(), lato = 260, cella = lato / n, x = (W - lato) / 2, y = H / 2 - 30;
+    ctx.fillStyle = "#FBF3E2"; ctx.fillRect(x - 16, y - 16, lato + 32, lato + 32); ctx.fillStyle = "#12302C";
+    for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) if (FIRMA.isDark(i, j)) ctx.fillRect(x + j * cella, y + i * cella, Math.ceil(cella), Math.ceil(cella));
+    ctx.fillStyle = "#FBF3E2"; ctx.font = "700 32px Manrope, system-ui, sans-serif"; ctx.fillText("Crea il film della tua famiglia", W / 2, y + lato + 80);
+    ctx.font = "500 26px Manrope, system-ui, sans-serif"; ctx.fillStyle = "#CFC6B5"; ctx.fillText("inquadra il codice · è gratis", W / 2, y + lato + 124);
+  }
   ctx.restore();
 }
 
@@ -272,4 +281,11 @@ function righe(ctx, testo, max) {
   const parole = String(testo).split(" "), out = []; let r = "";
   for (const p of parole) { const prova = r ? r + " " + p : p; if (ctx.measureText(prova).width > max && r) { out.push(r); r = p; } else r = prova; }
   if (r) out.push(r); return out.slice(0, 3);
+}
+
+async function preparaFirma() {
+  try {
+    const [{ default: qrcode }, { data: codice }] = await Promise.all([import("https://esm.sh/qrcode-generator@1.4.4"), sb.rpc("mio_codice_amico")]);
+    const q = qrcode(0, "M"); q.addData(`${location.origin}${location.pathname}#/iscriviti?amico=${codice ?? ""}&utm_source=film`); q.make(); FIRMA = q;
+  } catch { FIRMA = null; }
 }

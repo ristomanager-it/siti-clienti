@@ -4,10 +4,16 @@ import { SUPABASE_URL } from "../config.js";
 
 export default async function ({ params } = {}) {
   const invito = params?.invito ?? "", amico = params?.amico ?? "", ricetta = params?.ricetta ?? "";
+  const torna = String(params?.torna ?? "").startsWith("#/") ? params.torna : "";   // dopo l'iscrizione: al tavolo, all'album, al ricordo…
+  const dopo = invito ? `#/?invito=${encodeURIComponent(invito)}${torna ? `&torna=${encodeURIComponent(torna)}` : ""}`
+    : torna || (ricetta ? `#/ricetta?t=${encodeURIComponent(ricetta)}` : "#/");
+  const qsAccesso = [invito && `invito=${encodeURIComponent(invito)}`, ricetta && `ricetta=${encodeURIComponent(ricetta)}`, torna && `torna=${encodeURIComponent(torna)}`].filter(Boolean).join("&");
+  // già dentro (stesso telefono): niente modulo, si va dritti
+  if ((await sb.auth.getSession()).data.session) { location.replace(dopo); if (invito) location.reload(); return; }
   const ant = invito ? await fetch(`${SUPABASE_URL}/functions/v1/invito?codice=${encodeURIComponent(invito)}`).then((r) => r.json()).catch(() => null) : null;
   $app().innerHTML = `${ant && !ant.errore ? anteprima(ant) : ""}
     <div class="pad" style="padding-top:${ant && !ant.errore ? 18 : 48}px">${ant && !ant.errore ? "" : `<span class="logo" style="font-size:40px">Ancora</span><div class="tenue" style="font-weight:700;margin:-4px 0 18px">Il cloud dei tuoi ricordi</div>`}
-      <h1 style="font-size:28px;line-height:1.2">${ant && !ant.errore ? "Ti hanno preparato un posto." : invito ? "Ti aspettano in famiglia." : ricetta ? "Un minuto e leggi la ricetta." : "Crea il tuo account gratis."}</h1>
+      <h1 style="font-size:28px;line-height:1.2">${ant && !ant.errore ? "Ti hanno preparato un posto." : invito ? "Ti aspettano in famiglia." : ricetta ? "Un minuto e leggi la ricetta." : params?.perche ? esc(params.perche) : "Crea il tuo account gratis."}</h1>
       <p style="font-size:16px;margin:0">${invito ? "Crea il tuo account e sei dentro." : "La tua famiglia, i tuoi gruppi, i tuoi ricordi. Gratis, senza carta di credito."}</p></div>
     <form id="f" class="card">
       <div class="riga" style="gap:8px">
@@ -19,7 +25,7 @@ export default async function ({ params } = {}) {
         <span>Accetto le <a href="#/condizioni-uso" target="_blank">condizioni d'uso</a> e l'<a href="#/privacy" target="_blank">informativa privacy</a>.</span></label>
       <button class="btn ambra">Crea il mio account</button>
       <p id="esito" role="status"></p>
-      <p style="text-align:center;margin-bottom:0"><a href="#/accesso${invito ? `?invito=${esc(invito)}` : ricetta ? `?ricetta=${esc(ricetta)}` : ""}">Ho già un account: entro</a></p>
+      <p style="text-align:center;margin-bottom:0"><a href="#/accesso${qsAccesso ? "?" + esc(qsAccesso) : ""}">Ho già un account: entro</a></p>
     </form>`;
 
   document.getElementById("f").onsubmit = async (e) => {
@@ -32,11 +38,11 @@ export default async function ({ params } = {}) {
       body: JSON.stringify({ nome: v("nome"), cognome: v("cogn"), email, password, termini: document.getElementById("termini").checked, amico, invito }) })
       .then((x) => x.json()).catch(() => ({}));
     if (!r.ok) {
-      esito.innerHTML = `<span class="errore">${esc(r.errore ?? "Non è andata. Riprova.")}</span>${r.gia_registrato ? ` <a href="#/accesso${invito ? `?invito=${esc(invito)}` : ""}">Entra</a>` : ""}`;
+      esito.innerHTML = `<span class="errore">${esc(r.errore ?? "Non è andata. Riprova.")}</span>${r.gia_registrato ? ` <a href="#/accesso${qsAccesso ? "?" + esc(qsAccesso) : ""}">Entra</a>` : ""}`;
       btn.disabled = false; return;
     }
     await sb.auth.signInWithPassword({ email, password });
-    location.replace(ricetta ? `#/ricetta?t=${encodeURIComponent(ricetta)}` : invito ? `#/?invito=${encodeURIComponent(invito)}` : "#/"); location.reload();
+    location.replace(dopo); location.reload();
   };
 }
 

@@ -5,7 +5,7 @@ export default async function ({ params }) {
   // arrivo dal link di invito: entra nella cerchia/famiglia e ricarica i dati
   if (params?.invito) {
     await sb.rpc("accetta_invito", { p_codice: params.invito });
-    location.replace("#/"); location.reload(); return;
+    location.replace(String(params.torna ?? "").startsWith("#/") ? params.torna : "#/"); location.reload(); return;
   }
   if (state.io.modalita === "semplice") return semplice();
 

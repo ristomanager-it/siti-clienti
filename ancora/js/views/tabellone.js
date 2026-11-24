@@ -1,6 +1,6 @@
 // Il gioco della famiglia: #/tabellone?c=<gruppo> (tavoli e nuova partita) · #/tabellone?id=<partita> · #/tabellone?c=<gruppo>&nomi=1 (rinomina)
 // Regole e dadi stanno nella funzione "gioco-famiglia"; qui si disegna il tabellone e si mandano le mosse.
-import { sb, state, $app, esc, ICONE, passaPiu } from "../app.js";
+import { sb, state, $app, esc, ICONE, passaPiu, invitaAlGioco } from "../app.js";
 import { SUPABASE_URL } from "../config.js";
 
 const ICONA = { via: "🏁", ricordo: "📜", sorpresa: "🎁", tassa: "💸", auto: "🚗", serv: "🍷", castigo: "🚧", pausa: "☕", vai_castigo: "👮" };
@@ -146,7 +146,10 @@ async function partita(id, tv = false) {
         ${p.posti.map((x, i) => `<div class="card" style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="font-size:24px">${x.pedina}</span>
           <b style="flex:1">${x.persona_id ? esc(x.nome) : `<span class="tenue">posto libero</span>`}</b>
           ${!x.persona_id ? `<button class="chip" data-siedi="${i}" style="margin:0">Siediti qui</button>` : x.persona_id === state.io.id ? `<span class="tenue">sei tu</span>` : ""}</div>`).join("")}
-        <div class="pad">${p.creato_da === state.io.id ? `<button class="btn ambra" id="inizia">Si gioca${p.posti.some((x) => !x.persona_id) ? " (i posti liberi li prende il telefono)" : ""}</button>` : `<p class="tenue" style="text-align:center">Si parte quando lo decide chi ha aperto la partita.</p>`}</div>`;
+        <div class="pad">${p.creato_da === state.io.id ? `<button class="btn ambra" id="inizia">Si gioca${p.posti.some((x) => !x.persona_id) ? " (i posti liberi li prende il telefono)" : ""}</button>` : `<p class="tenue" style="text-align:center">Si parte quando lo decide chi ha aperto la partita.</p>`}
+          <button class="btn chiaro" id="invita-wa" style="margin-top:10px">📲 Invita su WhatsApp (anche chi non è su Ancora)</button></div>`;
+      corpo.querySelector("#invita-wa").onclick = () => invitaAlGioco({ cerchiaId: p.cerchia_id, torna: `#/tabellone?id=${id}`, titolo: "Il gioco della famiglia",
+        testo: "🏠 Giochiamo al gioco della famiglia su Ancora: c'è un posto per te al tabellone.", perche: "C'è un posto per te al gioco della famiglia." });
       corpo.querySelectorAll("[data-siedi]").forEach((b) => b.onclick = () => fai({ azione: "siedi", posto: Number(b.dataset.siedi) }, b));
       corpo.querySelector("#inizia")?.addEventListener("click", (e) => fai({ azione: "inizia" }, e.target));
       return;

@@ -1,7 +1,7 @@
 // La tombola di famiglia: #/tombola?c=<famiglia>  oppure  #/tombola?id=<tombola>
 // Chi la apre fa il banco ed estrae (il numero lo sceglie il server, a caso); gli altri prendono da 1 a 6 cartelle.
 // Le cartelle si segnano da sole, i premi li assegna il server; il numero si legge anche a voce, con la smorfia.
-import { sb, state, $app, esc, ICONE } from "../app.js";
+import { sb, state, $app, esc, ICONE, invitaAlGioco } from "../app.js";
 
 const SMORFIA = ["", "L'Italia", "La bambina", "La gatta", "Il maiale", "La mano", "", "Il vasetto", "La Madonna", "La figliolanza", "I fagioli",
   "I topolini", "Il soldato", "Sant'Antonio", "L'ubriaco", "Il ragazzo", "", "La disgrazia", "Il sangue", "La risata", "La festa",
@@ -192,7 +192,7 @@ export default async function ({ params }) {
         ${mie.map(cartellaHtml).join("")}
         <div class="pad">
           ${banco ? `<button class="btn chiaro" id="avvisa" style="margin-bottom:10px">🔔 Avvisa tutti sul telefono</button><button class="btn ambra" id="estrai" style="font-size:20px">Inizia: estrai il primo numero</button>` : `<p class="tenue" style="text-align:center">Aspettiamo che ${esc(t.persone?.soprannome || t.persone?.nome || "il banco")} estragga il primo numero…</p>`}
-          <button class="btn chiaro" id="invita" style="margin-top:10px">Invita a giocare su WhatsApp</button></div>`;
+          <button class="btn chiaro" id="invita" style="margin-top:10px">📲 Invita su WhatsApp (anche chi non è su Ancora)</button></div>`;
     } else {
       corpo.innerHTML = `
         ${t.stato === "finita" ? `<div class="card" style="text-align:center;background:#FFF6E8"><div style="font-size:40px">🏆</div><b style="font-size:20px">Tombola finita!</b>
@@ -261,12 +261,8 @@ export default async function ({ params }) {
     });
     corpo.querySelector("#chiudi")?.addEventListener("click", async () => { if (confirm("Chiudere la partita per tutti?")) { await sb.rpc("tombola_chiudi", { p_tombola: id }); aggiorna(); } });
     corpo.querySelector("#nuova")?.addEventListener("click", () => { location.hash = `#/tombola?c=${t.cerchia_id}`; });
-    corpo.querySelector("#invita")?.addEventListener("click", async () => {
-      const link = `${location.href.split("#")[0]}#/tombola?id=${id}`;
-      const testo = `🎄 Tombola su Ancora! Prendi le tue cartelle, si parte tra poco: ${link}`;
-      if (navigator.share) { try { await navigator.share({ title: "Tombola", text: testo }); return; } catch { /* annullato */ } }
-      window.open(`https://wa.me/?text=${encodeURIComponent(testo)}`, "_blank");
-    });
+    corpo.querySelector("#invita")?.addEventListener("click", () => invitaAlGioco({ cerchiaId: t.cerchia_id, torna: `#/tombola?id=${id}`, titolo: "Tombola",
+      testo: `🎄 Tombola su Ancora! Prendi le tue cartelle, si parte tra poco.`, perche: "Ti aspettano alla tombola: un minuto e prendi le cartelle." }));
   }
 
   await aggiorna();
