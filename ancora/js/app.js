@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "138";
+const VER = "139";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 const ROTTE = {
@@ -294,7 +294,7 @@ function invitoSchermataHome(forza = false) {
 function benvenutoNuovo() {
   try { if (localStorage.getItem("ancora_benvenuto")) return false; } catch { return false; }
   const nuovo = state.io?.creato_il && Date.now() - new Date(state.io.creato_il).getTime() < 7 * 864e5;
-  if (!nuovo || document.querySelector("#schermata-home, #benvenuto-nuovo, [role=dialog]")) return false;
+  if (!nuovo || document.querySelector("#schermata-home, #benvenuto-nuovo, #foglio-piu")) return false;
   const installata = giaInstallata();
   const notifiche = "Notification" in window && Notification.permission === "granted";
   const el = document.createElement("div");
