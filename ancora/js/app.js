@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "141";
+const VER = "142";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 const ROTTE = {
@@ -246,17 +246,17 @@ async function render() {
   const carica = ROTTE[nome] ?? ROTTE[""];
   const vista = await carica();
   $app().innerHTML = "";
+  // arrivato da un invito a giocare: appena al tavolo, gli chiediamo di salvare Ancora sulla schermata Home (per gli inviti e le notifiche)
+  if (["briscola", "tressette", "biliardo", "calcio", "tombola", "stop"].includes(nome)) {
+    let dopoTavolo = false; try { dopoTavolo = sessionStorage.getItem("ancora_dopo_tavolo") === "1"; sessionStorage.removeItem("ancora_dopo_tavolo"); } catch { /* niente */ }
+    if (dopoTavolo) setTimeout(() => invitoSchermataHome(true), 2500);
+  }
   try {
     await vista.default({ id, params });
     if (!PUBBLICHE.has(nome) && state.io && state.io.modalita !== "semplice") aggiungiMenu();
     if (!PUBBLICHE.has(nome) && nome === "") setTimeout(() => benvenutoNuovo() || bentornato(), 1200);
     if (!PUBBLICHE.has(nome) && nome === "") setTimeout(() => invitoSchermataHome() || ricordaPiu(), 2500);
     if (!PUBBLICHE.has(nome) && state.io) setTimeout(controllaAssistenza, 1500);
-    // arrivato da un invito a giocare: appena al tavolo, gli chiediamo di salvare Ancora sulla schermata Home (per gli inviti e le notifiche)
-    if (["briscola", "tressette", "biliardo", "calcio", "tombola", "stop"].includes(nome)) {
-      let dopoTavolo = false; try { dopoTavolo = sessionStorage.getItem("ancora_dopo_tavolo") === "1"; sessionStorage.removeItem("ancora_dopo_tavolo"); } catch { /* niente */ }
-      if (dopoTavolo) setTimeout(() => invitoSchermataHome(true), 2500);
-    }
   }
   catch (e) { console.error(e); $app().innerHTML = `<p class="errore">Qualcosa non ha funzionato. Riprova tra poco.</p>`; }
   window.scrollTo(0, 0);
