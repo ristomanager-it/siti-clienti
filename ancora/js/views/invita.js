@@ -1,14 +1,14 @@
 // "Invita e guadagna": il tuo link personale e i premi per chi porta gente su Ancora.
 // Ogni 3 persone: 1 mese di Ancora+ (fino a 12) · alla quinta famiglia nuova: 1 anno · quando una famiglia portata
 // passa ad Ancora+: il 20% (rimborsato sulla carta a chi paga Ancora+, in giorni di Ancora+ a chi non paga). E +1 GB a persona.
-import { sb, state, $app, esc, ANCORA_INFO, SALVALA, saluto } from "../app.js";
+import { sb, state, $app, esc, ANCORA_INFO_AMICI, SALVALA, saluto } from "../app.js";
 
 const euro = (c) => (c / 100).toFixed(2).replace(".", ",") + " €";
 
 export default async function () {
   const [{ data: codice }, { data: spazio }, { data: pr }] = await Promise.all([sb.rpc("mio_codice_amico"), sb.rpc("spazio_mio"), sb.rpc("premi_miei")]);
   const link = `${location.origin}${location.pathname}#/iscriviti?amico=${codice}&da=${encodeURIComponent(state.io?.soprannome || state.io?.nome || "")}`;
-  const testo = `${saluto()}\nHo trovato un'app che fa proprio al caso nostro: *Ancora*, la prima app social privata della famiglia e dei gruppi.\n\n${ANCORA_INFO}\n\nIscriviti da qui, è gratis 👇\n${link}\n\n${SALVALA}`;
+  const testo = `${saluto()}\nHo trovato un'app che fa proprio al caso nostro: *Ancora*, la prima app social privata della famiglia e dei gruppi.\n\n${ANCORA_INFO_AMICI}\n\nIscriviti da qui, è gratis 👇\n${link}\n\n${SALVALA}`;
   const persone = pr?.persone ?? 0, famiglie = pr?.famiglie ?? 0, mesi = pr?.mesi ?? 0;
   const versoMese = mesi >= 12 ? 3 : persone % 3;
   const barra = (pieni, tot, colore = "#C9832E") => `<div style="display:flex;gap:4px;margin-top:8px">${Array.from({ length: tot }, (_, i) =>

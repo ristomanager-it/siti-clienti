@@ -52,6 +52,8 @@ export default async function ({ params } = {}) {
 const FUNZIONI = `<div style="margin-top:8px;line-height:1.75">📸 Foto, video e storie solo tra voi<br>💬 Chat del gruppo e messaggi a due<br>🎙️ Le voci e i racconti dei nonni, per sempre<br>🌳 L'albero della famiglia<br>🍝 Il ricettario di casa<br>📅 Calendario, compleanni, liste e spese<br>🎲 Tombola, carte napoletane, biliardo e calciobalilla</div>
       <div class="tenue" style="font-size:14px;margin-top:6px">Con Ancora+: l'aiutante di casa, il libro stampato e il film della famiglia.</div>`;
 
+const FUNZIONI_AMICI = `<div style="margin-top:8px;line-height:1.75">💬 La chat del gruppo e i messaggi a due<br>📸 Le foto e i video delle serate, solo tra voi<br>📅 Il calendario per organizzarsi<br>🎲 Briscola, tressette, biliardo, calciobalilla e tombola, anche da case diverse<br>🎙️ Ai tavoli ci si parla a voce</div>`;
+
 export function anteprima(a) {
   return `<div style="position:relative;aspect-ratio:16/9;max-height:240px;width:100%;background:${a.copertina ? `url('${a.copertina}') center/cover` : "linear-gradient(135deg,#7FA37E,#4D7356)"}"></div>
     <div class="pad" style="display:flex;gap:14px;align-items:flex-end;margin-top:-44px;position:relative">
@@ -64,6 +66,6 @@ export function anteprima(a) {
     <div class="pad" style="padding-top:0"><div class="card" style="margin:0;background:#FBF4E6;font-size:15px;line-height:1.5">
       <b style="font-family:Fraunces,serif;font-size:18px">La prima app social privata della famiglia e dei gruppi</b><br>
       Come un social, ma <b>solo per voi</b>: si entra solo su invito, niente pubblicità né estranei.
-${FUNZIONI}
+${a.tipo === "famiglia" ? FUNZIONI : FUNZIONI_AMICI}
       <b>Si comincia gratis.</b></div></div>`;
 }

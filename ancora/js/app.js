@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "144";
+const VER = "145";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 const ROTTE = {
@@ -755,6 +755,8 @@ export const ANCORA_IN_BREVE = `*Ancora* è la prima app social privata della fa
 È gratis, si entra in un minuto.`;
 export const ANCORA_UNA_RIGA = "📲 Ancora è la prima app social privata della famiglia e dei gruppi: ti iscrivi gratis in un minuto.";
 export const ANCORA_INFO = "Solo noi, niente pubblicità né estranei: foto e video, chat, le voci e i racconti dei nonni, il ricettario di casa, calendario e compleanni, e i giochi insieme anche da case diverse (tombola, carte napoletane, biliardo, calciobalilla).";
+// per un gruppo di amici: niente nonni né ricettario, si parla di serate, chat e giochi
+export const ANCORA_INFO_AMICI = "Solo noi, niente pubblicità né estranei: la chat del gruppo, le foto e i video delle serate, il calendario per organizzarsi, e i giochi insieme anche da case diverse, parlando a voce (briscola, tressette, biliardo, calciobalilla, tombola).";
 export const SALVALA = "📌 Quando la apri, salvala sulla schermata Home del telefono: così ti arrivano gli inviti e i messaggi.";
 export const saluto = () => `Ciao! 👋 Sono ${state.io?.soprannome || state.io?.nome || "io"}${state.io?.cognome && !state.io?.soprannome ? ` ${state.io.cognome}` : ""}.`;
 
@@ -826,7 +828,7 @@ export async function invitaInCerchia(cerchiaId) {
   const manda = async (codice, persone) => {
     const link = `${location.origin}${location.pathname}#/iscriviti?invito=${codice}`;
     const voi = persone > 1;
-    const testo = `${saluto()}\nHo trovato un'app che fa proprio al caso nostro: *Ancora*, la prima app social privata della famiglia e dei gruppi.\n\n${ANCORA_INFO}\n\n${voi ? "Vi ho" : "Ti ho"} già preparato un posto in "${c?.nome ?? "Ancora"}": ${voi ? "iscrivetevi da qui, ognuno col suo telefono" : "iscriviti da qui"}, è gratis 👇\n${link}\n\n📌 Quando ${voi ? "la aprite, salvatela" : "la apri, salvala"} sulla schermata Home del telefono: così ${voi ? "vi arrivano" : "ti arrivano"} gli inviti e i messaggi.`;
+    const testo = `${saluto()}\nHo trovato un'app che fa proprio al caso nostro: *Ancora*, la prima app social privata della famiglia e dei gruppi.\n\n${c?.tipo === "famiglia" ? ANCORA_INFO : ANCORA_INFO_AMICI}\n\n${voi ? "Vi ho" : "Ti ho"} già preparato un posto in "${c?.nome ?? "Ancora"}": ${voi ? "iscrivetevi da qui, ognuno col suo telefono" : "iscriviti da qui"}, è gratis 👇\n${link}\n\n📌 Quando ${voi ? "la aprite, salvatela" : "la apri, salvala"} sulla schermata Home del telefono: così ${voi ? "vi arrivano" : "ti arrivano"} gli inviti e i messaggi.`;
     try { if (navigator.share) { await navigator.share({ title: c?.nome ?? "Ancora", text: testo }); return; } } catch { return; }
     window.open(`https://wa.me/?text=${encodeURIComponent(testo)}`, "_blank");
   };
