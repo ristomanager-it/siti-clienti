@@ -99,20 +99,25 @@ async function partita({ id = null, solo = false, livello = 0.6 }) {
   const tocca = () => tavolo && !("vincitore" in tavolo) && !anim && !invio && (solo ? tavolo.turno === 0 : tavolo.turno === io);
 
   function disegnaSala() {
+    // tutto in una schermata, senza scorrere e senza la barra in basso: tavolo al centro, comandi sotto a portata di pollice
     corpo.innerHTML = `
-      <div id="sala" style="background:#0E2622;padding:10px 10px 16px;min-height:calc(100vh - 60px);box-sizing:border-box;color:#FBF3E2">
-        <div id="gioc" style="display:flex;gap:8px;margin-bottom:8px"></div>
-        <canvas id="tav" style="display:block;margin:0 auto;touch-action:none;border-radius:14px"></canvas>
-        <p id="msg" style="text-align:center;min-height:24px;margin:10px 0 6px;font-weight:700"></p>
-        <div id="comandi" style="max-width:560px;margin:0 auto"></div>
+      <div id="sala" style="position:fixed;inset:0;z-index:5;background:#0E2622;color:#FBF3E2;display:flex;flex-direction:column;padding:calc(6px + env(safe-area-inset-top)) 8px calc(8px + env(safe-area-inset-bottom));box-sizing:border-box">
+        <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
+          <a href="#/biliardo" aria-label="Esci" style="color:#FBF3E2;font-size:24px;text-decoration:none;padding:0 6px">‹</a>
+          <div id="gioc" style="display:flex;gap:6px;flex:1"></div>
+          <button id="grande2" aria-label="Schermo intero" style="border:0;background:none;color:#FBF3E2;font-size:20px">⛶</button></div>
+        <div id="area" style="flex:1;min-height:0;display:grid;place-items:center"><canvas id="tav" style="display:block;touch-action:none;border-radius:14px"></canvas></div>
+        <p id="msg" style="text-align:center;min-height:20px;margin:6px 0 4px;font-weight:700;font-size:15px"></p>
+        <div id="comandi" style="width:100%;max-width:560px;margin:0 auto;max-height:46vh;overflow:auto"></div>
       </div>`;
+    document.getElementById("grande2").onclick = () => { const el = document.getElementById("sala"); (el?.requestFullscreen ?? el?.webkitRequestFullscreen)?.call(el); };
     cv = document.getElementById("tav"); ctx = cv.getContext("2d");
     const misura = () => {
       const sala = document.getElementById("sala"); if (!sala) return;
-      const larg = Math.min(sala.clientWidth - 20, 1100), alt = innerHeight - 280;
+      const area = document.getElementById("area"); const larg = Math.min(area.clientWidth, 1400), alt = area.clientHeight;
       verticale = innerWidth < innerHeight;
       const lw = verticale ? M.H + 2 * B : M.W + 2 * B, lh = verticale ? M.W + 2 * B : M.H + 2 * B;
-      k = Math.min(larg / lw, Math.max(220, alt) / lh);
+      k = Math.min(larg / lw, alt / lh);
       const dpr = devicePixelRatio || 1;
       cv.width = lw * k * dpr; cv.height = lh * k * dpr; cv.style.width = `${lw * k}px`; cv.style.height = `${lh * k}px`;
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0); disegna();
@@ -151,13 +156,13 @@ async function partita({ id = null, solo = false, livello = 0.6 }) {
       return;
     }
     c.innerHTML = `
-      <div style="display:flex;align-items:center;gap:10px">
-        <button class="chip" id="sx" style="margin:0;font-size:20px;padding:8px 14px">↺</button>
-        <label style="flex:1;font-size:14px">Forza <b id="fv">${Math.round(forza * 100)}%</b>
-          <input type="range" id="forza" min="5" max="100" value="${Math.round(forza * 100)}" style="width:100%;accent-color:#E8B56B"></label>
-        <button class="chip" id="dx" style="margin:0;font-size:20px;padding:8px 14px">↻</button></div>
-      <button class="btn ambra" id="tira" style="margin-top:10px;font-size:20px">Tira</button>
-      <p style="text-align:center;font-size:13px;opacity:.75;margin:8px 0 0">Tocca il tavolo dove vuoi mandare la bianca · ↺ ↻ per la mira fine${tavolo.manoLibera ? " · palla in mano: trascina la bianca" : ""}</p>`;
+      <div style="display:flex;align-items:center;gap:8px">
+        <button class="chip" id="sx" style="margin:0;font-size:22px;padding:10px 14px;touch-action:manipulation">↺</button>
+        <label style="flex:1;font-size:13px;line-height:1.1">Forza <b id="fv">${Math.round(forza * 100)}%</b>
+          <input type="range" id="forza" min="5" max="100" value="${Math.round(forza * 100)}" style="width:100%;accent-color:#E8B56B;height:28px"></label>
+        <button class="chip" id="dx" style="margin:0;font-size:22px;padding:10px 14px;touch-action:manipulation">↻</button>
+        <button class="btn ambra" id="tira" style="margin:0;width:auto;padding:12px 18px;font-size:18px">Tira</button></div>
+      <p style="text-align:center;font-size:12px;opacity:.7;margin:5px 0 0">Tocca il tavolo per mirare${tavolo.manoLibera ? " · palla in mano: trascina la bianca" : ""}</p>`;
     const giro = (a) => { const c2 = Math.cos(a), s2 = Math.sin(a); mira = { ax: mira.ax * c2 - mira.ay * s2, ay: mira.ax * s2 + mira.ay * c2 }; disegna(); };
     let ripeti;
     for (const [idb, a] of [["sx", -0.004], ["dx", 0.004]]) {
@@ -283,7 +288,7 @@ async function partita({ id = null, solo = false, livello = 0.6 }) {
   }
 
   if (solo) { tavolo = M.nuovoTavolo(); nomi = ["Tu", livello > 0.7 ? "Il telefono (bravo)" : "Il telefono"]; veri = [state.io?.soprannome || state.io?.nome || "Tu", "il telefono"]; mostraMsg = tavolo.msg; disegnaSala(); return; }
-  voceAlTavolo(id);
+  voceAlTavolo(id, { alto: true });
   await carica();
   timer = setInterval(() => { if (!document.hidden && location.hash.includes(id)) carica(); else if (!location.hash.startsWith("#/biliardo")) clearInterval(timer); }, 1500);
 }

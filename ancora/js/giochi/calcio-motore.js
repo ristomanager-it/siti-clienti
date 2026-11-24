@@ -47,9 +47,12 @@ export function passo(st, n, comandi, dt) {
     const c = comandi[p]; if (!c) continue;
     for (const i of steccheDelPosto(n, p)) {
       const s = st.stecche[i];
-      const u = squadraDel(n, p) === 1 ? 1 - c.u : c.u;      // ognuno vede la sua porta in basso: la squadra 1 ha la mano rovesciata
+      // con due pollici: u/calcio per portiere e difesa, u2/calcio2 per centro e attacco (se non ci sono, tutto con u)
+      const avanti = (s.ruolo === "centro" || s.ruolo === "attacco") && c.u2 !== undefined;
+      const uu = avanti ? c.u2 : c.u, kk = avanti ? c.calcio2 : c.calcio;
+      const u = squadraDel(n, p) === 1 ? 1 - uu : uu;      // ognuno vede la sua porta in basso: la squadra 1 ha la mano rovesciata
       s.off = s.min + (s.max - s.min) * Math.min(1, Math.max(0, u));
-      if (c.calcio && s.calcio <= 0) s.calcio = DUR_CALCIO;
+      if (kk && s.calcio <= 0) s.calcio = DUR_CALCIO;
     }
   }
   if (st.pausa > 0) { st.pausa -= dt; for (const s of st.stecche) { s.prima = s.off; s.calcio = Math.max(0, s.calcio - dt); } return; }
