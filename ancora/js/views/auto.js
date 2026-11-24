@@ -7,7 +7,7 @@ import * as A from "../giochi/auto-motore.js";
 import { caricaPista, cercaPosto, slug } from "../giochi/auto-osm.js";
 
 // le piste dalle strade vere già pronte (le altre le crea chi gioca dal suo paese)
-export const PAESI = { "osm:conflenti": { nome: "Conflenti", lat: 39.067, lon: 16.283 } };
+export const PAESI = { "osm:conflenti": { nome: "Conflenti", lat: 39.071689, lon: 16.284496 } };
 
 const COLORI = { rossa: "#D3222A", blu: "#2457C5", gialla: "#F2C230", verde: "#1E8A4C", nera: "#222", bianca: "#F2F2F2", arancio: "#F07A1E" };
 const COLORI_BOT = ["#2457C5", "#1E8A4C", "#F2C230", "#7A3FB8", "#F07A1E"];
@@ -231,7 +231,25 @@ async function corsa({ pista: chiave = "casa", colore = "rossa", cerchia = null,
     const { mergeGeometries } = await import("https://esm.sh/three@0.170.0/examples/jsm/utils/BufferGeometryUtils.js");
     const tinte = ["#EADFC8", "#E7D3B0", "#F1E6D2", "#D9C7A4", "#EFD9B8", "#E4CDB4"].map((c) => new THREE.Color(c)), chiesa = new THREE.Color("#D8CDB5");
     const pezziMuri = [], pezziTetti = [];
-    for (const [k, e] of (ex.edifici ?? []).entries()) {
+    // dove OpenStreetMap ha poche case disegnate, il paese si completa con case lungo la strada (sempre le stesse per quella pista)
+    const edifici = [...(ex.edifici ?? [])];
+    if (edifici.length < 250) {
+      let s = 11; const cas = () => ((s = (s * 16807) % 2147483647) / 2147483647);
+      const passo = Math.max(1, Math.round(pista.N * 13 / pista.lung));
+      for (let i = 0; i < pista.N; i += passo) {
+        const p = pista.pts[i];
+        for (const lato of [-1, 1]) {
+          if (cas() < 0.3) continue;
+          const lu = 7 + cas() * 6, pr = 7 + cas() * 5, d = W + 3.5 + pr / 2 + cas() * 3;
+          const cx = p.x + p.nx * lato * d, cz = p.z + p.nz * lato * d;
+          if (Math.abs(A.vicino(pista, cx, cz).lato) < W + 2 + pr / 2) continue;
+          const tx = p.tx * lu / 2, tz = p.tz * lu / 2, nx = p.nx * pr / 2, nz = p.nz * pr / 2;
+          const piani = 2 + Math.floor(cas() * 2.4);
+          edifici.push({ p: [[cx - tx - nx, cz - tz - nz], [cx + tx - nx, cz + tz - nz], [cx + tx + nx, cz + tz + nz], [cx - tx + nx, cz - tz + nz]], h: piani * 3.1 + 0.6 });
+        }
+      }
+    }
+    for (const [k, e] of edifici.entries()) {
       if (e.p.length < 3) continue;
       try {
         const forma = new THREE.Shape(e.p.map(([x, z]) => new THREE.Vector2(x, -z)));

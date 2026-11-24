@@ -18,7 +18,16 @@ async function mappa(corpo) {
 }
 
 /** Dove si trova un paese (OpenStreetMap Nominatim). */
-export async function cercaPosto(testo) { return (await mappa({ cerca: testo })).posto; }
+export async function cercaPosto(testo) {
+  // prima dal telefono (Nominatim, veloce); se il browser lo blocca, passa da Ancora
+  try {
+    const ctl = new AbortController(); setTimeout(() => ctl.abort(), 8000);
+    const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=it&accept-language=it&q=${encodeURIComponent(testo)}`, { signal: ctl.signal });
+    const j = await r.json();
+    if (j?.length) return { lat: Number(j[0].lat), lon: Number(j[0].lon), nome: j[0].display_name.split(",")[0] };
+  } catch { /* si prova dal server */ }
+  return (await mappa({ cerca: testo })).posto;
+}
 
 /** La pista già pronta su Ancora, oppure la costruisce (e la salva). */
 export async function caricaPista(chiave, { nome, lat, lon } = {}, avanzamento = () => {}) {
