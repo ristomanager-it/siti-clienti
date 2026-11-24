@@ -6,7 +6,7 @@ const GIOCHI = [
   { icona: "🃏", nome: "Briscola", testo: "A 2, a 4 a coppie e a 5 chiamata, con le carte napoletane. Segni al compagno e chat al tavolo; se manca qualcuno gioca il telefono.", link: "#/briscola", pronto: true },
   { icona: "🂡", nome: "Tressette", testo: "A 4 a coppie o a 2, con le napoletane. Busso, striscio e volo al compagno; se manca qualcuno gioca il telefono.", link: "#/tressette", pronto: true },
   { icona: "♟️", nome: "Dama e scacchi", testo: "Una mossa la mattina, una la sera: il nonno contro il nipote.", pronto: false },
-  { icona: "🏠", nome: "Il gioco della famiglia", testo: "Compra la casa della nonna e il mare del 2019: il tabellone lo rinominate voi, con i vostri posti e le vostre carte.", link: "#/tabellone", pronto: true },
+  { icona: "🏠", piu: true, nome: "Il gioco della famiglia", testo: "Compra la casa della nonna e il mare del 2019: il tabellone lo rinominate voi, con i vostri posti e le vostre carte.", link: "#/tabellone", pronto: true },
 ];
 
 export default async function ({ params } = {}) {
@@ -19,7 +19,7 @@ export default async function ({ params } = {}) {
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin:0 0 16px">${state.cerchie.map((c) => `<a href="#/giochi?c=${c.id}" class="chip ${c.id === fam?.id ? "on" : ""}" style="margin:0;text-decoration:none">${esc(c.nome)}</a>`).join("")}</div>
       ${GIOCHI.map((g) => `<${g.pronto ? `a href="${g.link}${fam ? `?c=${fam.id}` : ""}"` : "div"} class="card" style="display:flex;gap:14px;align-items:center;margin:0 0 12px;text-decoration:none;color:inherit;${g.pronto ? "" : "opacity:.6"}">
         <span style="font-size:36px" aria-hidden="true">${g.icona}</span>
-        <span style="flex:1"><b style="display:block;font-size:18px">${g.nome}</b><span class="tenue">${g.testo}</span></span>
+        <span style="flex:1"><b style="display:block;font-size:18px">${g.nome}${g.piu ? ` <small style="font-size:12px;background:#E8B56B;color:#fff;border-radius:8px;padding:1px 6px;vertical-align:middle">Ancora+</small>` : ` <small style="font-size:12px;background:#E1F5EE;color:#085041;border-radius:8px;padding:1px 6px;vertical-align:middle">gratis</small>`}</b><span class="tenue">${g.testo}</span></span>
         ${g.pronto ? `<span style="font-size:22px" aria-hidden="true">›</span>` : `<small class="chip" style="margin:0">presto</small>`}</${g.pronto ? "a" : "div"}>`).join("")}
     </div>`;
 }

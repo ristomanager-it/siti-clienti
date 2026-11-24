@@ -67,6 +67,12 @@ const SEZIONI = [
   ["aiutante", "L'aiutante della famiglia", `
     <p>Dal menu, sotto <b>La famiglia</b>: la prima volta gli date un nome (si cambia con «rinomina»). Poi gli scrivi o gli parli col 🎙: «domenica pranzo dalla zia alle 13», «aggiungi latte alla spesa», «quando è il compleanno del nonno?», «cosa è successo questa settimana?».</p>
     <p>È anche cuoco e giardiniere: col 📷 fotografi il frigo e ti propone la cena, una pianta e ti dice come curarla, una ricetta scritta a mano e la ricopia nel ricettario. Puoi chiedergli anche di casa, gite, regali e compiti. Ti fa il menu della settimana con la spesa completa, ti aiuta a scrivere un ricordo (glielo racconti, lui lo sistema e lo pubblica nel feed o nel diario), ti legge le risposte con 🔊 e alle 8 ti manda il buongiorno con compleanni e impegni (si spegne in alto nella chat). Quello che fa compare in un riquadro con <b>Apri</b> e <b>Annulla</b>. Vede solo quello che vedi tu e la tua chat con lui è solo tua. È incluso in Ancora+ (basta una persona per tutta la famiglia).</p>`],
+  ["giochi", "I giochi", `
+    <p>Dal menu, <b>🎲 Giochi</b>: scegli con chi giocare (la famiglia o un gruppo di amici). Chi apre il tavolo manda l'invito sul telefono a tutto il gruppo; se manca qualcuno, gioca il telefono.</p>
+    <p><b>Gratis per tutti:</b> la tombola (chi fa il banco scrive i premi, può mettere il prezzo della cartella e l'app tiene la cassa; si può fissare giorno e ora), la briscola a 2, a 4 a coppie (con i segni al compagno) e a 5 chiamata, il tressette a 2 e a 4 (busso, striscio e volo). Le carte sono le napoletane, e al tavolo si può scrivere o parlare.</p>
+    <p><b>Con Ancora+:</b> il gioco della famiglia. Prima rinominate il tabellone con i vostri posti e scrivete le vostre carte Ricordo, poi si compra, si costruisce e si incassa.</p>`],
+  ["inviti", "Invitare tanti con un link", `
+    <p>Su una famiglia o un gruppo tocca <b>Invita</b> e scegli per quante persone vale il link (1, 2, 5, 10, 20 o 30). Lo mandi una volta, anche nella chat WhatsApp della famiglia, e ognuno entra col suo telefono. Sotto vedi quanti sono già entrati, e puoi rimandarlo o chiuderlo.</p>`],
   ["film", "Il film dell'anno", `
     <p>Dal menu: <b>Il film dell'anno</b>. Scegli il gruppo, il periodo e la musica: il telefono monta foto e video e lo vedi nascere. Poi lo salvi o lo mandi a tutti. Tieni l'app aperta mentre si crea.</p>
     <p>Senza Ancora+ un'anteprima di 5 momenti; con Ancora+ il film intero.</p>`],

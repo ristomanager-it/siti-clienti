@@ -39,6 +39,10 @@ const COSA = [
   ["Il libro della famiglia", "l'anno di tutti, mese per mese, con i QR per sentire le voci: in PDF e stampato"],
   ["Il film dell'anno", "le foto e i video di tutti, montati con la musica, da mandare a tutti"],
   ["L'aiutante della famiglia", "gli date un nome voi: fotografi il frigo e vi dice cosa cucinare, fotografi una pianta e vi dice come curarla, segna impegni e spesa, ricopia la ricetta della nonna"],
+  ["I giochi di una volta", "tombola con la smorfia, briscola e tressette con le carte napoletane, anche da case diverse: gratis per tutti"],
+  ["Il gioco della famiglia", "compri e costruisci sul tabellone dei vostri posti: la casa della nonna, la 500 di papà, il bar del paese"],
+  ["Una ricetta da regalare", "ne condividi una con un link, il resto del ricettario resta in famiglia"],
+  ["Un link per tutto il gruppo", "lo mandi una volta nella chat di famiglia e ognuno entra col suo telefono"],
 ];
 
 const CONTRO = [
@@ -61,6 +65,7 @@ const DOMANDE = [
   ["Quando arriva il libro?", "A fine anno, a casa: a colori, con copertina rigida, con le storie, le foto e i QR per ascoltare le voci. Il PDF si scarica quando volete. Copie in più: 35 € l'una."],
   ["E il film?", "Si crea nell'app con un tocco: le foto e i video dell'anno, montati con la musica. Lo salvate e lo mandate a tutti."],
   ["Cos'è l'aiutante?", "Un assistente gentile che conosce solo quello che mettete su Ancora: gli chiedete «quando è il compleanno della zia?» o «metti pandoro nella spesa» e lo fa. Il nome lo scegliete voi. Vede solo ciò che vede chi chiede e le chat sono private."],
+  ["Si può giocare insieme?", "Sì, anche da case diverse: tombola (con i premi e la cassa), briscola a 2, 4 e 5 e tressette con le carte napoletane sono gratis per tutti. Se manca qualcuno gioca il telefono. Con Ancora+ c'è anche il gioco della famiglia, con il tabellone dei vostri posti."],
   ["E se il codice non viene usato?", "Se non viene attivato entro 30 giorni dalla data scelta, ti rimborsiamo per intero."],
 ];
 
@@ -220,10 +225,11 @@ export default async function ({ params } = {}) {
         <div style="color:#F1DCCB;margin-top:4px;line-height:1.45">Un anno di Ancora+ per tutti, <b>il libro a colori</b> con i QR delle voci e il PDF, <b>il film dell'anno</b> e il biglietto regalo. Prezzo di lancio fino a Natale, poi 129 €.</div></div>
       <div style="border-radius:22px;padding:20px;background:#fff;border:1px solid var(--bordo);margin-bottom:12px">
         <div class="riga"><b style="flex:1;font-size:18px">Ancora<span style="color:${C.oro}">+</span></b><b style="font-family:Fraunces,serif;font-size:26px;color:${C.salvia}">99 € <small style="font-size:14px">l'anno</small></b></div>
-        <div class="tenue" style="margin-top:4px">Oppure 9,99 € al mese. Basta che paghi uno e lo ha tutta la famiglia: <b>albero senza limiti</b> e <b>alberi uniti</b> tra famiglie, <b>album degli eventi</b> con il QR, <b>il libro delle storie</b>, ricette e lettere senza limiti, le domande su misura, <b>200 GB</b>. Le storie e i consigli di ognuno, sempre lì quando servono.</div></div>
+        <div class="tenue" style="margin-top:4px">Oppure 9,99 € al mese. Basta che paghi uno e lo ha tutta la famiglia: <b>albero senza limiti</b> e <b>alberi uniti</b> tra famiglie, <b>album degli eventi</b> con il QR, <b>il libro delle storie</b>, ricette e lettere senza limiti, le domande su misura, <b>l'aiutante di casa</b> e <b>il gioco della famiglia</b>, <b>200 GB</b>. Le storie e i consigli di ognuno, sempre lì quando servono.</div></div>
       <div style="border-radius:22px;padding:20px;background:${C.panna};border:1px solid #EAD9BF;margin-bottom:12px">
         <div class="riga"><b style="flex:1;font-size:18px">Gratis</b><b style="font-family:Fraunces,serif;font-size:26px;color:${C.notte}">0 €</b></div>
         <div class="tenue" style="margin-top:4px">L'account, tutte le famiglie e i gruppi che vuoi: chat, foto, storie, calendario, liste, spese, diario e domanda della settimana senza limiti. E per provare il resto: 3 ricette, l'albero fino a 10 persone, una lettera da aprire più avanti, un album degli eventi, l'anteprima del libro e del film. 2 GB a testa, +1 GB per ogni amico che porti (fino a +10 GB).</div>
+        <div style="margin-top:8px;font-weight:700">🎲 E i giochi insieme: tombola, briscola e tressette.</div>
         <a class="btn chiaro" href="#/iscriviti" style="margin-top:12px">Crea il tuo account gratis</a></div>
       <div style="padding:4px 4px 0;line-height:1.7">
         <b>Servizi in più, quando servono</b><br>

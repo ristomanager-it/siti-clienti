@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "120";
+const VER = "121";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 const ROTTE = {
@@ -54,7 +54,6 @@ const ROTTE = {
   "briscola": () => import(`./views/briscola.js?v=${VER}`),
   "tressette": () => import(`./views/tressette.js?v=${VER}`),
   "tabellone": () => import(`./views/tabellone.js?v=${VER}`),
-  "invita-lista": () => import(`./views/invita-lista.js?v=${VER}`),
   "assistenza": () => import(`./views/assistenza.js?v=${VER}`),
   "albero-veloce": () => import(`./views/albero-veloce.js?v=${VER}`),
   "archivio": () => import(`./views/archivio.js?v=${VER}`),
@@ -660,6 +659,7 @@ export const VANTAGGI_PIU = [
   ["Il libro intero della famiglia", "in PDF e stampato, con i QR per sentire le voci"],
   ["Il film dell'anno intero", "le foto e i video di tutti, montati con la musica (gratis: anteprima di 5 momenti)"],
   ["L'aiutante di casa", "cuoco, giardiniere e segretario, col nome che scegliete voi: dalla foto del frigo la cena, dalla foto di una pianta come curarla"],
+  ["Il gioco della famiglia", "compri e costruisci sul tabellone con i vostri posti e le vostre carte (tombola, briscola e tressette sono gratis per tutti)"],
   ["Ricette, lettere e album senza limiti", "il ricettario di casa intero, le lettere da aprire più avanti per ognuno, un album per ogni evento"],
   ["200 GB per tutta la famiglia", "invece di 2 GB a testa"],
   ["Le storie e i consigli di ognuno", "sempre lì quando servono: «tu che avresti fatto?», «com'era quella volta?»"],
@@ -706,35 +706,44 @@ setTimeout(aggiornaBadgeChat, 2500);
 /** Crea un invito per una famiglia/gruppo e apre la condivisione (WhatsApp o il menu del telefono). */
 export async function invitaInCerchia(cerchiaId) {
   const c = state.cerchie.find((x) => x.id === cerchiaId);
-  // si sceglie: un link per tutto un gruppo WhatsApp (vale per tanti) o un invito per una persona
-  const scelta = await new Promise((ok) => {
-    const f = document.createElement("div");
-    f.style.cssText = "position:fixed;inset:0;z-index:80;background:rgba(0,0,0,.4);display:flex;align-items:flex-end";
-    f.innerHTML = `<div style="background:#FBF8F2;width:100%;max-width:720px;margin:0 auto;border-radius:22px 22px 0 0;padding:20px 16px calc(20px + env(safe-area-inset-bottom))">
-      <b style="font-size:20px;display:block;margin-bottom:12px">Invita in ${esc(c?.nome ?? "Ancora")}</b>
-      <button class="btn ambra" data-s="gruppo" style="text-align:left">📣 Un link per tutto un gruppo<br><small style="font-weight:500">Lo mandi una volta nella chat WhatsApp della famiglia e ognuno entra (fino a 30, vale 14 giorni)</small></button>
-      <button class="btn chiaro" data-s="lista" style="margin-top:10px;text-align:left">📋 Più numeri con un solo invio<br><small style="font-weight:500">Fai la lista (anche dalla rubrica) e un messaggio arriva a tutti</small></button>
-      <button class="btn chiaro" data-s="uno" style="margin-top:10px;text-align:left">👤 Una persona sola<br><small style="font-weight:500">Un invito personale, vale per chi lo apre per primo</small></button>
-      <button class="btn chiaro" data-s="" style="margin-top:10px">Annulla</button></div>`;
-    f.onclick = (e) => { const b = e.target.closest("[data-s]"); if (b || e.target === f) { f.remove(); ok(b?.dataset.s ?? ""); } };
-    document.body.appendChild(f);
-  });
-  if (!scelta) return;
-  if (scelta === "lista") { location.hash = `#/invita-lista?c=${cerchiaId}`; return; }
-  let codice;
-  if (scelta === "gruppo") {
-    const { data, error } = await sb.rpc("invito_di_gruppo", { p_cerchia: cerchiaId });
-    if (error) { alert("Invito non creato: " + error.message); return; }
-    codice = data;
-  } else {
-    const { data: inv, error } = await sb.from("inviti").insert({ invitato_da: state.io.id, cerchia_id: cerchiaId }).select("codice").single();
-    if (error) { alert("Invito non creato: " + error.message); return; }
-    codice = inv.codice;
-  }
-  const link = `${location.origin}${location.pathname}#/iscriviti?invito=${codice}`;
-  const testo = scelta === "gruppo"
-    ? `Vi ho preparato un posto in "${c?.nome ?? "Ancora"}" su Ancora.\n\nÈ come un social, ma solo per noi: foto, storie, vocali e chat, senza pubblicità e senza estranei. Le cose belle restano in ordine invece di perdersi nella chat. È gratis.\n\nEntrate tutti da qui (ognuno col suo telefono): ${link}`
-    : `Ti ho preparato un posto in "${c?.nome ?? "Ancora"}" su Ancora.\n\nÈ come un social, ma solo per noi: foto, storie, vocali e chat, senza pubblicità e senza estranei. Le cose belle restano in ordine invece di perdersi nella chat. È gratis.\n\nEntra da qui: ${link}`;
-  try { if (navigator.share) { await navigator.share({ title: c?.nome ?? "Ancora", text: testo }); return; } } catch { return; }
-  window.open(`https://wa.me/?text=${encodeURIComponent(testo)}`, "_blank");
+  const { data: attivi } = await sb.rpc("inviti_di_gruppo_miei", { p_cerchia: cerchiaId });
+  // un solo foglio: quante persone? → manda. Sotto, i link già mandati con quanti sono entrati.
+  const f = document.createElement("div");
+  f.style.cssText = "position:fixed;inset:0;z-index:80;background:rgba(0,0,0,.4);display:flex;align-items:flex-end";
+  f.innerHTML = `<div style="background:#FBF8F2;width:100%;max-width:720px;margin:0 auto;border-radius:22px 22px 0 0;padding:20px 16px calc(20px + env(safe-area-inset-bottom));max-height:90vh;overflow-y:auto">
+    <b style="font-size:20px;display:block">Invita in ${esc(c?.nome ?? "Ancora")}</b>
+    <p class="tenue" style="margin:4px 0 12px">Quante persone devono entrare con questo link? Lo mandi una volta (anche nel gruppo WhatsApp) e ognuno entra col suo telefono.</p>
+    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px">${[1, 2, 5, 10, 20, 30].map((n) => `<button class="btn ${n === 5 ? "ambra" : "chiaro"}" data-n="${n}" style="margin:0;padding:0;min-height:52px;font-size:18px">${n}</button>`).join("")}</div>
+    <p class="tenue" style="font-size:13px;margin:8px 0 0">1 = invito personale. Il link vale 14 giorni.</p>
+    ${(attivi ?? []).length ? `<b style="display:block;margin:16px 0 6px">Link già mandati</b>${attivi.map((a) => `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--bordo)">
+      <span style="flex:1">🔗 Entrati <b>${a.usi} su ${a.max_usi}</b> <small class="tenue">· fino al ${new Date(a.scade_il).toLocaleDateString("it-IT")}</small></span>
+      ${a.usi < a.max_usi ? `<button class="chip" data-rimanda="${a.codice}" style="margin:0">Rimanda</button><button class="chip" data-chiudi="${a.codice}" style="margin:0">Chiudi</button>` : `<span class="tenue">completo</span>`}</div>`).join("")}` : ""}
+    <button class="btn chiaro" data-annulla style="margin-top:14px">Annulla</button></div>`;
+  document.body.appendChild(f);
+  const manda = async (codice, persone) => {
+    const link = `${location.origin}${location.pathname}#/iscriviti?invito=${codice}`;
+    const testo = `${persone > 1 ? "Vi ho" : "Ti ho"} preparato un posto in "${c?.nome ?? "Ancora"}" su Ancora.\n\nÈ come un social, ma solo per noi: foto, storie, vocali e chat, senza pubblicità e senza estranei. Le cose belle restano in ordine invece di perdersi nella chat. È gratis.\n\n${persone > 1 ? "Entrate da qui, ognuno col suo telefono" : "Entra da qui"}: ${link}`;
+    try { if (navigator.share) { await navigator.share({ title: c?.nome ?? "Ancora", text: testo }); return; } } catch { return; }
+    window.open(`https://wa.me/?text=${encodeURIComponent(testo)}`, "_blank");
+  };
+  f.onclick = async (e) => {
+    const b = e.target.closest("button");
+    if (e.target === f || b?.dataset.annulla != null) { f.remove(); return; }
+    if (b?.dataset.n) {
+      const n = Number(b.dataset.n);
+      let codice;
+      if (n === 1) {
+        const { data: inv, error } = await sb.from("inviti").insert({ invitato_da: state.io.id, cerchia_id: cerchiaId }).select("codice").single();
+        if (error) { alert("Invito non creato: " + error.message); return; } codice = inv.codice;
+      } else {
+        const { data, error } = await sb.rpc("invito_di_gruppo", { p_cerchia: cerchiaId, p_persone: n });
+        if (error) { alert("Invito non creato: " + error.message); return; } codice = data;
+      }
+      f.remove(); manda(codice, n);
+    } else if (b?.dataset.rimanda) { f.remove(); manda(b.dataset.rimanda, 2); }
+    else if (b?.dataset.chiudi) {
+      if (!confirm("Chiudere questo link? Chi non è ancora entrato non potrà più usarlo.")) return;
+      await sb.rpc("invito_chiudi", { p_codice: b.dataset.chiudi }); f.remove(); invitaInCerchia(cerchiaId);
+    }
+  };
 }

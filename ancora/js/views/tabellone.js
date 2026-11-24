@@ -1,6 +1,6 @@
 // Il gioco della famiglia: #/tabellone?c=<gruppo> (tavoli e nuova partita) · #/tabellone?id=<partita> · #/tabellone?c=<gruppo>&nomi=1 (rinomina)
 // Regole e dadi stanno nella funzione "gioco-famiglia"; qui si disegna il tabellone e si mandano le mosse.
-import { sb, state, $app, esc, ICONE } from "../app.js";
+import { sb, state, $app, esc, ICONE, passaPiu } from "../app.js";
 import { SUPABASE_URL } from "../config.js";
 
 const ICONA = { via: "🏁", ricordo: "📜", tassa: "💸", auto: "🚗", serv: "🍷", castigo: "🚧", pausa: "☕", vai_castigo: "👮" };
@@ -36,7 +36,9 @@ async function tavoli(gruppo) {
   if (!gruppo) { $app().innerHTML = `<p class="pad">Prima entra in una famiglia o in un gruppo.</p>`; return; }
   const { data: aperti } = await sb.from("famiglia_partite").select("id, stato, posti, creata_il").eq("cerchia_id", gruppo.id).neq("stato", "finita")
     .gte("creata_il", new Date(Date.now() - 3 * 864e5).toISOString()).order("creata_il", { ascending: false });
-  const { data: tab } = await sb.from("tabellone_famiglia").select("nomi, aggiornato_il").eq("cerchia_id", gruppo.id).maybeSingle();
+  const [{ data: tab }, { data: piu }] = await Promise.all([
+    sb.from("tabellone_famiglia").select("nomi, aggiornato_il").eq("cerchia_id", gruppo.id).maybeSingle(),
+    sb.rpc("cerchia_piu", { p_cerchia: gruppo.id })]);
   const rinominate = Object.keys(tab?.nomi ?? {}).length;
   $app().innerHTML = `
     <header class="testa"><a class="icona" href="#/giochi?c=${gruppo.id}" aria-label="Indietro">${ICONE.indietro}</a><b>🏠 Il gioco della famiglia</b><span style="width:44px"></span></header>
@@ -47,14 +49,17 @@ async function tavoli(gruppo) {
         <div class="tenue">${rinominate ? `${rinominate} caselle con i vostri nomi` : "Dategli i vostri nomi: la casa della nonna, la 500 del papà, il bar del paese…"}</div></span><span>›</span></a>
       ${(aperti ?? []).map((p) => `<a href="#/tabellone?id=${p.id}" class="card" style="display:block;margin:0 0 10px;text-decoration:none;color:inherit">
         <b>${p.stato === "in_corso" ? "In corso" : "Si cercano giocatori"}</b><div class="tenue">${p.posti.map((x) => `${x.pedina ?? ""} ${esc(x.nome ?? "posto libero")}`).join(" · ")}</div></a>`).join("")}
-      <b style="display:block;margin:6px 0 8px">Nuova partita: quanti giocatori?</b>
+      ${piu ? `<b style="display:block;margin:6px 0 8px">Nuova partita: quanti giocatori?</b>
       <div style="display:flex;gap:8px">${[2, 3, 4, 5, 6].map((n) => `<button class="btn ${n === 4 ? "ambra" : "chiaro"}" data-n="${n}" style="margin:0;flex:1">${n}</button>`).join("")}</div>
-      <p class="tenue" style="font-size:14px">Chi manca lo fa il telefono. Il gruppo riceve l'invito sul telefono.</p>
+      <p class="tenue" style="font-size:14px">Chi manca lo fa il telefono. Il gruppo riceve l'invito sul telefono.</p>`
+      : `<div class="card" style="text-align:center"><div style="font-size:34px">✨</div><b>Il gioco della famiglia è incluso in Ancora+</b>
+        <p class="tenue" style="margin:6px 0 12px">Tombola, briscola e tressette restano gratis per tutti.</p><button class="btn ambra" id="piu">Scopri Ancora+</button></div>`}
     </div>`;
+  document.getElementById("piu")?.addEventListener("click", () => passaPiu("Il gioco della famiglia è incluso in Ancora+."));
   document.querySelectorAll("[data-n]").forEach((b) => b.onclick = async () => {
     b.disabled = true;
     try { const { id } = await chiama({ azione: "crea", cerchia_id: gruppo.id, n: Number(b.dataset.n) }); location.hash = `#/tabellone?id=${id}`; }
-    catch (e) { alert(e.message); b.disabled = false; }
+    catch (e) { b.disabled = false; if (e.message.includes("ANCORA_PIU")) passaPiu("Il gioco della famiglia è incluso in Ancora+."); else alert(e.message); }
   });
 }
 
