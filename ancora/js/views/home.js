@@ -500,16 +500,19 @@ async function tavoliAperti() {
   const box = document.getElementById("tavoli-aperti"); if (!box || !state.io) return;
   const ids = state.cerchie.map((c) => c.id); if (!ids.length) return;
   const da = new Date(Date.now() - 8 * 3600e3).toISOString();
-  const [{ data: carte }, { data: tomb }, { data: tab }] = await Promise.all([
+  const [{ data: carteGruppi }, { data: tomb }, { data: tab }, { data: carteOspite }] = await Promise.all([
     sb.from("partite").select("id, gioco, n, posti, stato, creato_da, cerchia_id").in("cerchia_id", ids).in("stato", ["attesa", "in_corso"]).gte("aggiornata_il", da).order("creata_il", { ascending: false }).limit(10),
     sb.from("tombole").select("id, stato, banco_id, cerchia_id, programmata_il, persone:banco_id(nome, soprannome)").in("cerchia_id", ids).in("stato", ["attesa", "in_corso"]).gte("creata_il", new Date(Date.now() - 2 * 864e5).toISOString()).limit(5),
     sb.from("famiglia_partite").select("id, stato, posti, creato_da, cerchia_id").in("cerchia_id", ids).in("stato", ["attesa", "in_corso"]).gte("aggiornata_il", da).limit(5),
+    // i tavoli degli amici dove sono seduto come ospite
+    sb.from("partite").select("id, gioco, n, posti, stato, creato_da, cerchia_id").contains("posti", [{ persona_id: state.io.id }]).in("stato", ["attesa", "in_corso"]).gte("aggiornata_il", da).limit(5),
   ]);
+  const carte = [...(carteGruppi ?? []), ...(carteOspite ?? []).filter((x) => !(carteGruppi ?? []).some((y) => y.id === x.id))];
   const io = state.io.id, gruppo = (id) => state.cerchie.find((c) => c.id === id)?.nome ?? "";
   const nomeDi2 = (posti, pid) => posti?.find?.((x) => x.persona_id === pid)?.nome ?? "Qualcuno";
   const NOMI = { briscola: ["🃏", "a briscola"], tressette: ["🂡", "a tressette"], biliardo: ["🎱", "a biliardo"], calcio: ["⚽", "a calciobalilla"], stop: ["🃏", "a Stop"] };
   const righe = [];
-  for (const p of carte ?? []) {
+  for (const p of carte) {
     const seduto = p.posti.some((x) => x.persona_id === io), liberi = p.posti.filter((x) => !x.persona_id).length;
     const [ic, cosa] = NOMI[p.gioco] ?? ["🎲", "a giocare"];
     if (p.stato === "attesa" && !seduto && liberi) righe.push([`#/${p.gioco}?id=${p.id}`, ic, `${esc(nomeDi2(p.posti, p.creato_da))} ti invita ${cosa}`, `${liberi} ${liberi === 1 ? "posto libero" : "posti liberi"} · ${esc(gruppo(p.cerchia_id))}`, "Siediti"]);

@@ -182,9 +182,10 @@ export default async function ({ params, gioco = "briscola" }) {
           ${!x.persona_id ? `<button class="chip" data-siedi="${i}" style="margin:0">Siediti qui</button>` : x.persona_id === state.io.id ? `<span class="tenue">sei tu</span>` : ""}</div>`).join("")}
         <div class="pad">
           ${creatore ? `<button class="btn ambra" id="inizia">Si gioca${p.posti.some((x) => !x.persona_id) ? " (i posti liberi li prende il telefono)" : ""}</button>` : `<p class="tenue" style="text-align:center">${io >= 0 ? "Sei seduto: si parte quando lo decide chi ha aperto il tavolo." : "Scegli un posto libero."}</p>`}
-          <button class="btn chiaro" id="invita" style="margin-top:10px">🔔 Invita di nuovo il gruppo</button>
-          <button class="btn chiaro" id="invita-wa" style="margin-top:10px">📲 Invita su WhatsApp (anche chi non è su Ancora)</button></div>`;
-      corpo.querySelector("#invita-wa").onclick = () => invitaAlGioco({ cerchiaId: p.cerchia_id, torna: `#/${gioco}?id=${id}`, titolo: TRE ? "Tressette" : "Briscola",
+          ${state.cerchie.some((c) => c.id === p.cerchia_id) ? `<button class="btn chiaro" id="invita" style="margin-top:10px">🔔 Avvisa tutto il gruppo «${esc(state.cerchie.find((c) => c.id === p.cerchia_id)?.nome ?? "")}»</button>` : ""}
+          <button class="btn chiaro" id="invita-wa" style="margin-top:10px">📲 Invita un amico su WhatsApp</button>
+          <p class="tenue" style="font-size:13px;text-align:center;margin:4px 0 0">L'amico entra solo a questo tavolo: non vede la famiglia né il gruppo.</p></div>`;
+      corpo.querySelector("#invita-wa").onclick = () => invitaAlGioco({ tipo: "partita", id, cerchiaId: p.cerchia_id, torna: `#/${gioco}?id=${id}`, titolo: TRE ? "Tressette" : "Briscola",
         testo: `🃏 ${TRE ? "Tressette" : "Briscola"} a ${p.n} su Ancora, con le carte napoletane: manchi tu al tavolo.`, perche: "Manchi tu al tavolo: un minuto e ti siedi." });
       corpo.querySelectorAll("[data-siedi]").forEach((b) => b.onclick = async () => {
         const { error } = await sb.rpc("briscola_siedi", { p_partita: id, p_posto: Number(b.dataset.siedi) });
@@ -195,7 +196,7 @@ export default async function ({ params, gioco = "briscola" }) {
         const { error } = await sb.rpc(`${gioco}_inizia`, { p_partita: id });
         if (error) { alert(error.message); e.target.disabled = false; } ultimaFirma = ""; aggiorna();
       });
-      corpo.querySelector("#invita").onclick = async (e) => {
+      if (corpo.querySelector("#invita")) corpo.querySelector("#invita").onclick = async (e) => {
         const { data: n } = await sb.rpc("briscola_invita", { p_partita: id });
         e.target.textContent = n ? `🔔 Invitati ${n} sul telefono` : "🔔 Già invitati (si può rifare tra 10 minuti)"; e.target.disabled = true;
       };

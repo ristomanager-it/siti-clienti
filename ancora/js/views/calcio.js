@@ -68,8 +68,9 @@ async function tavolo(id) {
           <button class="btn chiaro" id="tv" style="margin-top:10px">📺 Il campo sul televisore</button>
           <p class="tenue" style="font-size:14px;margin:6px 0 0">Per il televisore: apri Ancora sul browser del televisore (o del computer collegato), entra col tuo account, apri questa partita e premi lì "📺 Il campo sul televisore". I telefoni diventano le manopole.</p>`
           : `<p class="tenue" style="text-align:center">${io >= 0 ? "Sei seduto: si parte quando lo decide chi ha aperto il tavolo." : "Scegli un posto libero."}</p>`}
-        <button class="btn chiaro" id="invita" style="margin-top:10px">🔔 Invita di nuovo il gruppo</button>
-        <button class="btn chiaro" id="invita-wa" style="margin-top:10px">📲 Invita su WhatsApp (anche chi non è su Ancora)</button></div>`;
+        ${state.cerchie.some((c) => c.id === riga.cerchia_id) ? `<button class="btn chiaro" id="invita" style="margin-top:10px">🔔 Avvisa tutto il gruppo «${esc(state.cerchie.find((c) => c.id === riga.cerchia_id)?.nome ?? "")}»</button>` : ""}
+        <button class="btn chiaro" id="invita-wa" style="margin-top:10px">📲 Invita un amico su WhatsApp</button>
+        <p class="tenue" style="font-size:13px;text-align:center;margin:4px 0 0">L'amico entra solo a questo tavolo: non vede la famiglia né il gruppo.</p></div>`;
     corpo.querySelectorAll("[data-siedi]").forEach((b) => b.onclick = async () => {
       const { error } = await sb.rpc("briscola_siedi", { p_partita: id, p_posto: Number(b.dataset.siedi) }); if (error) alert(error.message); carica();
     });
@@ -79,8 +80,8 @@ async function tavolo(id) {
     };
     corpo.querySelector("#via")?.addEventListener("click", () => avvia(false));
     corpo.querySelector("#tv")?.addEventListener("click", () => avvia(true));
-    corpo.querySelector("#invita").onclick = async (e) => { const { data: n } = await sb.rpc("sala_invita", { p_partita: id }); e.target.textContent = n ? `🔔 Invitati ${n} sul telefono` : "🔔 Già invitati (si può rifare tra 10 minuti)"; e.target.disabled = true; };
-    corpo.querySelector("#invita-wa").onclick = () => invitaAlGioco({ cerchiaId: riga.cerchia_id, torna: `#/calcio?id=${id}`, titolo: "Calciobalilla",
+    if (corpo.querySelector("#invita")) corpo.querySelector("#invita").onclick = async (e) => { const { data: n } = await sb.rpc("sala_invita", { p_partita: id }); e.target.textContent = n ? `🔔 Invitati ${n} sul telefono` : "🔔 Già invitati (si può rifare tra 10 minuti)"; e.target.disabled = true; };
+    corpo.querySelector("#invita-wa").onclick = () => invitaAlGioco({ tipo: "partita", id, cerchiaId: riga.cerchia_id, torna: `#/calcio?id=${id}`, titolo: "Calciobalilla",
       testo: `⚽ Calciobalilla su Ancora ${riga.n === 4 ? "due contro due" : "uno contro uno"}: manchi tu!`, perche: "Ti aspettano al calciobalilla: un minuto e sei in campo." });
   }
   await carica();

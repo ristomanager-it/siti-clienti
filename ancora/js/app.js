@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "139";
+const VER = "140";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 const ROTTE = {
@@ -57,6 +57,7 @@ const ROTTE = {
   "briscola": () => import(`./views/briscola.js?v=${VER}`),
   "tressette": () => import(`./views/tressette.js?v=${VER}`),
   "biliardo": () => import(`./views/biliardo.js?v=${VER}`),
+  "tavolo": () => import(`./views/tavolo.js?v=${VER}`),
   "calcio": () => import(`./views/calcio.js?v=${VER}`),
   "tabellone": () => import(`./views/tabellone.js?v=${VER}`),
   "assistenza": () => import(`./views/assistenza.js?v=${VER}`),
@@ -778,12 +779,20 @@ export function invitoPiu() {
 }
 document.addEventListener("click", (e) => { if (e.target.closest?.("[data-chiedi-piu]")) { e.preventDefault(); chiediPiu(); } });
 
-/** Invito a un gioco (o a qualsiasi pagina) che vale anche per chi non è su Ancora:
- *  un link di gruppo per 20 persone; chi non ha l'account si iscrive, entra nel gruppo e si ritrova al tavolo. */
-export async function invitaAlGioco({ cerchiaId, torna, testo, titolo = "Ancora", perche = "" }) {
-  const { data: codice, error } = await sb.rpc("invito_di_gruppo", { p_cerchia: cerchiaId, p_persone: 20 });
-  if (error) { alert("Invito non creato: " + error.message); return; }
-  const link = `${location.origin}${location.pathname}#/iscriviti?invito=${codice}&torna=${encodeURIComponent(torna)}${perche ? `&perche=${encodeURIComponent(perche)}` : ""}`;
+/** Invito a un tavolo per chi non è del gruppo (anche chi non è su Ancora): entra SOLO nella partita o nella tombola,
+ *  non nella famiglia. Il link porta il codice di chi invita (premi) e, dopo l'iscrizione o l'accesso, siede al tavolo.
+ *  Senza "tipo" (il gioco della famiglia) resta l'invito nel gruppo. */
+export async function invitaAlGioco({ tipo = null, id = null, cerchiaId, torna, testo, titolo = "Ancora", perche = "" }) {
+  let link;
+  if (tipo) {
+    const [{ data: codice, error }, { data: amico }] = await Promise.all([sb.rpc("ospite_codice", { p_tipo: tipo, p_id: id }), sb.rpc("mio_codice_amico")]);
+    if (error) { alert("Invito non creato: " + error.message); return; }
+    link = `${location.origin}${location.pathname}#/iscriviti?amico=${amico ?? ""}&torna=${encodeURIComponent(`#/tavolo?t=${codice}`)}${perche ? `&perche=${encodeURIComponent(perche)}` : ""}&utm_source=invito_gioco`;
+  } else {
+    const { data: codice, error } = await sb.rpc("invito_di_gruppo", { p_cerchia: cerchiaId, p_persone: 20 });
+    if (error) { alert("Invito non creato: " + error.message); return; }
+    link = `${location.origin}${location.pathname}#/iscriviti?invito=${codice}&torna=${encodeURIComponent(torna)}${perche ? `&perche=${encodeURIComponent(perche)}` : ""}`;
+  }
   const msg = `${testo}\n\n👉 ${link}\n\n${ANCORA_UNA_RIGA}`;
   try { if (navigator.share) { await navigator.share({ title: titolo, text: msg }); return; } } catch { return; }
   window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");

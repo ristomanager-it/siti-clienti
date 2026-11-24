@@ -76,8 +76,9 @@ async function partita({ id = null, solo = false, livello = 0.6 }) {
         ${!x.persona_id ? `<button class="chip" data-siedi="${i}" style="margin:0">Siediti qui</button>` : x.persona_id === state.io.id ? `<span class="tenue">sei tu</span>` : ""}</div>`).join("")}
       <div class="pad">
         ${creatore ? `<button class="btn ambra" id="inizia">Si gioca</button>` : `<p class="tenue" style="text-align:center">${io >= 0 ? "Sei seduto: si parte quando lo decide chi ha aperto il tavolo." : "Siediti al posto libero."}</p>`}
-        <button class="btn chiaro" id="invita" style="margin-top:10px">🔔 Invita di nuovo il gruppo</button>
-        <button class="btn chiaro" id="invita-wa" style="margin-top:10px">📲 Invita su WhatsApp (anche chi non è su Ancora)</button></div>`;
+        ${state.cerchie.some((c) => c.id === riga.cerchia_id) ? `<button class="btn chiaro" id="invita" style="margin-top:10px">🔔 Avvisa tutto il gruppo «${esc(state.cerchie.find((c) => c.id === riga.cerchia_id)?.nome ?? "")}»</button>` : ""}
+        <button class="btn chiaro" id="invita-wa" style="margin-top:10px">📲 Invita un amico su WhatsApp</button>
+        <p class="tenue" style="font-size:13px;text-align:center;margin:4px 0 0">L'amico entra solo a questo tavolo: non vede la famiglia né il gruppo.</p></div>`;
     corpo.querySelectorAll("[data-siedi]").forEach((b) => b.onclick = async () => {
       const { error } = await sb.rpc("briscola_siedi", { p_partita: id, p_posto: Number(b.dataset.siedi) }); if (error) alert(error.message); carica();
     });
@@ -86,8 +87,8 @@ async function partita({ id = null, solo = false, livello = 0.6 }) {
       const { error } = await sb.rpc("biliardo_inizia", { p_partita: id, p_tavolo: M.nuovoTavolo() });
       if (error) { alert(error.message); e.target.disabled = false; } carica();
     });
-    corpo.querySelector("#invita").onclick = async (e) => { const { data: n } = await sb.rpc("sala_invita", { p_partita: id }); e.target.textContent = n ? `🔔 Invitati ${n} sul telefono` : "🔔 Già invitati (si può rifare tra 10 minuti)"; e.target.disabled = true; };
-    corpo.querySelector("#invita-wa").onclick = () => invitaAlGioco({ cerchiaId: riga.cerchia_id, torna: `#/biliardo?id=${id}`, titolo: "Biliardo",
+    if (corpo.querySelector("#invita")) corpo.querySelector("#invita").onclick = async (e) => { const { data: n } = await sb.rpc("sala_invita", { p_partita: id }); e.target.textContent = n ? `🔔 Invitati ${n} sul telefono` : "🔔 Già invitati (si può rifare tra 10 minuti)"; e.target.disabled = true; };
+    corpo.querySelector("#invita-wa").onclick = () => invitaAlGioco({ tipo: "partita", id, cerchiaId: riga.cerchia_id, torna: `#/biliardo?id=${id}`, titolo: "Biliardo",
       testo: "🎱 Ti sfido a biliardo su Ancora: palla 8, uno contro uno.", perche: "Ti hanno sfidato a biliardo: un minuto e prendi la stecca." });
   }
 

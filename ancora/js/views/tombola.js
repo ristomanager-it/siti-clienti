@@ -194,7 +194,8 @@ export default async function ({ params }) {
         ${mie.map(cartellaHtml).join("")}
         <div class="pad">
           ${banco ? `<button class="btn chiaro" id="avvisa" style="margin-bottom:10px">🔔 Avvisa tutti sul telefono</button><button class="btn ambra" id="estrai" style="font-size:20px">Inizia: estrai il primo numero</button>` : `<p class="tenue" style="text-align:center">Aspettiamo che ${esc(t.persone?.soprannome || t.persone?.nome || "il banco")} estragga il primo numero…</p>`}
-          <button class="btn chiaro" id="invita" style="margin-top:10px">📲 Invita su WhatsApp (anche chi non è su Ancora)</button></div>`;
+          <button class="btn chiaro" id="invita" style="margin-top:10px">📲 Invita un amico su WhatsApp</button>
+          <p class="tenue" style="font-size:13px;text-align:center;margin:4px 0 0">Chi inviti così entra solo alla tombola: non vede la famiglia né il gruppo.</p></div>`;
     } else {
       corpo.innerHTML = `
         ${t.stato === "finita" ? `<div class="card" style="text-align:center;background:#FFF6E8"><div style="font-size:40px">🏆</div><b style="font-size:20px">Tombola finita!</b>
@@ -263,7 +264,7 @@ export default async function ({ params }) {
     });
     corpo.querySelector("#chiudi")?.addEventListener("click", async () => { if (confirm("Chiudere la partita per tutti?")) { await sb.rpc("tombola_chiudi", { p_tombola: id }); aggiorna(); } });
     corpo.querySelector("#nuova")?.addEventListener("click", () => { location.hash = `#/tombola?c=${t.cerchia_id}`; });
-    corpo.querySelector("#invita")?.addEventListener("click", () => invitaAlGioco({ cerchiaId: t.cerchia_id, torna: `#/tombola?id=${id}`, titolo: "Tombola",
+    corpo.querySelector("#invita")?.addEventListener("click", () => invitaAlGioco({ tipo: "tombola", id, cerchiaId: t.cerchia_id, torna: `#/tombola?id=${id}`, titolo: "Tombola",
       testo: `🎄 Tombola su Ancora! Prendi le tue cartelle, si parte tra poco.`, perche: "Ti aspettano alla tombola: un minuto e prendi le cartelle." }));
   }
 
