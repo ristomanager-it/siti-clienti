@@ -48,7 +48,6 @@ async function partita({ id = null, solo = false, livello = 0.6 }) {
   const corpo = document.getElementById("corpo");
   document.getElementById("grande").onclick = () => { const el = document.getElementById("sala"); (el?.requestFullscreen ?? el?.webkitRequestFullscreen)?.call(el); };
 
-  if (solo) { tavolo = M.nuovoTavolo(); nomi = ["Tu", livello > 0.7 ? "Il telefono (bravo)" : "Il telefono"]; veri = [state.io?.soprannome || state.io?.nome || "Tu", "il telefono"]; mostraMsg = tavolo.msg; disegnaSala(); return; }
 
   async function carica() {
     const { data } = await sb.from("partite").select("*").eq("id", id).maybeSingle();
@@ -281,6 +280,7 @@ async function partita({ id = null, solo = false, livello = 0.6 }) {
     return { x: b.x + d.ax * tMin, y: b.y + d.ay * tMin, palla };
   }
 
+  if (solo) { tavolo = M.nuovoTavolo(); nomi = ["Tu", livello > 0.7 ? "Il telefono (bravo)" : "Il telefono"]; veri = [state.io?.soprannome || state.io?.nome || "Tu", "il telefono"]; mostraMsg = tavolo.msg; disegnaSala(); return; }
   await carica();
   timer = setInterval(() => { if (!document.hidden && location.hash.includes(id)) carica(); else if (!location.hash.startsWith("#/biliardo")) clearInterval(timer); }, 1500);
 }
