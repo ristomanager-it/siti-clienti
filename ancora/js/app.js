@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "123";
+const VER = "124";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 const ROTTE = {
@@ -50,6 +50,7 @@ const ROTTE = {
   "film": () => import(`./views/film.js?v=${VER}`),
   "aiutante": () => import(`./views/aiutante.js?v=${VER}`),
   "giochi": () => import(`./views/giochi.js?v=${VER}`),
+  "ancora-piu": () => import(`./views/ancora-piu.js?v=${VER}`),
   "tombola": () => import(`./views/tombola.js?v=${VER}`),
   "briscola": () => import(`./views/briscola.js?v=${VER}`),
   "tressette": () => import(`./views/tressette.js?v=${VER}`),
@@ -554,13 +555,8 @@ function apriMenu() {
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">${avatar(state.io, 40)}
         <b style="flex:1;font-size:17px">${esc(nomeDi(state.io))}</b>
         <button data-chiudi aria-label="Chiudi" style="width:40px;height:40px;border-radius:20px;border:0;background:#EFE8DC;font-size:18px;cursor:pointer">✕</button></div>
-      ${state.piu ? `<div style="display:inline-block;margin-top:2px;padding:5px 12px;border-radius:999px;background:#E3EDE2;color:#2F5A3A;font-weight:800;font-size:13px">Ancora<span style="color:#C9832E">+</span> attivo ✓</div>
-        <a href="#/regala" style="display:block;margin-top:10px;border-radius:16px;padding:14px 16px;background:linear-gradient(135deg,#8E2F22,#B3402F);color:#FBF3E2;text-decoration:none">
-          <b style="font-family:Fraunces,serif;font-size:19px">🎁 Regalalo a un'altra famiglia</b>
-          <span style="display:block;font-size:14px;opacity:.92;margin-top:2px">Ai tuoi fratelli, ai suoceri, agli amici: la storia della loro famiglia, con il libro. 99 €, oppure 3 regali al prezzo di 2.</span></a>`
-        : `<button id="menu-piu" style="display:block;width:100%;text-align:left;margin-top:10px;border:0;cursor:pointer;border-radius:16px;padding:14px 16px;background:linear-gradient(135deg,#12302C,#2F5A55);color:#FBF3E2">
-          <b style="font-family:Fraunces,serif;font-size:20px">Scopri Ancora<span style="color:#E7C48A">+</span></b>
-          <span style="display:block;font-size:14px;opacity:.9;margin-top:2px">Il libro e il film della famiglia, l'albero senza limiti, le storie e i consigli di ognuno sempre lì. Basta uno, e lo hanno tutti.</span></button>`}
+      ${state.piu ? `<a href="#/ancora-piu" style="display:inline-block;margin-top:2px;padding:5px 12px;border-radius:999px;background:#E3EDE2;color:#2F5A3A;font-weight:800;font-size:13px;text-decoration:none">Ancora<span style="color:#C9832E">+</span> attivo ✓</a>`
+        : `<a href="#/ancora-piu" style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:10px;min-height:48px;border-radius:14px;background:linear-gradient(135deg,#D9622B,#C8102E);color:#fff;font-weight:800;font-size:17px;text-decoration:none;box-shadow:0 4px 14px rgba(200,16,46,.25)">✨ Scopri Ancora<span style="color:#FFE2A8">+</span></a>`}
       ${vociMenu().map(([gruppo, voci]) => `<div style="margin-top:18px;font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#8A5A17">${gruppo}</div>
         ${voci.map(([h, t]) => `<a href="${h}" style="display:block;padding:12px 10px;margin:2px -10px;border-radius:12px;text-decoration:none;font-size:17px;font-weight:700;
           color:#12302C;${attuale === h ? "background:#F3E6CF" : ""}">${t}${h === "#/assistenza" && assistenzaDaLeggere ? ` <span class="pallino-assistenza" style="display:inline-block;min-width:20px;padding:1px 6px;border-radius:10px;background:#B3402F;color:#fff;font-size:12px;text-align:center">${assistenzaDaLeggere}</span>` : ""}</a>`).join("")}`).join("")}
@@ -569,7 +565,6 @@ function apriMenu() {
   document.body.appendChild(m);
   const chiudi = () => m.remove();
   m.querySelectorAll("[data-chiudi], nav a").forEach((x) => x.addEventListener("click", chiudi));
-  m.querySelector("#menu-piu")?.addEventListener("click", () => { chiudi(); passaPiu(); });
   m.querySelector("#esci-app").onclick = async () => { await sb.auth.signOut(); state.io = null; chiudi(); location.hash = "#/accesso"; };
   addEventListener("hashchange", chiudi, { once: true });
 }
@@ -678,7 +673,8 @@ export function passaPiu(motivo = "") {
       ${VANTAGGI_PIU.map(([t, s]) => `<div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #EFE6D8">
         <span style="flex-shrink:0;width:22px;height:22px;border-radius:11px;background:#4D7356;color:#fff;display:grid;place-items:center;font-size:13px;font-weight:800">✓</span>
         <span><b>${t}</b><br><span class="tenue" style="font-size:14px">${s}</span></span></div>`).join("")}
-      <a class="btn ambra" href="#/piano" style="margin-top:16px">Passa ad Ancora+ · 99 € l'anno</a>
+      <a href="#/ancora-piu" style="display:block;margin-top:12px;font-weight:700">Vedi tutto quello che c'è in più →</a>
+      <a class="btn ambra" href="#/piano" style="margin-top:12px">Passa ad Ancora+ · 99 € l'anno</a>
       <a class="btn chiaro" href="#/regala" style="margin-top:8px">Regala «La storia della tua famiglia» · 99 €</a>
     </div>`;
   document.body.appendChild(d);
