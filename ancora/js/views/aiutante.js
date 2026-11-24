@@ -2,6 +2,7 @@
 // Fa cose vere (calendario, liste, ricette anche dalla foto) e le mostra in un riquadro con Apri / Annulla.
 import { sb, state, $app, esc, passaPiu, ICONE, urlMedia, cambiaImmagine } from "../app.js";
 import { SUPABASE_URL } from "../config.js";
+let bollaFuori = null;   // la funzione che aggiunge un fumetto alla chat (per i messaggi che arrivano da fuori la chat)
 
 const SUGGERITI = ["Ancora", "Nonna Pina", "Il saggio", "Pippo", "Zia Rosa"];
 // [testo del bottone, domanda] — se la domanda inizia con 📷 si apre la fotocamera
@@ -20,11 +21,13 @@ export default async function ({ params }) {
   const famiglie = state.cerchie.filter((c) => c.tipo === "famiglia");
   const scelta = (params.c && state.cerchie.find((c) => c.id === params.c)) ?? famiglie[0] ?? state.cerchie[0];
   if (!scelta) { $app().innerHTML = `<div class="pad"><p>Prima crea o entra in una famiglia: l'aiutante lavora per lei.</p><a class="btn" href="#/cerchie">Famiglie e gruppi</a></div>`; return; }
-  const { data: cer } = await sb.from("cerchie").select("id, nome, aiutante_nome").eq("id", scelta.id).single();
+  const { data: cer } = await sb.from("cerchie").select("id, nome, aiutante_nome, famiglia_id").eq("id", scelta.id).single();
   const { data: restanti } = await sb.rpc("aiutante_restanti", { p_cerchia: scelta.id });
-  if (restanti !== -1) return presentazione(cer ?? scelta);
+  if (restanti === 0) return presentazione(cer ?? scelta);   // 0 = serve Ancora+ · -2 = finite le domande del mese · n = quante ne restano
   if (!cer?.aiutante_nome || params.rinomina) return sceltaNome(cer ?? scelta);
-  return chat(cer);
+  await chat(cer);
+  if (params.ok === "crediti") bollaFuori?.("aiutante", "Fatto: hai 100 domande in più, non scadono. Chiedimi pure! 😊");
+  else if (restanti === -2) finiteDomande(cer);
 }
 
 // Chi non ha Ancora+: cosa sa fare, e il passaggio ad Ancora+.
@@ -163,7 +166,8 @@ async function chat(cer) {
     }
     fili.appendChild(d);
     return d;
-  };
+  };  bollaFuori = bolla;
+
   bolla("aiutante", `Ciao ${state.io?.soprannome || state.io?.nome || ""}! Sono ${nome}, l'aiutante di casa. Fotografa il frigo e ti dico cosa cucinare, o una pianta e ti dico come curarla. Metto gli impegni in calendario, le cose nella spesa, e mi puoi chiedere di tutto: casa, gite, compiti, regali. Come ti aiuto?`);
   for (const m of (storia ?? []).reverse()) bolla(m.ruolo, m.testo, m.azioni);
   const pronte = document.createElement("div");
@@ -199,6 +203,7 @@ async function chat(cer) {
       const j = await r.json();
       attesa.remove();
       if (j.limite) { bolla("aiutante", "Sono incluso in Ancora+: con Ancora+ attivo ti rispondo di nuovo."); passaPiu("L'aiutante di casa è incluso in Ancora+."); }
+      else if (j.crediti) finiteDomande(cer);
       else if (!r.ok) bolla("aiutante", j.errore ?? "Non riesco a rispondere ora. Riprova tra poco.");
       else {
         bolla("aiutante", j.testo, j.azioni);
@@ -232,5 +237,23 @@ async function chat(cer) {
     r.onresult = (ev) => { campo.value = [...ev.results].map((x) => x[0].transcript).join(""); };
     r.onend = () => { bv.textContent = "🎙"; campo.placeholder = `Chiedi a ${nome}…`; const t = campo.value.trim(); if (t) { campo.value = ""; invia(t); } };
     r.start();
+  };
+}
+
+// finite le 300 domande del mese: un pacchetto di domande in più (non scadono), oppure si aspetta il mese nuovo
+function finiteDomande(cer) {
+  const fine = new Date(); fine.setMonth(fine.getMonth() + 1, 1);
+  const el = bollaFuori("aiutante", "");
+  el.innerHTML = `<b>Questo mese abbiamo parlato tanto! 😊</b><br>Le 300 domande del mese sono finite: tornano il ${fine.toLocaleDateString("it-IT", { day: "numeric", month: "long" })}.
+    <button class="btn ambra" style="margin:10px 0 0;width:100%">100 domande in più · 2,99 €</button>
+    <small style="display:block;margin-top:6px;opacity:.75">Valgono per tutta la famiglia e non scadono.</small>`;
+  el.querySelector("button").onclick = async (e) => {
+    e.target.disabled = true; e.target.textContent = "Apro il pagamento…";
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/crea-checkout`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tipo: "servizio", servizio: "aiutante_100", famiglia_id: cer.famiglia_id, persona_id: state.io.id }),
+    });
+    const j = await res.json().catch(() => ({}));
+    if (j.url) location.href = j.url; else { e.target.disabled = false; e.target.textContent = "Riprova"; alert(j.errore ?? "Pagamento non disponibile ora."); }
   };
 }

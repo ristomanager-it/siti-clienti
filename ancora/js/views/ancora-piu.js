@@ -23,7 +23,7 @@ const RIGHE = [
   ["Il libro della famiglia (PDF, mese per mese, con le voci)", "anteprima", "intero"],
   ["Il film dell'anno", "anteprima", "completo"],
   ["In più", null],
-  ["L'aiutante di casa: cuoco, giardiniere, segretario", false, true],
+  ["L'aiutante di casa: cuoco, giardiniere, segretario (300 domande al mese)", false, true],
   ["Il gioco della famiglia, con i vostri posti", false, true],
 ];
 
