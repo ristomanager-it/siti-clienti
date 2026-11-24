@@ -209,7 +209,7 @@ export async function condivisioneRicetta(r) {
   };
   const manda = async (token) => {
     const link = `${base}#/ricetta?t=${token}&utm_source=ricetta&utm_medium=condivisione`;
-    const testo = `Ti mando la ricetta di ${r.titolo ?? "famiglia"}: la trovi qui 👇\n(${ANCORA_UNA_RIGA})`;
+    const testo = `Ti mando la ricetta di ${r.titolo ?? "famiglia"}: la trovi qui 👇\n\n${ANCORA_UNA_RIGA}`;
     if (navigator.share) { try { await navigator.share({ title: r.titolo ?? "Ricetta", text: testo, url: link }); return; } catch { /* annullato */ } }
     window.open(`https://wa.me/?text=${encodeURIComponent(`${testo}\n${link}`)}`, "_blank");
   };

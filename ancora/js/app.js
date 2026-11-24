@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "136";
+const VER = "137";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 const ROTTE = {
@@ -249,7 +249,7 @@ async function render() {
     await vista.default({ id, params });
     if (!PUBBLICHE.has(nome) && state.io && state.io.modalita !== "semplice") aggiungiMenu();
     if (!PUBBLICHE.has(nome) && nome === "") setTimeout(bentornato, 1200);
-    if (!PUBBLICHE.has(nome) && nome === "") setTimeout(() => invitoSchermataHome() || ricordaPiu(), 2500);
+    if (!PUBBLICHE.has(nome) && nome === "") setTimeout(() => benvenutoNuovo() || invitoSchermataHome() || ricordaPiu(), 1800);
     if (!PUBBLICHE.has(nome) && state.io) setTimeout(controllaAssistenza, 1500);
   }
   catch (e) { console.error(e); $app().innerHTML = `<p class="errore">Qualcosa non ha funzionato. Riprova tra poco.</p>`; }
@@ -287,6 +287,36 @@ function invitoSchermataHome(forza = false) {
   document.body.appendChild(el);
   el.querySelector(".icona").onclick = () => { try { localStorage.setItem("ancora_home_chiuso", String(Date.now())); } catch { /* niente */ } el.remove(); };
   el.querySelector("#installa")?.addEventListener("click", async () => { await promptInstalla.prompt(); promptInstalla = null; el.remove(); });
+  return true;
+}
+
+// --- Alla prima iscrizione: cosa c'è su Ancora, e i due passi che contano (schermata Home e notifiche) ---
+function benvenutoNuovo() {
+  try { if (localStorage.getItem("ancora_benvenuto")) return false; } catch { return false; }
+  const nuovo = state.io?.creato_il && Date.now() - new Date(state.io.creato_il).getTime() < 7 * 864e5;
+  if (!nuovo || document.querySelector("#schermata-home, #benvenuto-nuovo, [role=dialog]")) return false;
+  const installata = giaInstallata();
+  const notifiche = "Notification" in window && Notification.permission === "granted";
+  const el = document.createElement("div");
+  el.id = "benvenuto-nuovo";
+  el.style.cssText = "position:fixed;inset:0;z-index:70;background:rgba(18,48,44,.6);display:flex;align-items:flex-end;justify-content:center";
+  el.innerHTML = `<div role="dialog" aria-label="Benvenuto" style="background:#FBF8F2;width:100%;max-width:560px;max-height:92vh;overflow:auto;border-radius:24px 24px 0 0;padding:22px 18px calc(22px + env(safe-area-inset-bottom));animation:entra .3s ease">
+    <b style="font-family:Fraunces,serif;font-size:27px;line-height:1.15;display:block">Benvenuto su Ancora${state.io?.nome ? `, ${esc(state.io.nome)}` : ""} 👋</b>
+    <p style="margin:6px 0 12px;font-weight:700;color:#8A5A17">La prima app social privata della famiglia e dei gruppi: solo voi, niente pubblicità, niente estranei.</p>
+    <div style="line-height:1.85;font-size:16px">📸 Foto, video e storie solo tra voi<br>💬 Chat del gruppo e messaggi a due<br>🎙️ Le voci e i racconti dei nonni, per sempre<br>🌳 L'albero della famiglia<br>🍝 Il ricettario di casa<br>📅 Calendario, compleanni, liste e spese<br>🎲 Tombola, carte napoletane, biliardo e calciobalilla, parlando al tavolo</div>
+    <p class="tenue" style="margin:6px 0 16px;font-size:14px">Con Ancora+: l'aiutante di casa, il libro e il film della famiglia, 200 GB per tutti.</p>
+    <div class="card" style="margin:0 0 10px"><b style="font-size:17px">① Metti Ancora sulla schermata Home ${installata ? "✓" : ""}</b>
+      ${installata ? `<p class="tenue" style="margin:4px 0 0">Fatto: la trovi accanto alle altre app.</p>` : `<p class="tenue" style="margin:4px 0 8px">Così la apri con un tocco e ti arrivano gli inviti a giocare e i messaggi.</p>${promptInstalla ? `<button class="btn ambra" id="bn-installa" style="margin:0">Aggiungi alla schermata Home</button>` : istruzioniSchermataHome()}`}</div>
+    <div class="card" style="margin:0 0 14px"><b style="font-size:17px">② Attiva le notifiche ${notifiche ? "✓" : ""}</b>
+      ${notifiche ? `<p class="tenue" style="margin:4px 0 0">Attive.</p>` : `<p class="tenue" style="margin:4px 0 8px">Per sapere quando ti invitano a un tavolo, quando arriva un messaggio o una foto della famiglia.</p><button class="btn ambra" id="bn-notifiche" style="margin:0">🔔 Attiva le notifiche</button>`}</div>
+    <a class="btn chiaro" href="#/istruzioni" id="bn-libretto" style="margin:0 0 10px">📖 Il libretto di istruzioni</a>
+    <button class="btn" id="bn-via" style="margin:0">Cominciamo</button></div>`;
+  document.body.appendChild(el);
+  const chiudi = () => { try { localStorage.setItem("ancora_benvenuto", "1"); localStorage.setItem("ancora_home_chiuso", String(Date.now())); } catch { /* niente */ } el.remove(); };
+  el.querySelector("#bn-via").onclick = chiudi;
+  el.querySelector("#bn-libretto").onclick = chiudi;
+  el.querySelector("#bn-installa")?.addEventListener("click", async () => { await promptInstalla.prompt(); promptInstalla = null; el.querySelector("#bn-installa").outerHTML = `<p class="tenue" style="margin:4px 0 0">Fatto ✓</p>`; });
+  el.querySelector("#bn-notifiche")?.addEventListener("click", async (e) => { const ok = await attivaNotifiche(); if (ok) e.target.outerHTML = `<p class="tenue" style="margin:4px 0 0">Attive ✓</p>`; });
   return true;
 }
 
@@ -525,7 +555,7 @@ function vociMenu() {
     ["La famiglia", [["#/aiutante", `✨ ${famiglie.find((c) => c.tipo === "famiglia")?.aiutante_nome || "L'aiutante"}`], ["#/giochi", "🎲 Giochi"], ["#/calendario", "Calendario"], ["#/liste", "Liste e desideri"], ["#/spese", "Spese"], ["#/album", "Album degli eventi"], ["#/domande", "Domande per te"], ["#/albero", "L'albero"], ["#/cerchie", "Famiglie e cerchie"]]],
     ["I miei ricordi", [["#/archivio", "Il cloud dei ricordi"], ["#/racconta", "Racconta"], ["#/racconta?lettera=1", "Una lettera per più avanti"], ["#/diario", "Il diario"], ["#/ricette", "Il ricettario"], [`#/libro/${state.io.id}`, "Il mio libro"], ["#/libro?famiglia=", "Il libro della famiglia"], ["#/film", "Il film dell'anno"]]],
     ["Agenda", [["vacanze", "Vacanze"], ["compiti", "Compiti"], ["esami", "Esami"]].filter(([k]) => attivi(k)).map(([k, t]) => [`#/agenda?t=${k}`, t])],
-    ["Il mio account", [["#/invita", "Invita e guadagna Ancora+ 🎁"], ["#/locandina", "Porta Ancora in parrocchia o a scuola"], ["#/profilo", "Profilo e impostazioni"], ["#/piano", "Il piano"], ["#/servizi", "Servizi"], ["#/regala", "Regala Ancora"], ["#/omaggio", "Codice omaggio"], ["#/istruzioni", "Istruzioni"], ["#/assistenza", "Assistenza · scrivici"]]],
+    ["Il mio account", [["#/invita", "Invita e guadagna Ancora+ 🎁"], ["#/locandina", "Porta Ancora in parrocchia o a scuola"], ["#/profilo", "Profilo e impostazioni"], ["#/piano", "Il piano"], ["#/servizi", "Servizi"], ["#/regala", "Regala Ancora"], ["#/omaggio", "Codice omaggio"], ["#/assistenza", "Assistenza · scrivici"]]],
   ].filter(([, v]) => v.length);
 }
 
@@ -565,7 +595,9 @@ function apriMenu() {
       ${vociMenu().map(([gruppo, voci]) => `<div style="margin-top:18px;font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#8A5A17">${gruppo}</div>
         ${voci.map(([h, t]) => `<a href="${h}" style="display:block;padding:12px 10px;margin:2px -10px;border-radius:12px;text-decoration:none;font-size:17px;font-weight:700;
           color:#12302C;${attuale === h ? "background:#F3E6CF" : ""}">${t}${h === "#/assistenza" && assistenzaDaLeggere ? ` <span class="pallino-assistenza" style="display:inline-block;min-width:20px;padding:1px 6px;border-radius:10px;background:#B3402F;color:#fff;font-size:12px;text-align:center">${assistenzaDaLeggere}</span>` : ""}</a>`).join("")}`).join("")}
-      <button id="esci-app" style="margin-top:22px;border:0;background:transparent;color:#8A3B2E;font-weight:700;font-size:15px;cursor:pointer;padding:8px 0">Esci</button>
+      <a href="#/istruzioni" style="display:flex;align-items:center;gap:10px;margin-top:20px;padding:12px 14px;border-radius:14px;background:#12302C;color:#FBF3E2;text-decoration:none">
+        <span style="font-size:26px">📖</span><span><b style="display:block;font-size:17px">Libretto di istruzioni</b><small style="opacity:.8">Tutto Ancora, spiegato in fretta</small></span></a>
+      <button id="esci-app" style="margin-top:14px;border:0;background:transparent;color:#8A3B2E;font-weight:700;font-size:15px;cursor:pointer;padding:8px 0">Esci</button>
     </nav>`;
   document.body.appendChild(m);
   const chiudi = () => m.remove();
@@ -715,7 +747,7 @@ export const ANCORA_IN_BREVE = `*Ancora* è la prima app social privata della fa
 🎲 Tombola, briscola, tressette, biliardo e calciobalilla, anche da case diverse
 ✨ Con Ancora+: l'aiutante di casa (cucina, piante, compiti, viaggi), il libro stampato e il film della vostra famiglia
 È gratis, si entra in un minuto.`;
-export const ANCORA_UNA_RIGA = "Ancora è la prima app social privata della famiglia e dei gruppi: foto, chat, voci dei nonni, ricette, calendario e giochi, solo tra voi. Gratis.";
+export const ANCORA_UNA_RIGA = "📲 Ancora è la prima app social privata della famiglia e dei gruppi: ti iscrivi gratis in un minuto.";
 
 /** "Chiedilo in famiglia": chi è gratis (spesso i ragazzi che giocano) manda a mamma, papà o ai nonni i motivi veri per prendere Ancora+. */
 export async function chiediPiu() {
@@ -752,7 +784,7 @@ export async function invitaAlGioco({ cerchiaId, torna, testo, titolo = "Ancora"
   const { data: codice, error } = await sb.rpc("invito_di_gruppo", { p_cerchia: cerchiaId, p_persone: 20 });
   if (error) { alert("Invito non creato: " + error.message); return; }
   const link = `${location.origin}${location.pathname}#/iscriviti?invito=${codice}&torna=${encodeURIComponent(torna)}${perche ? `&perche=${encodeURIComponent(perche)}` : ""}`;
-  const msg = `${testo}\n\n👉 Entra da qui: ${link}\n(Chi non è ancora su Ancora si iscrive gratis in un minuto e si ritrova al tavolo.)\n\n${ANCORA_IN_BREVE}`;
+  const msg = `${testo}\n\n👉 ${link}\n\n${ANCORA_UNA_RIGA}`;
   try { if (navigator.share) { await navigator.share({ title: titolo, text: msg }); return; } } catch { return; }
   window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
 }
@@ -776,7 +808,7 @@ export async function invitaInCerchia(cerchiaId) {
   document.body.appendChild(f);
   const manda = async (codice, persone) => {
     const link = `${location.origin}${location.pathname}#/iscriviti?invito=${codice}`;
-    const testo = `${persone > 1 ? "Vi ho" : "Ti ho"} preparato un posto in "${c?.nome ?? "Ancora"}" su Ancora.\n\n👉 ${persone > 1 ? "Entrate da qui, ognuno col suo telefono" : "Entra da qui"}: ${link}\n\n${ANCORA_IN_BREVE}`;
+    const testo = `${persone > 1 ? "Vi ho" : "Ti ho"} preparato un posto in "${c?.nome ?? "Ancora"}" su Ancora.\n\n👉 ${persone > 1 ? "Entrate da qui, ognuno col suo telefono" : "Entra da qui"}: ${link}\n\n${ANCORA_UNA_RIGA}`;
     try { if (navigator.share) { await navigator.share({ title: c?.nome ?? "Ancora", text: testo }); return; } } catch { return; }
     window.open(`https://wa.me/?text=${encodeURIComponent(testo)}`, "_blank");
   };

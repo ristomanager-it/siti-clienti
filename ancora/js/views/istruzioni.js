@@ -3,9 +3,10 @@
 import { istruzioniSchermataHome } from "../app.js";
 import { $app, esc } from "../app.js";
 
-const AGGIORNATE = "22 novembre 2026";
+const AGGIORNATE = "24 novembre 2026";
 
 const NOVITA = [
+  ["24 novembre 2026", "Biliardo e calciobalilla (anche col campo sul televisore). Ai tavoli ci si parla dal vivo con 🎙️ Parla. Gli inviti a giocare compaiono anche in home. Cartoline dei ricordi da mandare su WhatsApp, l'album della festa per gli invitati, la locandina col tuo codice e i premi per chi porta famiglie su Ancora."],
   ["22 novembre 2026 · sera tardi", "Storie: in basso «👁 Vista da…» con chi l'ha vista e come ha reagito; ⋯ in alto per eliminarle (le storie non si modificano: si rifanno). Il numerino rosso sull'icona di Ancora segna i messaggi non letti."],
   ["23 novembre 2026", "L'aiutante della famiglia: il nome lo scegliete voi. L'albero in 2 minuti (mamma, papà, nonni, figli in una pagina) e le famiglie che si collegano con un tocco. Il film dell'anno e il libro della famiglia. La chat Assistenza nel menu. Regala Ancora anche a un'altra famiglia, con il 3x2. La pagina di vendita nella lingua del telefono."],
   ["22 novembre 2026 · sera tardi", "Libreria musicale per le storie: 25 brani, anche rock e rap (allegri, di Natale, compleanno, dolci, emozionanti, viaggio). Si ascoltano prima di sceglierli."],
@@ -68,9 +69,23 @@ const SEZIONI = [
     <p>Dal menu, sotto <b>La famiglia</b>: la prima volta gli date un nome (si cambia con «rinomina»). Poi gli scrivi o gli parli col 🎙: «domenica pranzo dalla zia alle 13», «aggiungi latte alla spesa», «quando è il compleanno del nonno?», «cosa è successo questa settimana?».</p>
     <p>È anche cuoco e giardiniere: col 📷 fotografi il frigo e ti propone la cena, una pianta e ti dice come curarla, una ricetta scritta a mano e la ricopia nel ricettario. Puoi chiedergli anche di casa, gite, regali e compiti. Ti fa il menu della settimana con la spesa completa, ti aiuta a scrivere un ricordo (glielo racconti, lui lo sistema e lo pubblica nel feed o nel diario), ti legge le risposte con 🔊 e alle 8 ti manda il buongiorno con compleanni e impegni (si spegne in alto nella chat). Quello che fa compare in un riquadro con <b>Apri</b> e <b>Annulla</b>. Vede solo quello che vedi tu e la tua chat con lui è solo tua. È incluso in Ancora+ (basta una persona per tutta la famiglia).</p>`],
   ["giochi", "I giochi", `
-    <p>Dal menu, <b>🎲 Giochi</b>: scegli con chi giocare (la famiglia o un gruppo di amici). Chi apre il tavolo manda l'invito sul telefono a tutto il gruppo; se manca qualcuno, gioca il telefono.</p>
-    <p><b>Gratis per tutti:</b> la tombola (chi fa il banco scrive i premi, può mettere il prezzo della cartella e l'app tiene la cassa; si può fissare giorno e ora), la briscola a 2, a 4 a coppie (con i segni al compagno) e a 5 chiamata, il tressette a 2 e a 4 (busso, striscio e volo). Le carte sono le napoletane, e al tavolo si può scrivere o parlare. E poi il biliardo (palla 8) e il calciobalilla a 2 o a 4: il campo si può mettere sul televisore e i telefoni fanno da manopole.</p>
+    <p>Dal menu, <b>🎲 Giochi</b>: scegli con chi giocare (la famiglia o un gruppo di amici). Chi apre il tavolo manda l'invito sul telefono a tutto il gruppo (e su WhatsApp anche a chi non è su Ancora: si iscrive e si ritrova al tavolo); se manca qualcuno, gioca il telefono.</p>
+    <p><b>Gratis per tutti:</b> la tombola (chi fa il banco scrive i premi, può mettere il prezzo della cartella e l'app tiene la cassa; si può fissare giorno e ora), la briscola a 2, a 4 a coppie (con i segni al compagno) e a 5 chiamata, il tressette a 2 e a 4 (busso, striscio e volo). Le carte sono le napoletane, e al tavolo si può scrivere, e con <b>🎙️ Parla</b> ci si parla dal vivo. E poi il biliardo (palla 8) e il calciobalilla a 2 o a 4: il campo si può mettere sul televisore e i telefoni fanno da manopole.</p>
     <p><b>Con Ancora+:</b> il gioco della famiglia. Prima rinominate il tabellone con i vostri posti e scrivete le vostre carte Ricordo, poi si compra, si costruisce e si incassa.</p>`],
+  ["notifiche", "Le notifiche (e la schermata Home)", `
+    <p>Prima metti Ancora sulla schermata Home (vedi sopra): su iPhone le notifiche arrivano solo così. Poi apri Ancora dall'icona e, dal <b>Profilo</b>, alla voce <b>Notifiche</b> tocca <b>Attiva</b> (o dal riquadro di benvenuto).</p>
+    <p>Ti arrivano gli inviti ai tavoli, i messaggi, le foto e le domande della famiglia. Gli inviti a giocare li trovi anche in home, nella fascia «Ti aspettano al tavolo».</p>`],
+  ["voce", "Parlarsi ai tavoli", `
+    <p>In ogni gioco, in basso, c'è <b>🎙️ Parla</b>: chi lo preme entra nella voce del tavolo e si sente con gli altri, come in una chiamata. 🔇 per il muto, ✕ per uscire. La prima volta il telefono chiede il permesso del microfono. L'audio va diretto da telefono a telefono.</p>`],
+  ["premi", "Invita e guadagna Ancora+", `
+    <p>Dal menu: <b>Invita e guadagna</b>. Ogni 3 persone che entrano col tuo link (o dai tuoi inviti ai giochi, alle ricette, alle cartoline): <b>1 mese di Ancora+</b>, fino a 12. Alla quinta famiglia nuova che porti: <b>1 anno</b>.</p>
+    <p>Quando una famiglia che hai portato passa ad Ancora+, il <b>20%</b> del suo primo pagamento è tuo: se paghi Ancora+ te lo rimborsiamo sulla carta, se no diventa giorni di Ancora+ gratis.</p>`],
+  ["cartoline", "Le cartoline dei ricordi", `
+    <p>Apri un ricordo della famiglia e tocca <b>💌 Fanne una cartolina</b>: ti prepara un'immagine da mandare su WhatsApp o mettere negli stati. Chi la riceve vede l'inizio; per leggerlo tutto e sentire la voce si iscrive. Il diario, le lettere chiuse e i ricordi privati non si condividono.</p>`],
+  ["festa", "L'album della festa", `
+    <p>Dal menu, <b>Album degli eventi</b>: crei l'album di un matrimonio, un compleanno, una comunione e stampi il QR per i tavoli. Gli invitati caricano le foto senza iscriversi; se lo permetti, chi si iscrive le vede tutte.</p>`],
+  ["locandina", "La locandina col tuo codice", `
+    <p>Dal menu, <b>Porta Ancora in parrocchia o a scuola</b>: una locandina A4 da stampare (parrocchia, scuola, centro anziani, negozio) col tuo QR. Chi si iscrive da lì conta per i tuoi premi.</p>`],
   ["inviti", "Invitare tanti con un link", `
     <p>Su una famiglia o un gruppo tocca <b>Invita</b> e scegli per quante persone vale il link (1, 2, 5, 10, 20 o 30). Lo mandi una volta, anche nella chat WhatsApp della famiglia, e ognuno entra col suo telefono. Sotto vedi quanti sono già entrati, e puoi rimandarlo o chiuderlo.</p>`],
   ["film", "Il film dell'anno", `
@@ -88,7 +103,7 @@ const SEZIONI = [
 
 export default async function ({ params } = {}) {
   $app().innerHTML = `
-    <header class="testa"><span class="logo" style="font-size:22px">Istruzioni</span><span style="flex:1"></span></header>
+    <header class="testa"><span class="logo" style="font-size:22px">📖 Libretto di istruzioni</span><span style="flex:1"></span></header>
     <div class="pad" style="padding-top:0">
       <p class="tenue" style="margin:0 0 14px">Aggiornate il ${AGGIORNATE}</p>
       <details class="card" style="margin:0 0 12px;border:2px solid var(--ambra)" ${params?.s ? "" : "open"}>
