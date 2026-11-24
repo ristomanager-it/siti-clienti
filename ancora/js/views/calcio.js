@@ -107,7 +107,7 @@ function campo({ riga = null, solo = false, livello = 0.6 }) {
         <a href="#/calcio" class="icona" style="color:#FBF3E2" aria-label="Esci">${ICONE.indietro}</a>
         <div id="tab" style="flex:1;text-align:center;font-weight:800;font-size:22px"></div>
         <button class="icona" id="grande" style="color:#FBF3E2;font-size:20px" aria-label="Schermo intero">⛶</button></div>
-      <canvas id="cv" style="touch-action:none;display:block;flex:1;min-height:0"></canvas>
+      <div style="flex:1;min-height:0;width:100%;position:relative"><canvas id="cv" style="touch-action:none;display:block;position:absolute;inset:0;width:100%;height:100%"></canvas></div>
       <div id="sotto" style="width:100%;max-width:560px;padding:8px 12px 14px;box-sizing:border-box"></div>
       <div id="avviso" style="position:absolute;inset:0;display:none;place-items:center;pointer-events:none;font:800 64px Fraunces,serif;color:#E8B56B;text-shadow:0 4px 20px rgba(0,0,0,.6)"></div>
     </div>`;
