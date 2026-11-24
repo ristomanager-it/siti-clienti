@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "145";
+const VER = "146";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 const ROTTE = {
@@ -754,9 +754,16 @@ export const ANCORA_IN_BREVE = `*Ancora* è la prima app social privata della fa
 ✨ Con Ancora+: l'aiutante di casa (cucina, piante, compiti, viaggi), il libro stampato e il film della vostra famiglia
 È gratis, si entra in un minuto.`;
 export const ANCORA_UNA_RIGA = "📲 Ancora è la prima app social privata della famiglia e dei gruppi: ti iscrivi gratis in un minuto.";
-export const ANCORA_INFO = "Solo noi, niente pubblicità né estranei: foto e video, chat, le voci e i racconti dei nonni, il ricettario di casa, calendario e compleanni, e i giochi insieme anche da case diverse (tombola, carte napoletane, biliardo, calciobalilla).";
-// per un gruppo di amici: niente nonni né ricettario, si parla di serate, chat e giochi
-export const ANCORA_INFO_AMICI = "Solo noi, niente pubblicità né estranei: la chat del gruppo, le foto e i video delle serate, il calendario per organizzarsi, e i giochi insieme anche da case diverse, parlando a voce (briscola, tressette, biliardo, calciobalilla, tombola).";
+// le poche righe che raccontano Ancora in un invito: diverse per ogni tipo di gruppo, senza elenchi, per incuriosire
+export const ANCORA_INFO_PER = {
+  famiglia: "Solo noi, niente pubblicità né estranei: le foto e i video di tutti in un posto solo, le voci dei nonni che restano per sempre, le ricette di casa… e la sera ci si sfida pure, anche da case diverse. Guardala, poi mi dici 😉",
+  casa: "Solo chi vive qui: le spese da dividere, la lista della spesa, il calendario di casa e la nostra chat… e quando c'è da staccare, si gioca insieme anche ognuno dalla sua stanza 😄",
+  coppia: "Solo noi due: le nostre foto, i nostri ricordi, le date importanti che non dimentichiamo più… e qualche sfida per vedere chi vince 😏",
+  amici: "Solo noi, niente pubblicità né estranei: la nostra chat, le foto delle serate che non finiscono in giro… e la sera ci si sfida parlando a voce, ognuno da casa sua. Provala e mi dici 😏",
+  gruppo: "Solo noi del gruppo, niente pubblicità né estranei: chat, foto e video, il calendario per organizzarci… e qualche sorpresa per stare insieme anche a distanza 😉",
+};
+export const ANCORA_INFO = ANCORA_INFO_PER.famiglia;
+export const ANCORA_INFO_AMICI = ANCORA_INFO_PER.amici;
 export const SALVALA = "📌 Quando la apri, salvala sulla schermata Home del telefono: così ti arrivano gli inviti e i messaggi.";
 export const saluto = () => `Ciao! 👋 Sono ${state.io?.soprannome || state.io?.nome || "io"}${state.io?.cognome && !state.io?.soprannome ? ` ${state.io.cognome}` : ""}.`;
 
@@ -828,7 +835,7 @@ export async function invitaInCerchia(cerchiaId) {
   const manda = async (codice, persone) => {
     const link = `${location.origin}${location.pathname}#/iscriviti?invito=${codice}`;
     const voi = persone > 1;
-    const testo = `${saluto()}\nHo trovato un'app che fa proprio al caso nostro: *Ancora*, la prima app social privata della famiglia e dei gruppi.\n\n${c?.tipo === "famiglia" ? ANCORA_INFO : ANCORA_INFO_AMICI}\n\n${voi ? "Vi ho" : "Ti ho"} già preparato un posto in "${c?.nome ?? "Ancora"}": ${voi ? "iscrivetevi da qui, ognuno col suo telefono" : "iscriviti da qui"}, è gratis 👇\n${link}\n\n📌 Quando ${voi ? "la aprite, salvatela" : "la apri, salvala"} sulla schermata Home del telefono: così ${voi ? "vi arrivano" : "ti arrivano"} gli inviti e i messaggi.`;
+    const testo = `${saluto()}\nHo trovato un'app che fa proprio al caso nostro: *Ancora*, la prima app social privata della famiglia e dei gruppi.\n\n${ANCORA_INFO_PER[c?.tipo] ?? ANCORA_INFO_PER.gruppo}\n\n${voi ? "Vi ho" : "Ti ho"} già preparato un posto in "${c?.nome ?? "Ancora"}": ${voi ? "iscrivetevi da qui, ognuno col suo telefono" : "iscriviti da qui"}, è gratis 👇\n${link}\n\n📌 Quando ${voi ? "la aprite, salvatela" : "la apri, salvala"} sulla schermata Home del telefono: così ${voi ? "vi arrivano" : "ti arrivano"} gli inviti e i messaggi.`;
     try { if (navigator.share) { await navigator.share({ title: c?.nome ?? "Ancora", text: testo }); return; } } catch { return; }
     window.open(`https://wa.me/?text=${encodeURIComponent(testo)}`, "_blank");
   };
