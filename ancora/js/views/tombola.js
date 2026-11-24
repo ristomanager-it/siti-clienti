@@ -1,7 +1,8 @@
 // La tombola di famiglia: #/tombola?c=<famiglia>  oppure  #/tombola?id=<tombola>
 // Chi la apre fa il banco ed estrae (il numero lo sceglie il server, a caso); gli altri prendono da 1 a 6 cartelle.
 // Le cartelle si segnano da sole, i premi li assegna il server; il numero si legge anche a voce, con la smorfia.
-import { sb, state, $app, esc, ICONE, invitaAlGioco } from "../app.js";
+import { sb, state, $app, esc, ICONE, invitaAlGioco, invitoPiu } from "../app.js";
+import { voceAlTavolo } from "../giochi/voce.js";
 
 const SMORFIA = ["", "L'Italia", "La bambina", "La gatta", "Il maiale", "La mano", "", "Il vasetto", "La Madonna", "La figliolanza", "I fagioli",
   "I topolini", "Il soldato", "Sant'Antonio", "L'ubriaco", "Il ragazzo", "", "La disgrazia", "Il sangue", "La risata", "La festa",
@@ -56,6 +57,7 @@ export default async function ({ params }) {
     if (error) { $app().innerHTML = `<p class="pad errore">${esc(error.message)}</p>`; return; }
     location.replace(`#/tombola?id=${data}`); return;
   }
+  voceAlTavolo(id);
 
   let voce = true; try { voce = localStorage.getItem("ancora_tombola_voce") !== "0"; } catch { /* niente */ }
   let ultimoVisto = null, premiVisti = null, timer = null, ultimaFirma = "", animando = false;
@@ -196,7 +198,7 @@ export default async function ({ params }) {
     } else {
       corpo.innerHTML = `
         ${t.stato === "finita" ? `<div class="card" style="text-align:center;background:#FFF6E8"><div style="font-size:40px">🏆</div><b style="font-size:20px">Tombola finita!</b>
-          ${banco ? `<button class="btn ambra" id="nuova" style="margin-top:12px">Un'altra partita</button>` : ""}</div>` : ""}
+          ${banco ? `<button class="btn ambra" id="nuova" style="margin-top:12px">Un'altra partita</button>` : ""}</div>${invitoPiu()}` : ""}
         ${grande}
         ${banco && t.stato === "in_corso" ? `<div class="pad" style="padding-top:8px"><button class="btn ambra" id="estrai" style="font-size:22px;min-height:64px">Estrai</button></div>` : ""}
         ${premiHtml}${palioHtml}

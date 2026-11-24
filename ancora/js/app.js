@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "134";
+const VER = "135";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 const ROTTE = {
@@ -235,7 +235,8 @@ async function render() {
   const id = rotta.split("/")[1];
 
   if (!PUBBLICHE.has(nome) && !state.io && !(await caricaIo())) {
-    location.hash = nome === "" ? "#/scopri" : "#/accesso"; return;   // chi arriva dal link principale vede la pagina di vendita
+    // chi arriva dal link principale vede la pagina di vendita; da un link a un gioco, un ricordo, una ricetta… dopo l'accesso torna lì
+    location.hash = nome === "" ? "#/scopri" : `#/accesso?torna=${encodeURIComponent(location.hash)}`; return;
   }
   const barra = document.getElementById("barra");
   barra.hidden = PUBBLICHE.has(nome) || state.io?.modalita === "semplice";
@@ -715,6 +716,35 @@ export const ANCORA_IN_BREVE = `*Ancora* è la prima app social privata della fa
 ✨ Con Ancora+: l'aiutante di casa (cucina, piante, compiti, viaggi), il libro stampato e il film della vostra famiglia
 È gratis, si entra in un minuto.`;
 export const ANCORA_UNA_RIGA = "Ancora è la prima app social privata della famiglia e dei gruppi: foto, chat, voci dei nonni, ricette, calendario e giochi, solo tra voi. Gratis.";
+
+/** "Chiedilo in famiglia": chi è gratis (spesso i ragazzi che giocano) manda a mamma, papà o ai nonni i motivi veri per prendere Ancora+. */
+export async function chiediPiu() {
+  const { data: codice } = await sb.rpc("mio_codice_amico");
+  const link = `${location.origin}${location.pathname}#/iscriviti?amico=${codice ?? ""}&torna=${encodeURIComponent("#/ancora-piu")}&utm_source=chiedi_piu`;
+  const msg = `Su Ancora ci giochiamo già: tombola, carte, biliardo, calciobalilla. Ma Ancora+ servirebbe a tutta la famiglia, e basta che lo prenda uno per averlo tutti 🙏
+
+✨ Con Ancora+ (99 € l'anno per tutta la famiglia, meno di 9 € al mese):
+📸 Le foto e i video di casa al sicuro, 200 GB per tutti, senza pubblicità e senza estranei
+🎙️ Le voci e le storie dei nonni conservate per sempre, con le domande su misura per ognuno
+📖 Il libro della famiglia, mese per mese, con i QR per riascoltare le voci
+🎬 Il film del nostro anno, con le nostre foto e la musica
+🍝 L'aiutante di casa: fotografi il frigo e ti dice cosa cucinare, il menu della settimana, aiuto coi compiti, le piante, i viaggi
+🌳 L'albero di famiglia senza limiti e il ricettario di casa senza limiti
+🏠 Il gioco della famiglia, col tabellone dei nostri posti
+
+Guarda qui 👉 ${link}`;
+  try { if (navigator.share) { await navigator.share({ title: "Ancora+ per la famiglia", text: msg }); return; } } catch { return; }
+  window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
+}
+/** Il riquadro piccolo che chi è gratis vede alla fine di una partita. */
+export function invitoPiu() {
+  if (state.piu) return "";
+  return `<div class="card" style="margin:12px 16px;background:#FFF6E8;border-color:#F0D5A8;color:#12302C;text-align:left">
+    <b style="font-size:17px">✨ Ancora+ per tutta la famiglia</b>
+    <p style="margin:4px 0 10px;font-size:15px;line-height:1.45">Le voci dei nonni per sempre, il libro e il film della famiglia, l'aiutante di casa per cucina e compiti, 200 GB per le foto di tutti. Basta che lo prenda uno.</p>
+    <div style="display:flex;gap:8px"><button class="btn ambra" data-chiedi-piu style="margin:0;flex:1">📲 Chiedilo in famiglia</button><a class="btn chiaro" href="#/ancora-piu" style="margin:0;flex:1">Scopri</a></div></div>`;
+}
+document.addEventListener("click", (e) => { if (e.target.closest?.("[data-chiedi-piu]")) { e.preventDefault(); chiediPiu(); } });
 
 /** Invito a un gioco (o a qualsiasi pagina) che vale anche per chi non è su Ancora:
  *  un link di gruppo per 20 persone; chi non ha l'account si iscrive, entra nel gruppo e si ritrova al tavolo. */

@@ -1,7 +1,8 @@
 // Briscola a 2 e a 4 (a coppie): #/briscola?c=<gruppo>  oppure  #/briscola?id=<partita>
 // Chi crea il tavolo sceglie in quanti; il gruppo riceve l'invito sul telefono. I posti vuoti li prende il telefono.
 // Le carte di ognuno le vede solo lui; regole, mazzo e mosse del telefono stanno sul server.
-import { sb, state, $app, esc, ICONE, invitaAlGioco } from "../app.js";
+import { sb, state, $app, esc, ICONE, invitaAlGioco, invitoPiu } from "../app.js";
+import { voceAlTavolo } from "../giochi/voce.js";
 
 const SEMI = { D: "Denari", C: "Coppe", S: "Spade", B: "Bastoni" };
 const FIGURE = { 8: "Fante", 9: "Cavallo", 10: "Re" };
@@ -71,6 +72,7 @@ export default async function ({ params, gioco = "briscola" }) {
     });
     return;
   }
+  voceAlTavolo(id);   // 🎙️ Parla: la voce dal vivo al tavolo
 
   let ultimaFirma = "", ultimaPresaVista = null, timer = null;
   $app().innerHTML = `
@@ -284,7 +286,7 @@ export default async function ({ params, gioco = "briscola" }) {
     }
 
     corpo.innerHTML = `
-      ${risultato}
+      ${risultato}${p.stato === "finita" ? invitoPiu() : ""}
       <div style="display:flex;justify-content:space-around;padding:10px 12px 0;gap:8px">${altri.map((i) => `<div style="text-align:center;min-width:0">
         <div style="display:flex;justify-content:center;gap:2px">${p.stato === "in_corso" ? (p.n === 2 ? dorso() + dorso() + dorso() : dorso()) : ""}</div>
         <small style="display:block;margin-top:4px;font-weight:${turno === i ? 800 : 600};${turno === i ? "color:#C8102E" : ""}">${turno === i && p.stato === "in_corso" ? "▶ " : ""}${nome(i)}${p.n === 4 && squadra(i) === squadra(io) ? " 🤝" : ""}</small></div>`).join("")}</div>

@@ -1,6 +1,7 @@
 // Il biliardo (palla 8): #/biliardo?c=<gruppo>  ·  #/biliardo?id=<partita>  ·  #/biliardo?solo=1&l=<bravura>
 // Contro il telefono si gioca su questo telefono. Con la famiglia: chi tira calcola il tiro, gli altri lo vedono uguale (stesso motore).
-import { sb, state, $app, esc, ICONE, invitaAlGioco } from "../app.js";
+import { sb, state, $app, esc, ICONE, invitaAlGioco, invitoPiu } from "../app.js";
+import { voceAlTavolo } from "../giochi/voce.js";
 import * as M from "../giochi/biliardo-motore.js";
 
 const COLORI = { 1: "#F2C230", 2: "#1F4FA8", 3: "#D2302C", 4: "#5B2C83", 5: "#E8772E", 6: "#1E7A46", 7: "#7A1F2B", 8: "#111" };
@@ -140,7 +141,7 @@ async function partita({ id = null, solo = false, livello = 0.6 }) {
     const c = document.getElementById("comandi"); if (!c) return;
     if ("vincitore" in tavolo) {
       c.innerHTML = `<div style="text-align:center"><div style="font-size:46px">${(solo ? tavolo.vincitore === 0 : tavolo.vincitore === io) ? "🏆" : "🎱"}</div>
-        <button class="btn ambra" id="ancora">Rivincita</button><a class="btn chiaro" href="#/biliardo" style="margin-top:10px">Esci</a></div>`;
+        <button class="btn ambra" id="ancora">Rivincita</button><a class="btn chiaro" href="#/biliardo" style="margin-top:10px">Esci</a></div>${invitoPiu()}`;
       c.querySelector("#ancora").onclick = async () => {
         if (solo) { tavolo = M.nuovoTavolo(); mostraMsg = tavolo.msg; aggiornaTesti(); comandi(); disegna(); return; }
         const { data, error } = await sb.rpc("sala_crea", { p_cerchia: riga.cerchia_id, p_gioco: "biliardo", p_n: 2 });
@@ -281,6 +282,7 @@ async function partita({ id = null, solo = false, livello = 0.6 }) {
   }
 
   if (solo) { tavolo = M.nuovoTavolo(); nomi = ["Tu", livello > 0.7 ? "Il telefono (bravo)" : "Il telefono"]; veri = [state.io?.soprannome || state.io?.nome || "Tu", "il telefono"]; mostraMsg = tavolo.msg; disegnaSala(); return; }
+  voceAlTavolo(id);
   await carica();
   timer = setInterval(() => { if (!document.hidden && location.hash.includes(id)) carica(); else if (!location.hash.startsWith("#/biliardo")) clearInterval(timer); }, 1500);
 }

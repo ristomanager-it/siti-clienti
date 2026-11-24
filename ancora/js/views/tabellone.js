@@ -1,6 +1,7 @@
 // Il gioco della famiglia: #/tabellone?c=<gruppo> (tavoli e nuova partita) · #/tabellone?id=<partita> · #/tabellone?c=<gruppo>&nomi=1 (rinomina)
 // Regole e dadi stanno nella funzione "gioco-famiglia"; qui si disegna il tabellone e si mandano le mosse.
 import { sb, state, $app, esc, ICONE, passaPiu, invitaAlGioco } from "../app.js";
+import { voceAlTavolo } from "../giochi/voce.js";
 import { SUPABASE_URL } from "../config.js";
 
 const ICONA = { via: "🏁", ricordo: "📜", sorpresa: "🎁", tassa: "💸", auto: "🚗", serv: "🍷", castigo: "🚧", pausa: "☕", vai_castigo: "👮" };
@@ -110,6 +111,7 @@ async function editor(gruppo) {
 
 // ---------- la partita ----------
 async function partita(id, tv = false) {
+  if (!tv) voceAlTavolo(id);
   let firma = "", timer = null, aperta = null, cartaVista = null;
   $app().innerHTML = tv
     ? `<div id="corpo" style="position:fixed;inset:0;z-index:70;background:#14302B;display:flex;align-items:center;justify-content:center;gap:16px;padding:10px;box-sizing:border-box"></div>

@@ -52,6 +52,7 @@ export default async function () {
         <p style="font-weight:700;color:#4D7356;margin-top:0">I ricordi già salvati restano tuoi e gratis per sempre, anche se smetti di pagare.</p>
         ${state.piu ? `<a class="btn ambra" href="#/regala">🎁 Regalalo a un'altra famiglia · 99 €</a>`
           : `<a class="btn ambra" href="#/piano" style="font-size:18px">Passa ad Ancora+ · 99 € l'anno</a>
+             <button class="btn chiaro" data-chiedi-piu style="margin-top:10px">📲 Chiedilo in famiglia (a mamma, papà, ai nonni)</button>
              <a class="btn chiaro" href="#/regala" style="margin-top:10px">🎁 Oppure regalalo · con il libro e il film</a>`}
         <p class="tenue" style="font-size:14px;text-align:center;margin-top:12px">Si disdice quando vuoi. Il pagamento è sicuro con Stripe.</p>
       </div>

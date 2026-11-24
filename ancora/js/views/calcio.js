@@ -1,7 +1,8 @@
 // Il calciobalilla: #/calcio?c=<gruppo>  ·  #/calcio?id=<partita>  ·  #/calcio?solo=1&l=<bravura>
 // La partita gira su un solo dispositivo (il telefono di chi la avvia, oppure il televisore): gli altri telefoni fanno da manopola
 // e vedono il campo. Le mosse viaggiano dal vivo (Supabase Realtime, broadcast); i posti vuoti li gioca il telefono.
-import { sb, state, $app, esc, ICONE, invitaAlGioco } from "../app.js";
+import { sb, state, $app, esc, ICONE, invitaAlGioco, invitoPiu } from "../app.js";
+import { voceAlTavolo } from "../giochi/voce.js";
 import * as C from "../giochi/calcio-motore.js";
 
 let ferma = () => {};
@@ -43,6 +44,7 @@ async function tavolo(id) {
   ferma = () => { attivo = false; clearInterval(timer); };
   $app().innerHTML = `<header class="testa"><a class="icona" href="#/calcio" aria-label="Indietro">${ICONE.indietro}</a><b style="flex:1">⚽ Calciobalilla</b></header><div id="corpo"></div>`;
   const corpo = document.getElementById("corpo");
+  voceAlTavolo(id, { alto: true });
   async function carica() {
     const { data } = await sb.from("partite").select("*").eq("id", id).maybeSingle();
     if (!attivo) return;
@@ -184,7 +186,7 @@ function campo({ riga = null, solo = false, livello = 0.6 }) {
     const vinto = io >= 0 ? C.squadraDel(n, io) === s.fine : null;
     sotto.innerHTML = `<div style="text-align:center"><div style="font-size:40px">${vinto === false ? "⚽" : "🏆"}</div>
       <b style="font-size:20px">Vincono ${esc(squadra(s.fine))} ${s.gol[s.fine]} a ${s.gol[1 - s.fine]}</b>
-      <button class="btn ambra" id="ancora" style="margin-top:10px">Rivincita</button></div>`;
+      <button class="btn ambra" id="ancora" style="margin-top:10px">Rivincita</button></div>${invitoPiu().replace("margin:12px 16px", "margin:10px 0 0")}`;
     sotto.querySelector("#ancora").onclick = async () => {
       if (solo) { location.reload(); return; }
       const { data, error } = await sb.rpc("sala_crea", { p_cerchia: riga.cerchia_id, p_gioco: "calcio", p_n: n });
