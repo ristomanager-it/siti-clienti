@@ -105,7 +105,7 @@ function campo({ riga = null, solo = false, livello = 0.6 }) {
   const mia = io >= 0 ? C.squadraDel(n, io) : 0;
 
   $app().innerHTML = `
-    <div id="sala" style="position:fixed;inset:0;background:#0E2622;color:#FBF3E2;display:flex;flex-direction:column;align-items:center;z-index:5;user-select:none">
+    <div id="sala" style="position:fixed;inset:0;background:#0E2622;color:#FBF3E2;display:flex;flex-direction:column;align-items:center;z-index:50;user-select:none">
       <div style="display:flex;align-items:center;gap:8px;width:100%;max-width:1100px;padding:8px 10px;box-sizing:border-box">
         <a href="#/calcio" class="icona" style="color:#FBF3E2" aria-label="Esci">${ICONE.indietro}</a>
         <div id="tab" style="flex:1;text-align:center;font-weight:800;font-size:22px"></div>
@@ -114,6 +114,7 @@ function campo({ riga = null, solo = false, livello = 0.6 }) {
       <div id="sotto" style="width:100%;max-width:560px;padding:8px 12px 14px;box-sizing:border-box"></div>
       <div id="avviso" style="position:absolute;inset:0;display:none;place-items:center;pointer-events:none;font:800 64px Fraunces,serif;color:#E8B56B;text-shadow:0 4px 20px rgba(0,0,0,.6)"></div>
     </div>`;
+  const barra = document.getElementById("barra"); if (barra) barra.hidden = true;   // niente barra in basso: servono i pollici (il router la rimette uscendo)
   const cv = document.getElementById("cv"), ctx = cv.getContext("2d");
   document.getElementById("grande").onclick = () => { const el = document.getElementById("sala"); (el.requestFullscreen ?? el.webkitRequestFullscreen)?.call(el); };
   const sotto = document.getElementById("sotto");

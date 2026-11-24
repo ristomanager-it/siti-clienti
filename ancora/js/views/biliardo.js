@@ -101,7 +101,7 @@ async function partita({ id = null, solo = false, livello = 0.6 }) {
   function disegnaSala() {
     // tutto in una schermata, senza scorrere e senza la barra in basso: tavolo al centro, comandi sotto a portata di pollice
     corpo.innerHTML = `
-      <div id="sala" style="position:fixed;inset:0;z-index:5;background:#0E2622;color:#FBF3E2;display:flex;flex-direction:column;padding:calc(6px + env(safe-area-inset-top)) 8px calc(8px + env(safe-area-inset-bottom));box-sizing:border-box">
+      <div id="sala" style="position:fixed;inset:0;z-index:50;background:#0E2622;color:#FBF3E2;display:flex;flex-direction:column;padding:calc(6px + env(safe-area-inset-top)) 8px calc(8px + env(safe-area-inset-bottom));box-sizing:border-box">
         <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px">
           <a href="#/biliardo" aria-label="Esci" style="color:#FBF3E2;font-size:24px;text-decoration:none;padding:0 6px">‹</a>
           <div id="gioc" style="display:flex;gap:6px;flex:1"></div>
@@ -111,6 +111,7 @@ async function partita({ id = null, solo = false, livello = 0.6 }) {
         <div id="comandi" style="width:100%;max-width:560px;margin:0 auto;max-height:46vh;overflow:auto"></div>
       </div>`;
     document.getElementById("grande2").onclick = () => { const el = document.getElementById("sala"); (el?.requestFullscreen ?? el?.webkitRequestFullscreen)?.call(el); };
+    const barra = document.getElementById("barra"); if (barra) barra.hidden = true;   // niente barra in basso durante la partita (il router la rimette uscendo)
     cv = document.getElementById("tav"); ctx = cv.getContext("2d");
     const misura = () => {
       const sala = document.getElementById("sala"); if (!sala) return;
