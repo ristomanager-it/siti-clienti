@@ -12,7 +12,7 @@ export default async function ({ params } = {}) {
   if ((await sb.auth.getSession()).data.session) { location.replace(dopo); if (invito) location.reload(); return; }
   const ant = invito ? await fetch(`${SUPABASE_URL}/functions/v1/invito?codice=${encodeURIComponent(invito)}`).then((r) => r.json()).catch(() => null) : null;
   $app().innerHTML = `${ant && !ant.errore ? anteprima(ant) : ""}
-    <div class="pad" style="padding-top:${ant && !ant.errore ? 18 : 48}px">${ant && !ant.errore ? "" : `<span class="logo" style="font-size:40px">Ancora</span><div class="tenue" style="font-weight:700;margin:-4px 0 18px">Il cloud dei tuoi ricordi</div>`}
+    <div class="pad" style="padding-top:${ant && !ant.errore ? 18 : 48}px">${ant && !ant.errore ? "" : `<span class="logo" style="font-size:40px">Ancora</span><div class="tenue" style="font-weight:700;margin:-4px 0 18px">La prima app social privata della famiglia e dei gruppi</div>`}
       <h1 style="font-size:28px;line-height:1.2">${params?.perche ? esc(params.perche) : ant && !ant.errore ? "Ti hanno preparato un posto." : invito ? "Ti aspettano in famiglia." : ricetta ? "Un minuto e leggi la ricetta." : "Crea il tuo account gratis."}</h1>
       <p style="font-size:16px;margin:0">${invito ? "Crea il tuo account e sei dentro." : "La tua famiglia, i tuoi gruppi, i tuoi ricordi. Gratis, senza carta di credito."}</p></div>
     <form id="f" class="card">
@@ -26,7 +26,9 @@ export default async function ({ params } = {}) {
       <button class="btn ambra">Crea il mio account</button>
       <p id="esito" role="status"></p>
       <p style="text-align:center;margin-bottom:0"><a href="#/accesso${qsAccesso ? "?" + esc(qsAccesso) : ""}">Ho già un account: entro</a></p>
-    </form>`;
+    </form>
+    ${ant && !ant.errore ? "" : `<div class="pad" style="padding-top:0"><div class="card" style="margin:0;background:#FBF4E6;font-size:15px;line-height:1.5">
+      <b style="font-family:Fraunces,serif;font-size:18px">Cosa trovi su Ancora</b><br>Come un social, ma <b>solo per voi</b>: niente pubblicità né estranei.${FUNZIONI}</div></div>`}`;
 
   document.getElementById("f").onsubmit = async (e) => {
     e.preventDefault();
@@ -47,6 +49,9 @@ export default async function ({ params } = {}) {
 }
 
 // l'anteprima della famiglia che ti ha invitato: copertina, foto, chi invita, quanti sono già dentro
+const FUNZIONI = `<div style="margin-top:8px;line-height:1.75">📸 Foto, video e storie solo tra voi<br>💬 Chat del gruppo e messaggi a due<br>🎙️ Le voci e i racconti dei nonni, per sempre<br>🌳 L'albero della famiglia<br>🍝 Il ricettario di casa<br>📅 Calendario, compleanni, liste e spese<br>🎲 Tombola, carte napoletane, biliardo e calciobalilla</div>
+      <div class="tenue" style="font-size:14px;margin-top:6px">Con Ancora+: l'aiutante di casa, il libro stampato e il film della famiglia.</div>`;
+
 export function anteprima(a) {
   return `<div style="position:relative;aspect-ratio:16/9;max-height:240px;width:100%;background:${a.copertina ? `url('${a.copertina}') center/cover` : "linear-gradient(135deg,#7FA37E,#4D7356)"}"></div>
     <div class="pad" style="display:flex;gap:14px;align-items:flex-end;margin-top:-44px;position:relative">
@@ -57,7 +62,8 @@ export function anteprima(a) {
         <span class="tenue" style="font-size:14px">${a.membri} ${a.membri === 1 ? "persona" : "persone"}${a.ricordi ? ` · ${a.ricordi} ricordi` : ""}</span></div>
     </div>
     <div class="pad" style="padding-top:0"><div class="card" style="margin:0;background:#FBF4E6;font-size:15px;line-height:1.5">
-      <b style="font-family:Fraunces,serif;font-size:18px">Cos'è Ancora</b><br>
-      Il posto privato della ${a.tipo === "famiglia" ? "famiglia" : "vostra cerchia"}: foto, storie, vocali e chat, come un social ma <b>solo per voi</b>.
-      Si entra solo su invito, niente pubblicità né estranei. Le cose belle restano in ordine, non si perdono nella chat. <b>È gratis.</b></div></div>`;
+      <b style="font-family:Fraunces,serif;font-size:18px">La prima app social privata della famiglia e dei gruppi</b><br>
+      Come un social, ma <b>solo per voi</b>: si entra solo su invito, niente pubblicità né estranei.
+${FUNZIONI}
+      <b>Si comincia gratis.</b></div></div>`;
 }

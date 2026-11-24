@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "132";
+const VER = "133";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 const ROTTE = {
@@ -703,13 +703,26 @@ setInterval(aggiornaBadgeChat, 20_000);
 addEventListener("hashchange", () => setTimeout(aggiornaBadgeChat, 800));
 setTimeout(aggiornaBadgeChat, 2500);
 
+/** Il "cos'è Ancora" che va in ogni invito: tutto quello che c'è, in poche righe da WhatsApp. */
+export const ANCORA_IN_BREVE = `*Ancora* è la prima app social privata della famiglia e dei gruppi: solo voi, niente pubblicità, niente estranei.
+📸 Foto, video e storie solo tra voi
+💬 Chat del gruppo e messaggi a due
+🎙️ Le voci e i racconti dei nonni, per sempre
+🌳 L'albero della famiglia
+🍝 Il ricettario di casa
+📅 Calendario, compleanni, liste della spesa e spese di casa
+🎲 Tombola, briscola, tressette, biliardo e calciobalilla, anche da case diverse
+✨ Con Ancora+: l'aiutante di casa (cucina, piante, compiti, viaggi), il libro stampato e il film della vostra famiglia
+È gratis, si entra in un minuto.`;
+export const ANCORA_UNA_RIGA = "Ancora è la prima app social privata della famiglia e dei gruppi: foto, chat, voci dei nonni, ricette, calendario e giochi, solo tra voi. Gratis.";
+
 /** Invito a un gioco (o a qualsiasi pagina) che vale anche per chi non è su Ancora:
  *  un link di gruppo per 20 persone; chi non ha l'account si iscrive, entra nel gruppo e si ritrova al tavolo. */
 export async function invitaAlGioco({ cerchiaId, torna, testo, titolo = "Ancora", perche = "" }) {
   const { data: codice, error } = await sb.rpc("invito_di_gruppo", { p_cerchia: cerchiaId, p_persone: 20 });
   if (error) { alert("Invito non creato: " + error.message); return; }
   const link = `${location.origin}${location.pathname}#/iscriviti?invito=${codice}&torna=${encodeURIComponent(torna)}${perche ? `&perche=${encodeURIComponent(perche)}` : ""}`;
-  const msg = `${testo}\n\nChi non è ancora su Ancora si iscrive gratis in un minuto e si ritrova al tavolo: ${link}`;
+  const msg = `${testo}\n\n👉 Entra da qui: ${link}\n(Chi non è ancora su Ancora si iscrive gratis in un minuto e si ritrova al tavolo.)\n\n${ANCORA_IN_BREVE}`;
   try { if (navigator.share) { await navigator.share({ title: titolo, text: msg }); return; } } catch { return; }
   window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
 }
@@ -733,7 +746,7 @@ export async function invitaInCerchia(cerchiaId) {
   document.body.appendChild(f);
   const manda = async (codice, persone) => {
     const link = `${location.origin}${location.pathname}#/iscriviti?invito=${codice}`;
-    const testo = `${persone > 1 ? "Vi ho" : "Ti ho"} preparato un posto in "${c?.nome ?? "Ancora"}" su Ancora.\n\nÈ come un social, ma solo per noi: foto, storie, vocali e chat, senza pubblicità e senza estranei. Le cose belle restano in ordine invece di perdersi nella chat. È gratis.\n\n${persone > 1 ? "Entrate da qui, ognuno col suo telefono" : "Entra da qui"}: ${link}`;
+    const testo = `${persone > 1 ? "Vi ho" : "Ti ho"} preparato un posto in "${c?.nome ?? "Ancora"}" su Ancora.\n\n👉 ${persone > 1 ? "Entrate da qui, ognuno col suo telefono" : "Entra da qui"}: ${link}\n\n${ANCORA_IN_BREVE}`;
     try { if (navigator.share) { await navigator.share({ title: c?.nome ?? "Ancora", text: testo }); return; } } catch { return; }
     window.open(`https://wa.me/?text=${encodeURIComponent(testo)}`, "_blank");
   };

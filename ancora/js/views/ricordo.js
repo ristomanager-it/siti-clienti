@@ -1,5 +1,5 @@
 // Un ricordo: foto grandi, la sua voce, il testo, le risposte a voce e i commenti.
-import { sb, state, $app, esc, quando, nomeDi, avatar, pulsanteVoce, urlMediaMolti, ICONE } from "../app.js";
+import { sb, state, $app, esc, quando, nomeDi, avatar, pulsanteVoce, urlMediaMolti, ICONE, ANCORA_UNA_RIGA } from "../app.js";
 
 export default async function ({ id }) {
   const { data: r } = await sb.from("ricordi")
@@ -130,9 +130,9 @@ async function cartolina(r, { foto, voce }) {
   const manda = async (token) => {
     const link = `${base}#/cartolina?t=${token}`;
     const chi = nomeDi(r.persone);
-    const testo = voce ? `${chi} racconta${r.titolo ? `: "${r.titolo}"` : ""} 💌 Ascolta la sua voce qui 👇
+    const testo = (voce ? `${chi} racconta${r.titolo ? `: "${r.titolo}"` : ""} 💌 Ascolta la sua voce qui 👇
 ${link}` : `${chi} racconta${r.titolo ? `: "${r.titolo}"` : ""} 💌 Leggilo qui 👇
-${link}`;
+${link}`) + `\n\n${ANCORA_UNA_RIGA}`;
     try {
       const png = await immagineCartolina(r, { foto, voce, link });
       const file = new File([png], "cartolina-ancora.png", { type: "image/png" });
@@ -209,7 +209,7 @@ export async function condivisioneRicetta(r) {
   };
   const manda = async (token) => {
     const link = `${base}#/ricetta?t=${token}&utm_source=ricetta&utm_medium=condivisione`;
-    const testo = `Ti mando la ricetta di ${r.titolo ?? "famiglia"}: la trovi qui 👇`;
+    const testo = `Ti mando la ricetta di ${r.titolo ?? "famiglia"}: la trovi qui 👇\n(${ANCORA_UNA_RIGA})`;
     if (navigator.share) { try { await navigator.share({ title: r.titolo ?? "Ricetta", text: testo, url: link }); return; } catch { /* annullato */ } }
     window.open(`https://wa.me/?text=${encodeURIComponent(`${testo}\n${link}`)}`, "_blank");
   };
