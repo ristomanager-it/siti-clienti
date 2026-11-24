@@ -32,14 +32,14 @@ export default async function ({ params }) {
     const torna = encodeURIComponent(`#/cartolina?t=${t}`);
     const perche = encodeURIComponent(r.voce ? `Un minuto e senti la voce di ${chi}.` : `Un minuto e leggi tutto il racconto di ${chi}.`);
     $app().innerHTML = testa + `
-      <div class="card" style="position:relative;overflow:hidden">
-        <p style="white-space:pre-line;line-height:1.6;margin:0;font-size:17px">${esc(r.inizio ?? "")}</p>
+      ${r.inizio || r.voce ? `<div class="card" style="position:relative;overflow:hidden">
+        ${r.inizio ? `<p style="white-space:pre-line;line-height:1.6;margin:0;font-size:17px">${esc(r.inizio)}</p>` : ""}
         ${r.lungo ? `<p style="filter:blur(6px);user-select:none;margin:8px 0 0;line-height:1.6">E poi racconta tutto il resto, con le parole di una volta, quelle che in famiglia si ripetono da anni…</p>` : ""}
         ${r.voce ? `<div style="display:flex;align-items:center;gap:10px;margin-top:14px;padding:12px 14px;border-radius:14px;background:var(--notte);color:#fff;opacity:.85">
           <span style="font-size:22px">🔒</span><b style="flex:1">La sua voce${r.durata ? ` · ${Math.max(1, Math.round(r.durata / 60))} min` : ""}</b><span>▶</span></div>` : ""}
-      </div>
+      </div>` : ""}
       <div class="pad" style="text-align:center;padding-bottom:40px">
-        <h2 style="margin:6px 0 6px">${r.voce ? "Ascolta la sua voce, gratis" : "Leggilo tutto, gratis"}</h2>
+        <h2 style="margin:6px 0 6px">${r.voce ? "Ascolta la sua voce, gratis" : r.inizio ? "Leggilo tutto, gratis" : "Guarda tutto il ricordo, gratis"}</h2>
         <p class="tenue" style="margin:0 0 14px">Iscriviti in un minuto, senza carta. E poi, se vuoi, fai raccontare anche i tuoi nonni.</p>
         <a class="btn ambra" id="iscr" href="#/iscriviti?${r.amico ? `amico=${encodeURIComponent(r.amico)}&` : ""}torna=${torna}&perche=${perche}">${r.voce ? "Iscriviti e ascolta" : "Iscriviti e leggi"}</a>
         <a class="btn chiaro" style="margin-top:10px" href="#/accesso?torna=${torna}">Ho già un account</a>
