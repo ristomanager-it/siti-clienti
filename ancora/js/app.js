@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "137";
+const VER = "138";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 const ROTTE = {
@@ -248,8 +248,8 @@ async function render() {
   try {
     await vista.default({ id, params });
     if (!PUBBLICHE.has(nome) && state.io && state.io.modalita !== "semplice") aggiungiMenu();
-    if (!PUBBLICHE.has(nome) && nome === "") setTimeout(bentornato, 1200);
-    if (!PUBBLICHE.has(nome) && nome === "") setTimeout(() => benvenutoNuovo() || invitoSchermataHome() || ricordaPiu(), 1800);
+    if (!PUBBLICHE.has(nome) && nome === "") setTimeout(() => benvenutoNuovo() || bentornato(), 1200);
+    if (!PUBBLICHE.has(nome) && nome === "") setTimeout(() => invitoSchermataHome() || ricordaPiu(), 2500);
     if (!PUBBLICHE.has(nome) && state.io) setTimeout(controllaAssistenza, 1500);
   }
   catch (e) { console.error(e); $app().innerHTML = `<p class="errore">Qualcosa non ha funzionato. Riprova tra poco.</p>`; }
@@ -270,7 +270,7 @@ export function istruzioniSchermataHome() {
   return `<ol style="margin:0;padding-left:20px;line-height:1.6"><li>tocca il menu <b>⋮</b> in alto a destra</li><li>tocca <b>Aggiungi a schermata Home</b> (o <b>Installa app</b>)</li><li>conferma</li></ol>`;
 }
 function invitoSchermataHome(forza = false) {
-  if (giaInstallata() || document.getElementById("schermata-home")) return false;
+  if (giaInstallata() || document.getElementById("schermata-home") || document.getElementById("benvenuto-nuovo")) return false;
   let quando = 0; try { quando = Number(localStorage.getItem("ancora_home_chiuso") ?? 0); } catch { /* niente */ }
   // la prima volta subito e ben visibile; poi ogni 3 giorni finché non l'ha messa sulla Home
   if (!forza && Date.now() - quando < 3 * 86400_000) return false;
