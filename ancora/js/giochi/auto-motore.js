@@ -14,9 +14,12 @@ export const PISTE = {
     punti: [[0, 0], [300, 0], [380, 50], [380, 130], [300, 170], [100, 160], [20, 220], [-80, 200], [-120, 120], [-80, 50]] },
 };
 
+// una pista in più (le strade vere di un paese): punti in metri, larghezza della strada
+export function registraPista(chiave, nome, punti, largo = 11, extra = {}) { PISTE[chiave] = { nome, desc: "Strade vere", punti, largo, ...extra }; }
+
 // Catmull-Rom chiusa → N punti con direzione, normale e curvatura
 export function creaPista(chiave) {
-  const P = PISTE[chiave].punti, n = P.length, N = 900;
+  const P = PISTE[chiave].punti, n = P.length, N = Math.max(900, Math.min(2400, n * 4));
   const pts = [];
   for (let i = 0; i < N; i++) {
     const t = (i / N) * n, k = Math.floor(t), u = t - k;
@@ -36,7 +39,7 @@ export function creaPista(chiave) {
     while (da > Math.PI) da -= 2 * Math.PI; while (da < -Math.PI) da += 2 * Math.PI;
     pts[i].curva = Math.abs(da) / Math.max(1, Math.hypot(c.x - a.x, c.z - a.z));
   }
-  return { chiave, nome: PISTE[chiave].nome, pts, N, lung };
+  return { chiave, nome: PISTE[chiave].nome, pts, N, lung, largo: PISTE[chiave].largo ?? LARGO, extra: PISTE[chiave] };
 }
 
 // il punto della pista più vicino, cercando vicino all'ultimo noto
@@ -56,7 +59,8 @@ export function griglia(pista, quante) {
   // in fila due a due dietro la linea del via
   const { pts, N } = pista;
   return Array.from({ length: quante }, (_, k) => {
-    const i = (N - 8 - Math.floor(k / 2) * 9 + N) % N, p = pts[i], lato = (k % 2 ? -1 : 1) * LARGO * 0.22;
+    const m = 10 + Math.floor(k / 2) * 10;                  // metri dietro la linea del via
+    const i = (N - Math.round(m * N / pista.lung) + N) % N, p = pts[i], lato = (k % 2 ? -1 : 1) * pista.largo * 0.22;
     return { x: p.x + p.nx * lato, z: p.z + p.nz * lato, a: Math.atan2(p.tz, p.tx), v: 0, i, giro: 0, metaGiro: false, fine: null, giroInizio: 0, giroMigliore: null, fuori: 0 };
   });
 }
@@ -65,7 +69,8 @@ export function griglia(pista, quante) {
 export function guida(pista, c, cmd, dt, t) {
   if (c.fine !== null) { c.v = Math.max(0, c.v - 12 * dt); avanza(c, dt); return; }
   const { lato } = (c._v = vicino(pista, c.x, c.z, c.i));
-  const fuori = Math.abs(lato) > LARGO / 2 + 0.6;
+  const L = pista.largo;
+  const fuori = Math.abs(lato) > L / 2 + 0.6;
   let acc = cmd.gas * (c.v < 25 ? 16 : 11) - cmd.freno * 28 - 0.0028 * c.v * c.v - 0.4;
   if (fuori) acc -= 0.06 * c.v * c.v / 10 + 3;
   c.v = Math.max(cmd.freno > 0.5 && c.v < 1 ? -6 : 0, Math.min(VMAX, c.v + acc * dt));
@@ -74,9 +79,10 @@ export function guida(pista, c, cmd, dt, t) {
   avanza(c, dt);
   // il muretto: oltre l'erba non si va
   const n = vicino(pista, c.x, c.z, c.i);
-  if (Math.abs(n.lato) > LARGO / 2 + 10) {
+  const muro = pista.extra?.osm ? 2.5 : 10;   // in paese ci sono le case: il muro è subito dopo il marciapiede
+  if (Math.abs(n.lato) > L / 2 + muro) {
     const p = pista.pts[n.i], s = Math.sign(n.lato);
-    c.x = p.x + p.nx * s * (LARGO / 2 + 9.8); c.z = p.z + p.nz * s * (LARGO / 2 + 9.8); c.v *= 0.55;
+    c.x = p.x + p.nx * s * (L / 2 + muro - 0.2); c.z = p.z + p.nz * s * (L / 2 + muro - 0.2); c.v *= 0.55;
   }
   c.fuori = fuori ? 1 : 0;
   // giri: si deve passare da metà pista prima di ritagliare il traguardo
@@ -94,13 +100,14 @@ function avanza(c, dt) { c.x += Math.cos(c.a) * c.v * dt; c.z += Math.sin(c.a) *
 // il telefono che guida: guarda avanti, rallenta prima delle curve, sbaglia un pochino
 export function pilota(pista, c, bravura = 0.8, mem = {}) {
   const { pts, N } = pista;
-  const avanti = 10 + Math.floor(c.v / 3);
+  const k = N / pista.lung;                       // punti per metro
+  const avanti = Math.round((12 + c.v * 0.9) * k);
   const q = pts[(c.i + avanti) % N];
-  if (mem.scarto === undefined || Math.random() < 0.01) mem.scarto = (Math.random() - 0.5) * LARGO * 0.35;
+  if (mem.scarto === undefined || Math.random() < 0.01) mem.scarto = (Math.random() - 0.5) * pista.largo * 0.35;
   const tx = q.x + q.nx * mem.scarto, tz = q.z + q.nz * mem.scarto;
   let d = Math.atan2(tz - c.z, tx - c.x) - c.a;
   while (d > Math.PI) d -= 2 * Math.PI; while (d < -Math.PI) d += 2 * Math.PI;
-  let curva = 0; for (let k = 5; k < 60; k += 5) curva = Math.max(curva, pts[(c.i + k) % N].curva);
+  let curva = 0; for (let m = 5; m < 70; m += 5) curva = Math.max(curva, pts[(c.i + Math.round(m * k)) % N].curva);
   const vVoluta = Math.min(VMAX * (0.78 + 0.2 * bravura), Math.sqrt((7 + 7 * bravura) / Math.max(curva, 0.0005)));
   return { sterzo: Math.max(-1, Math.min(1, d * 2.2)), gas: c.v < vVoluta ? 1 : 0, freno: c.v > vVoluta + 4 ? 0.7 : 0 };
 }

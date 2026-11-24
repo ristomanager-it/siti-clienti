@@ -1,5 +1,5 @@
 // Service worker: cache dell'app e notifiche push (gratuite, a differenza di WhatsApp)
-const CACHE = "ancora-v152";
+const CACHE = "ancora-v153";
 const FILE = ["./", "index.html", "css/app.css", "js/app.js", "manifest.webmanifest"];
 
 self.addEventListener("install", (e) => { self.skipWaiting(); e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILE))); });

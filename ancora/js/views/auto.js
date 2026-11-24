@@ -4,6 +4,10 @@
 import { sb, state, $app, esc, ICONE, invitaAlGioco, invitoPiu } from "../app.js";
 import { voceAlTavolo } from "../giochi/voce.js";
 import * as A from "../giochi/auto-motore.js";
+import { caricaPista, cercaPosto, slug } from "../giochi/auto-osm.js";
+
+// le piste dalle strade vere già pronte (le altre le crea chi gioca dal suo paese)
+export const PAESI = { "osm:conflenti": { nome: "Conflenti", lat: 39.067, lon: 16.283 } };
 
 const COLORI = { rossa: "#D3222A", blu: "#2457C5", gialla: "#F2C230", verde: "#1E8A4C", nera: "#222", bianca: "#F2F2F2", arancio: "#F07A1E" };
 const COLORI_BOT = ["#2457C5", "#1E8A4C", "#F2C230", "#7A3FB8", "#F07A1E"];
@@ -12,10 +16,14 @@ const rpc = async (nome, arg) => { try { return await sb.rpc(nome, arg); } catch
 
 export default async function ({ params } = {}) {
   ferma();
-  if (params?.solo) return corsa({ pista: params.pista ?? "casa", colore: params.colore ?? "rossa", cerchia: params.c ?? null, giroVeloce: params.giro === "1" });
+  if (params?.solo) return corsa({ pista: params.pista ?? "casa", colore: params.colore ?? "rossa", cerchia: params.c ?? null, giroVeloce: params.giro === "1",
+    posto: params.lat ? { lat: Number(params.lat), lon: Number(params.lon), nome: params.nome ?? "Il mio paese" } : null });
   if (params?.id) return gara(params.id);
   const gruppo = (params?.c && state.cerchie.find((c) => c.id === params.c)) ?? state.cerchie.find((c) => c.tipo === "famiglia") ?? state.cerchie[0];
   let pista = "casa", colore = "rossa";
+  const { data: vere } = await sb.from("piste_osm").select("chiave, nome").order("creata_il", { ascending: false }).limit(30);
+  const paesi = { ...Object.fromEntries((vere ?? []).map((v) => [v.chiave, { nome: v.nome }])), ...PAESI };
+  let posto = null;
   const [{ data: aperte }, { data: record }] = gruppo ? await Promise.all([
     sb.from("partite").select("id, n, posti, stato, creata_il").eq("cerchia_id", gruppo.id).eq("gioco", "auto").neq("stato", "finita").gte("creata_il", new Date(Date.now() - 864e5).toISOString()).order("creata_il", { ascending: false }),
     sb.from("auto_record").select("pista, ms, persone:persona_id(nome, soprannome)").eq("cerchia_id", gruppo.id).order("ms").limit(30),
@@ -28,24 +36,39 @@ export default async function ({ params } = {}) {
         <b>La pista</b>
         <div style="display:grid;gap:8px;margin:8px 0 14px">${Object.entries(A.PISTE).map(([k, p]) => `
           <button class="card" data-pista="${k}" style="margin:0;text-align:left;border:2px solid ${k === pista ? "#E8B56B" : "transparent"}"><b>${esc(p.nome)}</b><div class="tenue" style="font-size:14px">${esc(p.desc)}</div></button>`).join("")}</div>
+        <b>📍 Le strade vere</b>
+        <div style="display:grid;gap:8px;margin:8px 0 8px">${Object.entries(paesi).map(([k, p]) => `
+          <button class="card" data-pista="${k}" style="margin:0;text-align:left;border:2px solid ${k === pista ? "#E8B56B" : "transparent"}"><b>📍 ${esc(p.nome)}</b><div class="tenue" style="font-size:14px">Le vie e le case vere del paese</div></button>`).join("")}</div>
+        <div style="display:flex;gap:8px;margin:0 0 4px"><input id="paese" placeholder="Il tuo paese o una piazza" style="flex:1;margin:0"><button class="btn chiaro" id="cerca" style="margin:0;width:auto">Crea</button></div>
+        <p class="tenue" style="font-size:12px;margin:0 0 16px">${posto ? `Pronta: ${esc(posto.nome)} ✓ · ` : ""}Mappe © contributori OpenStreetMap</p>
         <b>La tua auto</b>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 16px">${Object.entries(COLORI).map(([k, c]) => `
           <button data-colore="${k}" aria-label="${k}" style="width:44px;height:44px;border-radius:22px;background:${c};border:3px solid ${k === colore ? "#E8B56B" : "#ddd"}"></button>`).join("")}</div>
         <div style="display:grid;gap:10px">
-          <a class="btn ambra" style="margin:0" href="#/auto?solo=1&pista=${pista}&colore=${colore}${gruppo ? `&c=${gruppo.id}` : ""}">📱 Gara contro il telefono</a>
-          ${gruppo ? `<a class="btn chiaro" style="margin:0" href="#/auto?solo=1&giro=1&pista=${pista}&colore=${colore}&c=${gruppo.id}">⏱️ Giro veloce · entra in classifica</a>
+          <a class="btn ambra" style="margin:0" href="#/auto?solo=1&pista=${encodeURIComponent(pista)}&colore=${colore}${gruppo ? `&c=${gruppo.id}` : ""}${posto && pista === posto.chiave ? `&lat=${posto.lat}&lon=${posto.lon}&nome=${encodeURIComponent(posto.nome)}` : ""}">📱 Gara contro il telefono</a>
+          ${gruppo ? `<a class="btn chiaro" style="margin:0" href="#/auto?solo=1&giro=1&pista=${encodeURIComponent(pista)}&colore=${colore}&c=${gruppo.id}${posto && pista === posto.chiave ? `&lat=${posto.lat}&lon=${posto.lon}&nome=${encodeURIComponent(posto.nome)}` : ""}">⏱️ Giro veloce · entra in classifica</a>
           <button class="btn chiaro" id="gara" style="margin:0">👥 Gara dal vivo con ${esc(gruppo.nome)}</button>` : ""}
         </div>
         ${(aperte ?? []).map((p) => `<a href="#/auto?id=${p.id}" class="card" style="display:block;margin:12px 0 0;text-decoration:none;color:inherit">
           <b>${p.stato === "in_corso" ? "Gara in corso" : "Si cercano piloti"} · fino a ${p.n}</b><div class="tenue">${p.posti.map((x) => esc(x.nome ?? "posto libero")).join(" · ")}</div></a>`).join("")}
-        ${record?.length ? `<h3 style="margin:22px 0 6px">🏆 Giro veloce di ${esc(gruppo.nome)}</h3>${Object.entries(A.PISTE).map(([k, p]) => {
+        ${record?.length ? `<h3 style="margin:22px 0 6px">🏆 Giro veloce di ${esc(gruppo.nome)}</h3>${[...Object.entries(A.PISTE).filter(([k]) => !k.startsWith("osm:")), ...Object.entries(paesi)].map(([k, p]) => {
           const r = record.filter((x) => x.pista === k).slice(0, 3); if (!r.length) return "";
           return `<div class="card" style="margin:0 0 8px"><b>${esc(p.nome)}</b>${r.map((x, i) => `<div style="display:flex;justify-content:space-between"><span>${["🥇", "🥈", "🥉"][i]} ${esc(x.persone?.soprannome || x.persone?.nome || "")}</span><b>${A.tempo(x.ms / 1000)}</b></div>`).join("")}</div>`;
         }).join("")}` : ""}
       </div>`;
     document.querySelectorAll("[data-pista]").forEach((b) => b.onclick = () => { pista = b.dataset.pista; disegna(); });
     document.querySelectorAll("[data-colore]").forEach((b) => b.onclick = () => { colore = b.dataset.colore; disegna(); });
+    document.getElementById("cerca").onclick = async (e) => {
+      const q = document.getElementById("paese").value.trim(); if (!q) return;
+      e.target.disabled = true; e.target.textContent = "…";
+      try {
+        const r = await cercaPosto(q);
+        if (!r) { alert("Non trovo questo posto: prova con «paese, provincia»."); e.target.disabled = false; e.target.textContent = "Crea"; return; }
+        posto = { ...r, chiave: slug(r.nome) }; paesi[posto.chiave] = { nome: r.nome }; pista = posto.chiave; disegna();
+      } catch { alert("Ricerca non riuscita: riprova tra poco."); e.target.disabled = false; e.target.textContent = "Crea"; }
+    };
     document.getElementById("gara")?.addEventListener("click", async (e) => {
+      if (pista.startsWith("osm:") && !(vere ?? []).some((v) => v.chiave === pista)) return alert("Questa pista va preparata una volta: prima fai una gara contro il telefono su questa pista, poi la usi dal vivo.");
       e.target.disabled = true;
       const { data, error } = await sb.rpc("sala_crea", { p_cerchia: gruppo.id, p_gioco: "auto", p_n: 6 });
       if (error) { alert(error.message); e.target.disabled = false; return; }
@@ -65,6 +88,7 @@ async function gara(id) {
   const corpo = document.getElementById("corpo");
   let pista = (() => { try { return sessionStorage.getItem("auto-pista") || "casa"; } catch { return "casa"; } })();
   const colore = (() => { try { return sessionStorage.getItem("auto-colore") || "rossa"; } catch { return "rossa"; } })();
+  const { data: vere } = await sb.from("piste_osm").select("chiave, nome").order("creata_il", { ascending: false }).limit(30);
   async function carica() {
     const { data: p } = await sb.from("partite").select("*").eq("id", id).maybeSingle();
     if (!attivo) return;
@@ -77,7 +101,7 @@ async function gara(id) {
       <div class="pad" style="padding-top:0">${p.posti.map((x, i) => `<div class="card" style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
         <span style="font-size:20px">🏁</span><b style="flex:1">${x.persona_id ? esc(x.nome) : `<span class="tenue">posto libero</span>`}</b>
         ${!x.persona_id && !seduto ? `<button class="chip" data-siedi="${i}" style="margin:0">Siediti</button>` : x.persona_id === state.io.id ? `<span class="tenue">sei tu</span>` : ""}</div>`).join("")}
-      ${creatore ? `<b>La pista</b><div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 12px">${Object.entries(A.PISTE).map(([k, x]) => `<button class="chip ${k === pista ? "on" : ""}" data-pista="${k}" style="margin:0">${esc(x.nome)}</button>`).join("")}</div>
+      ${creatore ? `<b>La pista</b><div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 12px">${[...Object.entries(A.PISTE).filter(([k]) => !k.startsWith("osm:")), ...(vere ?? []).map((v) => [v.chiave, { nome: "📍 " + v.nome }])].map(([k, x]) => `<button class="chip ${k === pista ? "on" : ""}" data-pista="${k}" style="margin:0">${esc(x.nome)}</button>`).join("")}</div>
         <button class="btn ambra" id="via">🏁 Si parte!</button>` : `<p class="tenue" style="text-align:center">${seduto ? "Sei in griglia: si parte quando lo decide chi ha aperto la gara." : "Siediti a un posto libero."}</p>`}
       ${gruppo ? `<button class="btn chiaro" id="invita" style="margin-top:10px">🔔 Avvisa tutto il gruppo «${esc(gruppo.nome)}»</button>` : ""}
       <button class="btn chiaro" id="invita-wa" style="margin-top:10px">📲 Invita un amico su WhatsApp</button>
@@ -99,9 +123,23 @@ async function gara(id) {
 }
 
 // --- la corsa (contro il telefono, giro veloce o dal vivo) ---
-async function corsa({ pista: chiave = "casa", colore = "rossa", cerchia = null, giroVeloce = false, riga = null }) {
+async function corsa({ pista: chiave = "casa", colore = "rossa", cerchia = null, giroVeloce = false, riga = null, posto = null }) {
   const live = !!riga;
   if (live) chiave = riga.pubblico?.pista ?? "casa";
+  const osm = chiave.startsWith("osm:");
+  if (osm && !A.PISTE[chiave]) {
+    // le strade vere: la prima volta si scaricano da OpenStreetMap, poi sono salvate su Ancora
+    $app().innerHTML = `<div class="pad" style="text-align:center;padding-top:90px"><div style="font-size:52px">🗺️</div><h2 id="car">Preparo la pista…</h2>
+      <p class="tenue">Le strade e le case vere, da OpenStreetMap. La prima volta ci vuole qualche secondo.</p></div>`;
+    try {
+      const d = await caricaPista(chiave, posto ?? PAESI[chiave] ?? {}, (t) => { const h = document.getElementById("car"); if (h) h.textContent = t; });
+      A.registraPista(chiave, d.nome, d.punti, d.largo, { osm: true, edifici: d.edifici, altre: d.altre });
+    } catch (e) {
+      $app().innerHTML = `<div class="pad" style="text-align:center;padding-top:90px"><div style="font-size:52px">🗺️</div><h2>Pista non pronta</h2>
+        <p class="tenue">${esc(e.message ?? String(e))}</p><a class="btn" href="#/auto">Indietro</a></div>`;
+      return;
+    }
+  }
   const pista = A.creaPista(chiave);
   const io = live ? riga.posti.findIndex((x) => x.persona_id === state.io.id) : 0;
   const nomi = live ? riga.posti.map((x) => (x.persona_id === state.io.id ? "Tu" : x.nome ?? "?")) : giroVeloce ? ["Tu"] : ["Tu", "Rosa", "Bruno", "Gino"];
@@ -177,33 +215,66 @@ async function corsa({ pista: chiave = "casa", colore = "rossa", cerchia = null,
     g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute("color", new THREE.Float32BufferAttribute(col, 3)); g.setIndex(idx); g.computeVertexNormals();
     const m = new THREE.Mesh(g, new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide })); scena.add(m); return m;
   };
-  const W = A.LARGO / 2;
+  const W = pista.largo / 2;
   nastro(-W, W, 0.03, () => "#4A4D52");
   nastro(-W - 1.4, -W, 0.05, (i) => (Math.floor(i / 4) % 2 ? "#E23B2E" : "#F4F4F4"));
   nastro(W, W + 1.4, 0.05, (i) => (Math.floor(i / 4) % 2 ? "#E23B2E" : "#F4F4F4"));
   nastro(-0.18, 0.18, 0.04, (i) => (Math.floor(i / 6) % 2 ? "#4A4D52" : "#E8E8E8"));
-  nastro(-W - 10, 0, 0, (i) => (Math.floor(i / 10) % 2 ? "#E23B2E" : "#F4F4F4"), 1.0);
-  nastro(W + 10, 0, 0, (i) => (Math.floor(i / 10) % 2 ? "#E23B2E" : "#F4F4F4"), 1.0);
+  if (!osm) {
+    nastro(-W - 10, 0, 0, (i) => (Math.floor(i / 10) % 2 ? "#E23B2E" : "#F4F4F4"), 1.0);
+    nastro(W + 10, 0, 0, (i) => (Math.floor(i / 10) % 2 ? "#E23B2E" : "#F4F4F4"), 1.0);
+  } else {
+    // marciapiedi e il paese vero intorno: case alte quanto i loro piani, le altre strade
+    nastro(-W - 2.4, -W - 1.4, 0.12, () => "#BDB8AE"); nastro(W + 1.4, W + 2.4, 0.12, () => "#BDB8AE");
+    const ex = pista.extra ?? {};
+    // tutte le case in due soli pezzi (muri e tetti), così anche un telefono semplice va fluido
+    const { mergeGeometries } = await import("https://esm.sh/three@0.170.0/examples/jsm/utils/BufferGeometryUtils.js");
+    const tinte = ["#EADFC8", "#E7D3B0", "#F1E6D2", "#D9C7A4", "#EFD9B8", "#E4CDB4"].map((c) => new THREE.Color(c)), chiesa = new THREE.Color("#D8CDB5");
+    const pezziMuri = [], pezziTetti = [];
+    for (const [k, e] of (ex.edifici ?? []).entries()) {
+      if (e.p.length < 3) continue;
+      try {
+        const forma = new THREE.Shape(e.p.map(([x, z]) => new THREE.Vector2(x, -z)));
+        const g = new THREE.ExtrudeGeometry(forma, { depth: e.h, bevelEnabled: false }); g.rotateX(-Math.PI / 2);
+        const c = e.t === "c" ? chiesa : tinte[k % tinte.length], n = g.attributes.position.count, col = new Float32Array(n * 3);
+        for (let i = 0; i < n; i++) { col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b; }
+        g.setAttribute("color", new THREE.BufferAttribute(col, 3)); pezziMuri.push(g);
+        const t = new THREE.ShapeGeometry(forma); t.rotateX(-Math.PI / 2); t.translate(0, e.h + 0.05, 0); pezziTetti.push(t.index ? t.toNonIndexed() : t);
+      } catch { /* una casa disegnata male su OpenStreetMap: si salta */ }
+    }
+    if (pezziMuri.length) scena.add(new THREE.Mesh(mergeGeometries(pezziMuri), new THREE.MeshLambertMaterial({ vertexColors: true })));
+    if (pezziTetti.length) scena.add(new THREE.Mesh(mergeGeometries(pezziTetti), new THREE.MeshLambertMaterial({ color: "#A9533B", side: THREE.DoubleSide })));
+    for (const l of ex.altre ?? []) {
+      const pos = [], idx = [];
+      for (let i = 0; i < l.length; i++) {
+        const a = l[Math.max(0, i - 1)], b = l[Math.min(l.length - 1, i + 1)], dx = b[0] - a[0], dz = b[1] - a[1], d = Math.hypot(dx, dz) || 1, nx = -dz / d * 3, nz = dx / d * 3;
+        pos.push(l[i][0] + nx, 0.015, l[i][1] + nz, l[i][0] - nx, 0.015, l[i][1] - nz);
+        if (i + 1 < l.length) idx.push(2 * i, 2 * i + 1, 2 * i + 2, 2 * i + 1, 2 * i + 3, 2 * i + 2);
+      }
+      const g = new THREE.BufferGeometry(); g.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
+      scena.add(new THREE.Mesh(g, new THREE.MeshLambertMaterial({ color: "#6A6C70", side: THREE.DoubleSide })));
+    }
+  }
   // linea del via a scacchi
   {
     const cv = document.createElement("canvas"); cv.width = 64; cv.height = 16; const x = cv.getContext("2d");
     for (let i = 0; i < 16; i++) for (let j = 0; j < 4; j++) { x.fillStyle = (i + j) % 2 ? "#111" : "#fff"; x.fillRect(i * 4, j * 4, 4, 4); }
     const tex = new THREE.CanvasTexture(cv); tex.magFilter = THREE.NearestFilter;
     const p = pista.pts[0];
-    const l = new THREE.Mesh(new THREE.PlaneGeometry(3, A.LARGO), new THREE.MeshBasicMaterial({ map: tex }));
+    const l = new THREE.Mesh(new THREE.PlaneGeometry(3, pista.largo), new THREE.MeshBasicMaterial({ map: tex }));
     l.rotation.x = -Math.PI / 2; l.rotation.z = -Math.atan2(p.tz, p.tx); l.position.set(p.x, 0.06, p.z); scena.add(l);
     // portale del traguardo
     const mat = new THREE.MeshLambertMaterial({ color: "#C8102E" });
     for (const s of [-1, 1]) { const pal = new THREE.Mesh(new THREE.BoxGeometry(0.6, 6, 0.6), mat); pal.position.set(p.x + p.nx * s * (W + 2), 3, p.z + p.nz * s * (W + 2)); scena.add(pal); }
-    const trave = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.2, A.LARGO + 4), mat);
+    const trave = new THREE.Mesh(new THREE.BoxGeometry(0.8, 1.2, pista.largo + 4), mat);
     trave.position.set(p.x, 6, p.z); trave.rotation.y = -Math.atan2(p.tz, p.tx); scena.add(trave);
   }
   // alberi e tribune
   {
     const tronchi = [], chiome = [];
     const casuale = (() => { let s = 7; return () => ((s = (s * 16807) % 2147483647) / 2147483647); })();
-    for (let k = 0; k < 420; k++) {
-      const i = Math.floor(casuale() * pista.N), p = pista.pts[i], lato = (casuale() < 0.5 ? -1 : 1) * (W + 16 + casuale() * 90);
+    for (let k = 0; k < (osm ? 260 : 420); k++) {
+      const i = Math.floor(casuale() * pista.N), p = pista.pts[i], lato = (casuale() < 0.5 ? -1 : 1) * (W + (osm ? 70 : 16) + casuale() * (osm ? 160 : 90));
       const x = p.x + p.nx * lato, z = p.z + p.nz * lato;
       const v = A.vicino(pista, x, z); if (Math.abs(v.lato) < W + 14) continue;
       tronchi.push([x, z]); chiome.push([x, z, 0.8 + casuale() * 0.8]);
@@ -215,8 +286,10 @@ async function corsa({ pista: chiave = "casa", colore = "rossa", cerchia = null,
     chiome.forEach(([x, z, s], i) => { m.makeScale(s, s, s); m.setPosition(x, 3 + 3.5 * s, z); ch.setMatrixAt(i, m); });
     scena.add(tr, ch);
     const p = pista.pts[Math.floor(pista.N * 0.02)];
+    if (!osm) {
     const trib = new THREE.Mesh(new THREE.BoxGeometry(40, 6, 8), new THREE.MeshLambertMaterial({ color: "#B9BEC6" }));
     trib.position.set(p.x - p.nx * (W + 22), 3, p.z - p.nz * (W + 22)); trib.rotation.y = -Math.atan2(p.tz, p.tx); scena.add(trib);
+    }
   }
   // le auto
   const creaAuto = (col) => {
