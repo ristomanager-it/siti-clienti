@@ -2,32 +2,23 @@
 // si cerca un giro chiuso di 1-3 km intorno al centro e lo si trasforma in pista. Si fa una volta sola: poi la pista è salvata su Ancora.
 import { sb } from "../app.js";
 
-const OVERPASS = ["https://overpass-api.de/api/interpreter", "https://overpass.kumi.systems/api/interpreter", "https://overpass.private.coffee/api/interpreter"];
 export const LARGO_OSM = 8.5;
 
 export const slug = (s) => "osm:" + String(s).toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 50);
 
-/** Dove si trova un paese (OpenStreetMap Nominatim). */
-export async function cercaPosto(testo) {
-  const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=it&accept-language=it&q=${encodeURIComponent(testo)}`);
-  const j = await r.json();
-  if (!j?.length) return null;
-  return { lat: Number(j[0].lat), lon: Number(j[0].lon), nome: j[0].display_name.split(",")[0] };
+// le chiamate a OpenStreetMap passano dal server di Ancora (Safari blocca quelle dirette)
+async function mappa(corpo) {
+  const { data, error } = await sb.functions.invoke("mappa-osm", { body: corpo });
+  if (error) {
+    let m = error.message; try { m = (await error.context.json()).errore ?? m; } catch { /* resta il messaggio */ }
+    throw new Error(m);
+  }
+  if (data?.errore) throw new Error(data.errore);
+  return data;
 }
 
-async function overpass(q) {
-  let ultimoErrore;
-  for (const u of OVERPASS) {
-    try {
-      const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), 45000);
-      const r = await fetch(u, { method: "POST", body: "data=" + encodeURIComponent(q), headers: { "Content-Type": "application/x-www-form-urlencoded" }, signal: ctl.signal });
-      clearTimeout(t);
-      if (r.ok) return await r.json();
-      ultimoErrore = new Error(`OpenStreetMap ha risposto ${r.status}`);
-    } catch (e) { ultimoErrore = e; }
-  }
-  throw ultimoErrore ?? new Error("OpenStreetMap non risponde");
-}
+/** Dove si trova un paese (OpenStreetMap Nominatim). */
+export async function cercaPosto(testo) { return (await mappa({ cerca: testo })).posto; }
 
 /** La pista già pronta su Ancora, oppure la costruisce (e la salva). */
 export async function caricaPista(chiave, { nome, lat, lon } = {}, avanzamento = () => {}) {
@@ -35,12 +26,7 @@ export async function caricaPista(chiave, { nome, lat, lon } = {}, avanzamento =
   if (data) return { nome: data.nome, ...data.dati };
   if (lat === undefined) throw new Error("Pista non trovata");
   avanzamento("Scarico le strade e le case da OpenStreetMap…");
-  const q = `[out:json][timeout:40];
-    way(around:1600,${lat},${lon})["highway"~"^(primary|secondary|tertiary|unclassified|residential|living_street|primary_link|secondary_link|tertiary_link)$"]["area"!="yes"];
-    out geom;
-    way(around:700,${lat},${lon})["building"];
-    out geom 1800;`;
-  const osm = await overpass(q);
+  const osm = await mappa({ lat, lon });
   avanzamento("Cerco il giro più bello…");
   const dati = costruisci(osm, lat, lon);
   dati.nome = nome; dati.centro = [lat, lon];
