@@ -1,5 +1,5 @@
 // "Invita e guadagna": il tuo link personale e i premi per chi porta gente su Ancora.
-// Ogni 3 persone: 1 mese di Ancora+ (fino a 12) · alla terza famiglia nuova: 1 anno · quando una famiglia portata
+// Ogni 3 persone: 1 mese di Ancora+ (fino a 12) · alla quinta famiglia nuova: 1 anno · quando una famiglia portata
 // passa ad Ancora+: il 20% (rimborsato sulla carta a chi paga Ancora+, in giorni di Ancora+ a chi non paga). E +1 GB a persona.
 import { sb, state, $app, esc } from "../app.js";
 
@@ -36,10 +36,10 @@ export default async function () {
       </div>
 
       <div class="card" style="margin:0 0 10px">
-        <b style="font-size:18px">🏡 3 famiglie nuove: 1 anno di Ancora+</b>
-        <p class="tenue" style="margin:4px 0 0">Quando tre persone che hai portato aprono la loro famiglia su Ancora (i suoceri, tuo fratello, un'amica).</p>
-        ${barra(Math.min(3, famiglie), 3, "#2F7A4F")}
-        <p style="margin:8px 0 0;font-weight:700">${pr?.anno ? "✓ Anno guadagnato" : `${famiglie} su 3`}</p>
+        <b style="font-size:18px">🏡 5 famiglie nuove: 1 anno di Ancora+</b>
+        <p class="tenue" style="margin:4px 0 0">Quando cinque persone che hai portato aprono la loro famiglia su Ancora (i suoceri, tuo fratello, un'amica…).</p>
+        ${barra(Math.min(5, famiglie), 5, "#2F7A4F")}
+        <p style="margin:8px 0 0;font-weight:700">${pr?.anno ? "✓ Anno guadagnato" : `${famiglie} su 5`}</p>
       </div>
 
       <div class="card" style="margin:0 0 14px;background:#FFF6E8;border-color:#F0D5A8">
