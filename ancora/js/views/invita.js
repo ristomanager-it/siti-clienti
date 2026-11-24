@@ -7,7 +7,7 @@ const euro = (c) => (c / 100).toFixed(2).replace(".", ",") + " €";
 
 export default async function () {
   const [{ data: codice }, { data: spazio }, { data: pr }] = await Promise.all([sb.rpc("mio_codice_amico"), sb.rpc("spazio_mio"), sb.rpc("premi_miei")]);
-  const link = `${location.origin}${location.pathname}#/iscriviti?amico=${codice}`;
+  const link = `${location.origin}${location.pathname}#/iscriviti?amico=${codice}&da=${encodeURIComponent(state.io?.soprannome || state.io?.nome || "")}`;
   const testo = `${saluto()}\nTi invito su Ancora 👉 ${link}\n\n${ANCORA_UNA_RIGA}\n${SALVALA}`;
   const persone = pr?.persone ?? 0, famiglie = pr?.famiglie ?? 0, mesi = pr?.mesi ?? 0;
   const versoMese = mesi >= 12 ? 3 : persone % 3;
