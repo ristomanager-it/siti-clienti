@@ -11,7 +11,7 @@ const RIGHE = [
   ["Famiglie e gruppi, quanti ne vuoi", true, true],
   ["Calendario, liste, spese, diario", true, true],
   ["La domanda della settimana", true, true],
-  ["Tombola, briscola e tressette", true, true],
+  ["Tombola, carte, biliardo e calciobalilla", true, true],
   ["Ricordi", null],
   ["Spazio per foto e video", "2 GB a testa", "200 GB per tutta la famiglia"],
   ["L'albero di famiglia", "fino a 10 persone", "senza limiti, e alberi uniti tra famiglie"],

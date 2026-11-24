@@ -39,7 +39,7 @@ const COSA = [
   ["Il libro della famiglia", "l'anno di tutti, mese per mese, con i QR per sentire le voci: in PDF e stampato"],
   ["Il film dell'anno", "le foto e i video di tutti, montati con la musica, da mandare a tutti"],
   ["L'aiutante della famiglia", "gli date un nome voi: fotografi il frigo e vi dice cosa cucinare, fotografi una pianta e vi dice come curarla, segna impegni e spesa, ricopia la ricetta della nonna"],
-  ["I giochi di una volta", "tombola con la smorfia, briscola e tressette con le carte napoletane, anche da case diverse: gratis per tutti"],
+  ["I giochi di una volta", "tombola con la smorfia, briscola e tressette con le carte napoletane, biliardo e calciobalilla, anche da case diverse: gratis per tutti"],
   ["Il gioco della famiglia", "compri e costruisci sul tabellone dei vostri posti: la casa della nonna, la 500 di papà, il bar del paese"],
   ["Una ricetta da regalare", "ne condividi una con un link, il resto del ricettario resta in famiglia"],
   ["Un link per tutto il gruppo", "lo mandi una volta nella chat di famiglia e ognuno entra col suo telefono"],
@@ -65,7 +65,7 @@ const DOMANDE = [
   ["Quando arriva il libro?", "A fine anno, a casa: a colori, con copertina rigida, con le storie, le foto e i QR per ascoltare le voci. Il PDF si scarica quando volete. Copie in più: 35 € l'una."],
   ["E il film?", "Si crea nell'app con un tocco: le foto e i video dell'anno, montati con la musica. Lo salvate e lo mandate a tutti."],
   ["Cos'è l'aiutante?", "Un assistente gentile che conosce solo quello che mettete su Ancora: gli chiedete «quando è il compleanno della zia?» o «metti pandoro nella spesa» e lo fa. Il nome lo scegliete voi. Vede solo ciò che vede chi chiede e le chat sono private."],
-  ["Si può giocare insieme?", "Sì, anche da case diverse: tombola (con i premi e la cassa), briscola a 2, 4 e 5 e tressette con le carte napoletane sono gratis per tutti. Se manca qualcuno gioca il telefono. Con Ancora+ c'è anche il gioco della famiglia, con il tabellone dei vostri posti."],
+  ["Si può giocare insieme?", "Sì, anche da case diverse: tombola (con i premi e la cassa), briscola a 2, 4 e 5 e tressette con le carte napoletane, biliardo e calciobalilla (anche col campo sul televisore e i telefoni come manopole) sono gratis per tutti. Se manca qualcuno gioca il telefono. Con Ancora+ c'è anche il gioco della famiglia, con il tabellone dei vostri posti."],
   ["E se il codice non viene usato?", "Se non viene attivato entro 30 giorni dalla data scelta, ti rimborsiamo per intero."],
 ];
 
@@ -229,7 +229,7 @@ export default async function ({ params } = {}) {
       <div style="border-radius:22px;padding:20px;background:${C.panna};border:1px solid #EAD9BF;margin-bottom:12px">
         <div class="riga"><b style="flex:1;font-size:18px">Gratis</b><b style="font-family:Fraunces,serif;font-size:26px;color:${C.notte}">0 €</b></div>
         <div class="tenue" style="margin-top:4px">L'account, tutte le famiglie e i gruppi che vuoi: chat, foto, storie, calendario, liste, spese, diario e domanda della settimana senza limiti. E per provare il resto: 3 ricette, l'albero fino a 10 persone, una lettera da aprire più avanti, un album degli eventi, l'anteprima del libro e del film. 2 GB a testa, +1 GB per ogni amico che porti (fino a +10 GB).</div>
-        <div style="margin-top:8px;font-weight:700">🎲 E i giochi insieme: tombola, briscola e tressette.</div>
+        <div style="margin-top:8px;font-weight:700">🎲 E i giochi insieme: tombola, carte napoletane, biliardo e calciobalilla.</div>
         <a class="btn chiaro" href="#/iscriviti" style="margin-top:12px">Crea il tuo account gratis</a></div>
       <div style="padding:4px 4px 0;line-height:1.7">
         <b>Servizi in più, quando servono</b><br>
