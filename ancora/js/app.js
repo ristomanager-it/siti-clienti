@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "119";
+const VER = "120";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 const ROTTE = {
@@ -54,6 +54,7 @@ const ROTTE = {
   "briscola": () => import(`./views/briscola.js?v=${VER}`),
   "tressette": () => import(`./views/tressette.js?v=${VER}`),
   "tabellone": () => import(`./views/tabellone.js?v=${VER}`),
+  "invita-lista": () => import(`./views/invita-lista.js?v=${VER}`),
   "assistenza": () => import(`./views/assistenza.js?v=${VER}`),
   "albero-veloce": () => import(`./views/albero-veloce.js?v=${VER}`),
   "archivio": () => import(`./views/archivio.js?v=${VER}`),
@@ -712,12 +713,14 @@ export async function invitaInCerchia(cerchiaId) {
     f.innerHTML = `<div style="background:#FBF8F2;width:100%;max-width:720px;margin:0 auto;border-radius:22px 22px 0 0;padding:20px 16px calc(20px + env(safe-area-inset-bottom))">
       <b style="font-size:20px;display:block;margin-bottom:12px">Invita in ${esc(c?.nome ?? "Ancora")}</b>
       <button class="btn ambra" data-s="gruppo" style="text-align:left">📣 Un link per tutto un gruppo<br><small style="font-weight:500">Lo mandi una volta nella chat WhatsApp della famiglia e ognuno entra (fino a 30, vale 14 giorni)</small></button>
+      <button class="btn chiaro" data-s="lista" style="margin-top:10px;text-align:left">📋 Più numeri con un solo invio<br><small style="font-weight:500">Fai la lista (anche dalla rubrica) e un messaggio arriva a tutti</small></button>
       <button class="btn chiaro" data-s="uno" style="margin-top:10px;text-align:left">👤 Una persona sola<br><small style="font-weight:500">Un invito personale, vale per chi lo apre per primo</small></button>
       <button class="btn chiaro" data-s="" style="margin-top:10px">Annulla</button></div>`;
     f.onclick = (e) => { const b = e.target.closest("[data-s]"); if (b || e.target === f) { f.remove(); ok(b?.dataset.s ?? ""); } };
     document.body.appendChild(f);
   });
   if (!scelta) return;
+  if (scelta === "lista") { location.hash = `#/invita-lista?c=${cerchiaId}`; return; }
   let codice;
   if (scelta === "gruppo") {
     const { data, error } = await sb.rpc("invito_di_gruppo", { p_cerchia: cerchiaId });
