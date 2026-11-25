@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "167";
+const VER = "168";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 // --- giochi aperti a tutti (gli altri li vede solo il superadmin, che li prova e li apre uno per uno) ---
@@ -329,7 +329,7 @@ function invitoSchermataHome(forza = false) {
 // dal giorno dopo l'iscrizione, al massimo 3 volte e a 4 giorni di distanza
 export function spintaFamiglia() {
   if (!state.io || state.cerchie.some((c) => c.tipo === "famiglia")) return;
-  if (document.querySelector("#benvenuto-nuovo, #schermata-home, #foglio-piu, [role=dialog], [data-popup]")) return;
+  if (document.querySelector("#benvenuto-nuovo, #schermata-home, #foglio-piu, [data-popup]")) return;
   if (sessionStorage.getItem("ancora_spinta_famiglia")) return;
   const iscritto = state.io.creato_il ? new Date(state.io.creato_il).getTime() : 0;
   if (Date.now() - iscritto < 864e5) return;
