@@ -82,7 +82,7 @@ export default async function ({ params, gioco = "briscola" }) {
   }
   voceAlTavolo(id);   // 🎙️ Parla: la voce dal vivo al tavolo
 
-  let ultimaFirma = "", ultimaPresaVista = null, timer = null;
+  let ultimaFirma = "", ultimaPresaVista = null, timer = null, telefonoInCorso = false;
   $app().innerHTML = `
     <header class="testa"><a class="icona" href="#/${gioco}" aria-label="Indietro">${ICONE.indietro}</a><b>${TITOLO}</b><span style="width:44px"></span></header>
     <div id="corpo"></div>
@@ -140,6 +140,14 @@ export default async function ({ params, gioco = "briscola" }) {
       sb.from("partita_mani").select("posto, carte").eq("partita_id", id),
     ]);
     if (!p) { corpo.innerHTML = `<p class="pad">Questo tavolo non c'è più.</p>`; clearInterval(timer); return; }
+    // Stoppa: i telefoni giocano una mossa per volta, al ritmo di una al secondo, così si vede cosa calano
+    if (STOP && p.stato === "in_corso" && ["piccolo", "grosso", "stoppa"].includes(p.pubblico?.fase) && p.posti[Number(p.pubblico.turno)]?.bot && !telefonoInCorso) {
+      telefonoInCorso = true;
+      setTimeout(async () => {
+        try { await sb.rpc("stoppa_telefono", { p_partita: id }); } catch { /* riprova al prossimo giro */ }
+        telefonoInCorso = false; if (document.getElementById("corpo")) aggiorna();
+      }, 1100);
+    }
     posti = p.posti; mioPosto = p.posti.findIndex((x) => x.persona_id === state.io.id);
     document.getElementById("chat").hidden = p.stato === "attesa" || mioPosto < 0;
     const sb4 = document.getElementById("segni-box");
@@ -222,6 +230,10 @@ export default async function ({ params, gioco = "briscola" }) {
       const tav = (pub.tavolo ?? []).slice(-6);
       centro = `${tav.length ? `<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center">${tav.map((x, i) => `<div style="text-align:center;${i === tav.length - 1 ? "" : "opacity:.7"}">${fila(x.carte)}<small style="color:#fff;font-size:11px">${chi(x.posto)}</small></div>`).join("")}</div>` : ""}
         <div style="color:#fff;text-align:center;width:100%;margin-top:6px;font-weight:800">${pub.richiesto ? `Si cala ${nomeV(pub.richiesto)}${tocca ? " — tocca a te" : ` — ce l'ha ${nome(turno)}`}` : tocca ? "Apri una scala: cala la carta che vuoi" : `${nome(turno)} apre una scala`}</div>`;
+      // ho appena calato e ho anche la carta dopo: posso continuare o lasciare il turno
+      const continuo = tocca && pub.richiesto && tav.length && tav[tav.length - 1].posto === io;
+      if (continuo) azioni = `<div style="display:flex;gap:8px;align-items:center;margin:10px 16px 0"><span style="flex:1;font-weight:700">Hai anche ${nomeV(pub.richiesto)}: calalo o passa</span>
+        <button class="btn chiaro" data-st="passa" style="margin:0;width:auto;padding:0 22px">Passo</button></div>`;
     } else if (pub.fase === "fine_mano" || p.stato === "finita") {
       const e = pub.esito ?? {};
       const testo = e.tipo === "stoppa" ? `🎉 ${chi(e.posto)} ${e.posto === io ? "hai" : "ha"} stoppato! +${e.preso} 🪙`
