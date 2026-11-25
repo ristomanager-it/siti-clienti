@@ -4,8 +4,20 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "155";
+const VER = "156";
 export const state = { io: null, famiglia: null, cerchie: [] };
+
+// --- giochi aperti a tutti (gli altri li vede solo il superadmin, che li prova e li apre uno per uno) ---
+export const GIOCHI_ROTTE = { tombola: "tombola", briscola: "briscola", tressette: "tressette", stop: "briscola", biliardo: "biliardo", auto: "auto", calcio: "calcio", tabellone: "tabellone", tornei: "tornei" };
+let permessiGiochi = null;
+export async function giochiPermessi(ricarica = false) {
+  if (permessiGiochi && !ricarica) return permessiGiochi;
+  const [{ data: admin }, { data: righe }] = await Promise.all([sb.rpc("is_admin"), sb.from("giochi_aperti").select("gioco, aperto")]);
+  permessiGiochi = { admin: !!admin, aperti: new Set((righe ?? []).filter((r) => r.aperto).map((r) => r.gioco)) };
+  return permessiGiochi;
+}
+sb.auth.onAuthStateChange(() => { permessiGiochi = null; });
+export const giocoVisibile = (gp, rotta) => gp.admin || gp.aperti.has(GIOCHI_ROTTE[rotta] ?? rotta);
 
 const ROTTE = {
   "": () => import(`./views/home.js?v=${VER}`),
@@ -245,6 +257,15 @@ async function render() {
   barra.hidden = PUBBLICHE.has(nome) || state.io?.modalita === "semplice";
   barra.querySelectorAll("a").forEach((a) => a.classList.toggle("attivo", a.dataset.r === nome));
 
+  // i giochi non ancora aperti a tutti li vede solo il superadmin
+  if (GIOCHI_ROTTE[nome] && !PUBBLICHE.has(nome) && state.io) {
+    const gp = await giochiPermessi();
+    if (!gp.admin && !gp.aperti.has(GIOCHI_ROTTE[nome])) {
+      $app().innerHTML = `<div class="pad" style="text-align:center;padding-top:90px"><div style="font-size:52px">🎲</div><h2>Questo gioco arriva presto</h2>
+        <p class="tenue">Lo stiamo provando: appena è pronto lo trovi nei Giochi.</p><a class="btn" href="#/">Torna alla home</a></div>`;
+      window.scrollTo(0, 0); return;
+    }
+  }
   const carica = ROTTE[nome] ?? ROTTE[""];
   const vista = await carica();
   $app().innerHTML = "";
@@ -560,7 +581,7 @@ function vociMenu() {
   return [
     ["Le mie famiglie e i gruppi", [...famiglie.map((c) => [`#/?c=${c.id}`, c.nome]),
       ...(famiglie.length > 1 ? [["#/?c=tutti", "Tutte insieme"]] : []), ["#/?c=diretti", "Messaggi per me"]]],
-    ["La famiglia", [["#/aiutante", `✨ ${famiglie.find((c) => c.tipo === "famiglia")?.aiutante_nome || "L'aiutante"}`], ["#/giochi", "🎲 Giochi"], ["#/calendario", "Calendario"], ["#/liste", "Liste e desideri"], ["#/spese", "Spese"], ["#/album", "Album degli eventi"], ["#/domande", "Domande per te"], ["#/albero", "L'albero"], ["#/cerchie", "Famiglie e cerchie"]]],
+    ["La famiglia", [["#/aiutante", `✨ ${famiglie.find((c) => c.tipo === "famiglia")?.aiutante_nome || "L'aiutante"}`], ...(permessiGiochi && !permessiGiochi.admin && !permessiGiochi.aperti.size ? [] : [["#/giochi", "🎲 Giochi"]]), ["#/calendario", "Calendario"], ["#/liste", "Liste e desideri"], ["#/spese", "Spese"], ["#/album", "Album degli eventi"], ["#/domande", "Domande per te"], ["#/albero", "L'albero"], ["#/cerchie", "Famiglie e cerchie"]]],
     ["I miei ricordi", [["#/archivio", "Il cloud dei ricordi"], ["#/racconta", "Racconta"], ["#/racconta?lettera=1", "Una lettera per più avanti"], ["#/diario", "Il diario"], ["#/ricette", "Il ricettario"], [`#/libro/${state.io.id}`, "Il mio libro"], ["#/libro?famiglia=", "Il libro della famiglia"], ["#/film", "Il film dell'anno"]]],
     ["Agenda", [["vacanze", "Vacanze"], ["compiti", "Compiti"], ["esami", "Esami"]].filter(([k]) => attivi(k)).map(([k, t]) => [`#/agenda?t=${k}`, t])],
     ["Il mio account", [["#/invita", "Invita e guadagna Ancora+ 🎁"], ["#/locandina", "Porta Ancora in parrocchia o a scuola"], ["#/profilo", "Profilo e impostazioni"], ["#/piano", "Il piano"], ["#/servizi", "Servizi"], ["#/regala", "Regala Ancora"], ["#/omaggio", "Codice omaggio"], ["#/assistenza", "Assistenza · scrivici"]]],

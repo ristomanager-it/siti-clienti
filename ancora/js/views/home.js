@@ -1,7 +1,10 @@
 // Il feed della famiglia: storie della settimana in alto, poi i ricordi con foto grande e voce.
-import { sb, state, $app, esc, quando, nomeDi, avatar, pulsanteVoce, urlMediaMolti, ICONE, settimana, testata, aggiorna, cambiaImmagine, invitaInCerchia } from "../app.js";
+import { sb, state, $app, esc, quando, nomeDi, avatar, pulsanteVoce, urlMediaMolti, ICONE, settimana, testata, aggiorna, cambiaImmagine, invitaInCerchia, giochiPermessi, giocoVisibile } from "../app.js";
 
+let gpHome = { admin: false, aperti: new Set() };
 export default async function ({ params }) {
+  gpHome = await giochiPermessi().catch(() => gpHome);
+  const giochiSi = gpHome.admin || gpHome.aperti.size > 0;
   // arrivo dal link di invito: entra nella cerchia/famiglia e ricarica i dati
   if (params?.invito) {
     await sb.rpc("accetta_invito", { p_codice: params.invito });
@@ -107,7 +110,7 @@ export default async function ({ params }) {
       // una riga di pulsanti piccoli (scorre di lato): la tombola solo nel periodo di Natale
       const d = new Date(), m = d.getMonth(), g = d.getDate();
       const natale = (m === 10 && g >= 20) || m === 11 || (m === 0 && g <= 6);
-      const tasti = [...(natale ? [[`#/tombola?c=${fam.id}`, "🎄 Tombola"]] : []), ["#/giochi", "🎲 Giochi"], ["#/calendario", "📅 Calendario"], ["#/liste", "📝 Liste"], ["#/ricette", "🍝 Ricette"]];
+      const tasti = [...(natale && giocoVisibile(gpHome, "tombola") ? [[`#/tombola?c=${fam.id}`, "🎄 Tombola"]] : []), ...(giochiSi ? [["#/giochi", "🎲 Giochi"]] : []), ["#/calendario", "📅 Calendario"], ["#/liste", "📝 Liste"], ["#/ricette", "🍝 Ricette"]];
       return `<nav aria-label="Scorciatoie" style="display:flex;gap:8px;overflow-x:auto;padding:0 16px 14px;scrollbar-width:none">${tasti.map(([h, t]) =>
         `<a href="${h}" class="chip" ${h === "#/giochi" ? 'id="chip-giochi"' : ""} style="margin:0;white-space:nowrap;text-decoration:none;flex-shrink:0">${t}</a>`).join("")}</nav><div id="tavoli-aperti"></div>`;
     })() : ""}
@@ -536,6 +539,8 @@ async function tavoliAperti() {
     const nomeAltro = t.partecipanti.find((p) => p.persona_id === altro)?.nome ?? "?";
     righe.push([`#/tornei?id=${t.id}`, "🏆", `${esc(t.nome)}: tocca a te contro ${esc(nomeAltro)}`, x.stato === "in_corso" ? "la partita è aperta" : "sfida da giocare", "Gioca"]);
   }
+  const giro = righe.filter(([h]) => giocoVisibile(gpHome, h.replace(/^#\//, "").split("?")[0]));
+  righe.length = 0; righe.push(...giro);
   if (!righe.length) return;
   const chip = document.getElementById("chip-giochi");
   if (chip) chip.innerHTML = `🎲 Giochi <span style="display:inline-grid;place-items:center;min-width:20px;height:20px;border-radius:10px;background:#C8102E;color:#fff;font-size:12px;font-weight:800;margin-left:4px;padding:0 5px">${righe.length}</span>`;
