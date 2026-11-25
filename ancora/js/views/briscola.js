@@ -140,13 +140,13 @@ export default async function ({ params, gioco = "briscola" }) {
       sb.from("partita_mani").select("posto, carte").eq("partita_id", id),
     ]);
     if (!p) { corpo.innerHTML = `<p class="pad">Questo tavolo non c'è più.</p>`; clearInterval(timer); return; }
-    // Stoppa: i telefoni giocano una mossa per volta, al ritmo di una al secondo, così si vede cosa calano
+    // Stoppa: i telefoni giocano una mossa per volta, una ogni 2 secondi, così si vede cosa calano
     if (STOP && p.stato === "in_corso" && ["piccolo", "grosso", "stoppa"].includes(p.pubblico?.fase) && p.posti[Number(p.pubblico.turno)]?.bot && !telefonoInCorso) {
       telefonoInCorso = true;
       setTimeout(async () => {
         try { await sb.rpc("stoppa_telefono", { p_partita: id }); } catch { /* riprova al prossimo giro */ }
         telefonoInCorso = false; if (document.getElementById("corpo")) aggiorna();
-      }, 1100);
+      }, 2000);
     }
     posti = p.posti; mioPosto = p.posti.findIndex((x) => x.persona_id === state.io.id);
     document.getElementById("chat").hidden = p.stato === "attesa" || mioPosto < 0;
