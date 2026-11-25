@@ -4,11 +4,11 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "158";
+const VER = "159";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 // --- giochi aperti a tutti (gli altri li vede solo il superadmin, che li prova e li apre uno per uno) ---
-export const GIOCHI_ROTTE = { tombola: "tombola", briscola: "briscola", tressette: "tressette", stop: "briscola", biliardo: "biliardo", auto: "auto", calcio: "calcio", tabellone: "tabellone", tornei: "tornei" };
+export const GIOCHI_ROTTE = { tombola: "tombola", briscola: "briscola", tressette: "tressette", stop: "briscola", stoppa: "stoppa", biliardo: "biliardo", auto: "auto", calcio: "calcio", tabellone: "tabellone", tornei: "tornei" };
 let permessiGiochi = null;
 export async function giochiPermessi(ricarica = false) {
   if (permessiGiochi && !ricarica) return permessiGiochi;
@@ -68,6 +68,7 @@ const ROTTE = {
   "tombola": () => import(`./views/tombola.js?v=${VER}`),
   "briscola": () => import(`./views/briscola.js?v=${VER}`),
   "tressette": () => import(`./views/tressette.js?v=${VER}`),
+  "stoppa": () => import(`./views/stoppa.js?v=${VER}`),
   "biliardo": () => import(`./views/biliardo.js?v=${VER}`),
   "tavolo": () => import(`./views/tavolo.js?v=${VER}`),
   "calcio": () => import(`./views/calcio.js?v=${VER}`),
@@ -270,7 +271,7 @@ async function render() {
   const vista = await carica();
   $app().innerHTML = "";
   // arrivato da un invito a giocare: appena al tavolo, gli chiediamo di salvare Ancora sulla schermata Home (per gli inviti e le notifiche)
-  if (["briscola", "tressette", "biliardo", "calcio", "tombola", "stop", "auto"].includes(nome)) {
+  if (["briscola", "tressette", "stoppa", "biliardo", "calcio", "tombola", "stop", "auto"].includes(nome)) {
     let dopoTavolo = false; try { dopoTavolo = sessionStorage.getItem("ancora_dopo_tavolo") === "1"; sessionStorage.removeItem("ancora_dopo_tavolo"); } catch { /* niente */ }
     if (dopoTavolo) setTimeout(() => invitoSchermataHome(true), 2500);
   }

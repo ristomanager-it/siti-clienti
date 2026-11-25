@@ -41,8 +41,9 @@ const SEGNALI = {
 const terzi = (t) => { const n = Math.floor(t / 3), r = t % 3; return `${n}${r === 1 ? "⅓" : r === 2 ? "⅔" : ""}`; };
 
 export default async function ({ params, gioco = "briscola" }) {
-  const TRE = gioco === "tressette";
-  const TITOLO = TRE ? "🃏 Tressette" : "🃏 Briscola";
+  const TRE = gioco === "tressette", STOP = gioco === "stoppa";
+  const TITOLO = STOP ? "🃏 Stoppa" : TRE ? "🃏 Tressette" : "🃏 Briscola";
+  const NOME_GIOCO = STOP ? "Stoppa" : TRE ? "Tressette" : "Briscola";
   let id = params?.id;
   const gruppo = (params?.c && state.cerchie.find((c) => c.id === params.c)) ?? state.cerchie.find((c) => c.tipo === "famiglia") ?? state.cerchie[0];
 
@@ -56,11 +57,18 @@ export default async function ({ params, gioco = "briscola" }) {
         ${!gruppo ? `<p>Prima entra in una famiglia o in un gruppo.</p>` : `
         <p class="tenue" style="margin-top:0">Si gioca in ${esc(gruppo.nome)}. Appena apri il tavolo, al gruppo arriva l'invito sul telefono. Se manca qualcuno, gioca il telefono al suo posto.</p>
         ${(aperti ?? []).map((p) => `<a href="#/${gioco}?id=${p.id}" class="card" style="display:block;margin:0 0 10px;text-decoration:none;color:inherit">
-          <b>${p.stato === "in_corso" ? "In corso" : "Si cercano giocatori"} · ${gioco} a ${p.n}</b>
+          <b>${p.stato === "in_corso" ? "In corso" : "Si cercano giocatori"} · ${NOME_GIOCO.toLowerCase()} a ${p.n}</b>
           <div class="tenue">${p.posti.map((x) => esc(x.nome ?? "posto libero")).join(" · ")}</div></a>`).join("")}
+        ${STOP ? `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">${[3, 4, 5, 6].map((k) => `<button class="btn ${k === 4 ? "ambra" : ""}" data-n="${k}" style="margin:0">Tavolo a ${k}</button>`).join("")}</div>
+        <div class="card" style="margin-top:14px;font-size:14px;line-height:1.5"><b>Come si gioca</b><br>
+          Si gioca a fiches (niente soldi veri): ognuno parte con 30 🪙 e a ogni mano mette la posta nel piatto.<br>
+          <b>1 · Punti piccoli</b> — arrivano 3 carte alla volta: chi vuole gioca (1 🪙), vince chi ha più carte dello stesso seme, poi la somma più alta. Se nessuno gioca, il punto va al mazziere.<br>
+          <b>2 · Punto grosso</b> — con tutte le carte in mano vince il tris dello stesso seme più forte (massimo 55: 7, 6 e asso).<br>
+          <b>3 · Stoppata</b> — si calano le carte in fila, di qualunque seme: asso, 2 … 7, fante, cavallo, re. Chi finisce per primo stoppa e gli altri gli pagano 1 🪙 ogni 2 carte rimaste.<br>
+          <span class="tenue">Punti: 7=21 · 6=18 · asso=16 · 5=15 · 4=14 · 3=13 · 2=12 · figure=10. Misera (nessuna figura) o quattro re: si salta la stoppata e gli altri pagano 1 🪙 a lui. Tre 2 e nessun re: niente stoppata. Un giro di mazzieri e si contano le fiches.</span></div>` : `
         <button class="btn ambra" data-n="4">Nuovo tavolo a 4 (a coppie)</button>
-        <button class="btn" data-n="2" style="margin-top:10px">Nuovo tavolo a 2</button>
-        ${TRE ? `<p class="tenue" style="font-size:14px;margin-top:14px">Si risponde sempre al seme, niente briscola. Comanda il 3, poi il 2 e l'asso. L'asso vale un punto, tre, due e figure un terzo, l'ultima presa un punto. Al compagno si può bussare, strisciare e volare.</p>`
+        <button class="btn" data-n="2" style="margin-top:10px">Nuovo tavolo a 2</button>`}
+        ${STOP ? "" : TRE ? `<p class="tenue" style="font-size:14px;margin-top:14px">Si risponde sempre al seme, niente briscola. Comanda il 3, poi il 2 e l'asso. L'asso vale un punto, tre, due e figure un terzo, l'ultima presa un punto. Al compagno si può bussare, strisciare e volare.</p>`
           : `<button class="btn" data-n="5" style="margin-top:10px">Nuovo tavolo a 5 (chiamata)</button>
         <p class="tenue" style="font-size:14px;margin-top:14px">A 5: asta a punti da 61, chi vince chiama una carta (il suo seme è la briscola, chi la tiene è il socio segreto). Il chiamante prende doppio.</p>`}`}
       </div>`;
@@ -146,7 +154,7 @@ export default async function ({ params, gioco = "briscola" }) {
           if (error) alert(error.message); else { b.style.background = "#E1F5EE"; setTimeout(() => { b.style.background = "#fff"; }, 800); messaggi(); }
         });
       }
-    } else if (!TRE && p.n === 4 && p.stato === "in_corso" && mioPosto >= 0) {
+    } else if (!TRE && !STOP && p.n === 4 && p.stato === "in_corso" && mioPosto >= 0) {
       if (!sb4.dataset.pronto) {
         sb4.dataset.pronto = "1";
         sb4.innerHTML = `<div class="card" style="margin:12px 16px 0"><b>🤫 Segni al compagno</b> <span class="tenue" style="font-size:13px">· li vede solo lui</span>
@@ -165,6 +173,107 @@ export default async function ({ params, gioco = "briscola" }) {
     disegna(p, mani?.[0] ?? null);
   }
 
+  // --- la Stoppa ---
+  const VAL = { 7: 21, 6: 18, 1: 16, 5: 15, 4: 14, 3: 13, 2: 12 };
+  const valore = (c) => VAL[Number(c.slice(1))] ?? 10;
+  function forza(carte, trio) {
+    let meglio = { n: 0, s: 0, seme: null };
+    for (const sm of "DCSB") {
+      const v = carte.filter((c) => c[0] === sm).map(valore).sort((a, b) => b - a).slice(0, trio ? 3 : 99);
+      const f = { n: v.length, s: v.reduce((a, b) => a + b, 0), seme: sm };
+      if (f.n * 1000 + f.s > meglio.n * 1000 + meglio.s) meglio = f;
+    }
+    return meglio;
+  }
+  const dettoForza = (f) => f.n ? `${f.n} ${f.n === 1 ? "carta" : "carte"} di ${SEMI[f.seme]} · ${f.s} punti` : "";
+  const nomeV = (v) => ["", "l'asso", "il 2", "il 3", "il 4", "il 5", "il 6", "il 7", "il fante", "il cavallo", "il re"][v];
+  const fila = (carte, piccola = true) => `<div style="display:flex;gap:4px;justify-content:center;flex-wrap:wrap">${carte.map((c) => carta(c, { piccola })).join("")}</div>`;
+  let ultimoVisto = null;
+
+  function disegnaStoppa(p, mia, corpo, io, nome) {
+    const pub = p.pubblico ?? {}, turno = Number(pub.turno), tocca = turno === io && p.stato === "in_corso";
+    const chi = (i) => (i === io ? "tu" : nome(i));
+    const fiches = pub.fiches ?? [], conte = pub.conte ?? [], scelte = pub.scelte ?? [];
+    const seq = pub.seq ?? [], k = Number(pub.iter ?? 1);
+    const da = seq.slice(0, k - 1).reduce((a, b) => a + b, 0), carte = mia?.carte ?? [];
+    const giro = pub.fase === "piccolo" ? carte.slice(da, da + (seq[k - 1] ?? 0)) : [];
+    const ord = (a, b) => Number(a.slice(1)) - Number(b.slice(1)) || a.localeCompare(b);
+
+    // l'ultimo punto vinto: resta scritto (e appena cambia lo evidenzio)
+    const u = pub.ultimo, nuovo = u && u.n !== ultimoVisto; if (u) ultimoVisto = u.n;
+    const ultimoHtml = u && ["piccolo", "grosso", "stoppa"].includes(pub.fase) ? `<div class="card" style="margin:10px 16px 0;${nuovo ? "background:#FFF6E8;box-shadow:0 0 0 3px #E8B56B" : ""}">
+      <b>${u.tipo === "grosso" ? "Punto grosso" : `Punto piccolo ${u.iter}`}: ${chi(u.vincitore)} +${u.premio} 🪙</b>
+      <div class="tenue" style="font-size:14px">${u.carte ? `con ${u.carte.map((c) => nomeCarta(c)).join(", ")}` : "nessuno ha giocato: va al mazziere"}
+      ${(u.giocano ?? []).length > 1 ? ` · ${(u.giocano).filter((g) => g.posto !== u.vincitore).map((g) => `${chi(g.posto)} ${Math.floor(g.forza / 1000)} carte, ${g.forza % 1000}`).join(" · ")}` : ""}</div></div>` : "";
+
+    let centro = "", azioni = "";
+    if (pub.fase === "piccolo" || pub.fase === "grosso") {
+      const gr = pub.fase === "grosso";
+      centro = `<div style="color:#fff;text-align:center"><div style="font-size:13px;opacity:.85">${gr ? "PUNTO GROSSO" : `PUNTO PICCOLO ${k} DI ${seq.length}`}</div>
+        <div style="font:800 30px Fraunces,serif">${gr ? pub.grosso : pub.punto} 🪙${pub.puntate ? ` <small style="font-size:18px">+ ${pub.puntate} giocate</small>` : ""}</div>
+        <div style="font-size:14px;margin-top:4px">${tocca ? "Tocca a te: giochi o passi?" : `Decide ${nome(turno)}…`}</div></div>`;
+      if (tocca) {
+        const f = forza(gr ? carte : giro, gr);
+        azioni = `<div style="display:flex;gap:8px;margin:10px 16px 0"><button class="btn ambra" data-st="gioco" style="margin:0;flex:1" ${fiches[io] > 0 ? "" : "disabled"}>🪙 Gioco</button>
+          <button class="btn chiaro" data-st="passo" style="margin:0;flex:1">Passo</button></div>
+          <p class="tenue" style="text-align:center;font-size:13px;margin:6px 0 0">${gr ? "Il tuo tris migliore" : "Le tue 3 carte"}: <b>${dettoForza(f)}</b></p>`;
+      }
+    } else if (pub.fase === "stoppa") {
+      const tav = (pub.tavolo ?? []).slice(-6);
+      centro = `${tav.length ? `<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center">${tav.map((x, i) => `<div style="text-align:center;${i === tav.length - 1 ? "" : "opacity:.7"}">${fila(x.carte)}<small style="color:#fff;font-size:11px">${chi(x.posto)}</small></div>`).join("")}</div>` : ""}
+        <div style="color:#fff;text-align:center;width:100%;margin-top:6px;font-weight:800">${pub.richiesto ? `Si cala ${nomeV(pub.richiesto)}${tocca ? " — tocca a te" : ` — ce l'ha ${nome(turno)}`}` : tocca ? "Apri una scala: cala la carta che vuoi" : `${nome(turno)} apre una scala`}</div>`;
+    } else if (pub.fase === "fine_mano" || p.stato === "finita") {
+      const e = pub.esito ?? {};
+      const testo = e.tipo === "stoppa" ? `🎉 ${chi(e.posto)} ${e.posto === io ? "hai" : "ha"} stoppato! +${e.preso} 🪙`
+        : e.tipo === "misera" ? `${chi(e.posto)}: misera (nessuna figura). Niente stoppata, gli altri pagano 1 🪙 · +${e.preso}`
+        : e.tipo === "ricchezza" ? `${chi(e.posto)}: quattro re! Niente stoppata, gli altri pagano 1 🪙 · +${e.preso}`
+        : e.tipo === "tre_due" ? `${chi(e.posto)}: tre 2 e nessun re. Niente stoppata.` : "Mano finita";
+      centro = `<div style="color:#fff;text-align:center;width:100%"><div style="font:800 22px Fraunces,serif">${testo}</div>
+        ${(e.paga ?? []).length ? `<div style="font-size:14px;margin-top:6px">${e.paga.map((x) => `${chi(x.posto)}: ${x.carte} carte, paga ${x.paga}`).join(" · ")}</div>` : ""}
+        ${e.carte ? `<div style="margin-top:8px">${fila(e.carte)}</div>` : ""}</div>`;
+      if (p.stato === "finita") {
+        const classifica = fiches.map((f, i) => [i, f]).sort((a, b) => b[1] - a[1]);
+        azioni = `<div class="card" style="text-align:center;background:#FFF6E8;margin:12px 16px 0"><div style="font-size:42px">${classifica[0][0] === io ? "🏆" : "🃏"}</div>
+          <b style="font-size:20px">Vince ${chi(classifica[0][0])} con ${classifica[0][1]} 🪙</b>
+          <div style="margin-top:6px">${classifica.map(([i, f], r) => `${r + 1}. ${chi(i)} ${f}`).join(" · ")}</div>
+          <a class="btn ambra" href="#/stoppa?c=${p.cerchia_id}" style="margin-top:12px">Un'altra partita</a></div>${invitoPiu()}`;
+      } else if (io >= 0) azioni = `<button class="btn ambra" id="prossima" style="margin:12px 16px 0;width:calc(100% - 32px)">Prossima mano</button>`;
+    }
+
+    const mano = carte.slice().sort(ord);
+    const calabile = (c) => tocca && pub.fase === "stoppa" && (!pub.richiesto || Number(c.slice(1)) === Number(pub.richiesto));
+    corpo.innerHTML = `
+      <div class="tenue" style="text-align:center;font-size:13px;padding:8px 16px 0">Mano ${pub.mano ?? 1} di ${p.n} · 🎴 mazziere ${chi(Number(pub.mazziere))}</div>
+      <div style="display:flex;justify-content:center;flex-wrap:wrap;gap:6px;padding:8px 12px 0">${p.posti.map((_, i) => `<div style="text-align:center;padding:6px 8px;border-radius:12px;min-width:64px;background:${turno === i && p.stato === "in_corso" && pub.fase !== "fine_mano" ? "#FFE9C7" : "#F3EDE2"}">
+        <b style="font-size:13px">${turno === i && pub.fase !== "fine_mano" && p.stato === "in_corso" ? "▶ " : ""}${chi(i)}${Number(pub.mazziere) === i ? " 🎴" : ""}</b>
+        <div style="font-size:13px">${fiches[i] ?? 0} 🪙 · ${conte[i] ?? 0} 🂠</div>
+        ${["piccolo", "grosso"].includes(pub.fase) && scelte[i] !== null && scelte[i] !== undefined ? `<small style="font-weight:700;color:${scelte[i] ? "#0F6E56" : "#999"}">${scelte[i] ? "gioca" : "passa"}</small>` : ""}</div>`).join("")}</div>
+      ${ultimoHtml}
+      <div style="margin:12px 16px 0;padding:14px 10px;border-radius:18px;background:#2E6B4F;min-height:120px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap">${centro}</div>
+      ${azioni}
+      ${io >= 0 && mano.length ? `<div style="margin:14px 16px 0;padding:10px;border-radius:16px;background:${tocca && pub.fase === "stoppa" ? "#FFF6E8" : "#F3EDE2"};${tocca && pub.fase === "stoppa" ? "box-shadow:0 0 0 3px #E8B56B" : ""}">
+        ${giro.length ? `<div style="font-weight:800;margin-bottom:6px">Le carte di questo giro</div>${fila(giro.slice().sort(ord), false)}<div style="font-weight:700;margin:10px 0 6px;font-size:14px" class="tenue">Tutte le tue carte</div>` : `<div style="font-weight:800;margin-bottom:8px">${tocca && pub.fase === "stoppa" ? (pub.richiesto ? `▶ Cala ${nomeV(pub.richiesto)}` : "▶ Apri con la carta che vuoi") : "Le tue carte"}</div>`}
+        <div style="display:flex;gap:5px;justify-content:center;flex-wrap:wrap">${mano.map((c) => { const ok = calabile(c);
+          return `<button data-cala="${c}" aria-label="${nomeCarta(c)}" ${ok ? "" : "disabled"} style="border:0;background:none;padding:0;cursor:${ok ? "pointer" : "default"};${pub.fase === "stoppa" && tocca && !ok ? "opacity:.35" : ""}">${carta(c, { piccola: true, attiva: ok })}</button>`; }).join("")}</div></div>`
+        : io < 0 ? `<p class="pad tenue" style="text-align:center">Guardi la partita.</p>` : ""}`;
+
+    corpo.querySelectorAll("[data-st]").forEach((b) => b.onclick = async () => {
+      corpo.querySelectorAll("[data-st]").forEach((x) => x.disabled = true);
+      const { error } = await sb.rpc("stoppa_gioca", { p_partita: id, p_azione: b.dataset.st });
+      if (error) alert(error.message); ultimaFirma = ""; aggiorna();
+    });
+    corpo.querySelectorAll("[data-cala]").forEach((b) => b.onclick = async () => {
+      corpo.querySelectorAll("[data-cala]").forEach((x) => x.disabled = true);
+      const { error } = await sb.rpc("stoppa_gioca", { p_partita: id, p_azione: "cala", p_carta: b.dataset.cala });
+      if (error) alert(error.message); ultimaFirma = ""; aggiorna();
+    });
+    corpo.querySelector("#prossima")?.addEventListener("click", async (e) => {
+      e.target.disabled = true;
+      const { error } = await sb.rpc("stoppa_prossima", { p_partita: id });
+      if (error) alert(error.message); ultimaFirma = ""; aggiorna();
+    });
+  }
+
   function disegna(p, mia) {
     const corpo = document.getElementById("corpo");
     const pub = p.pubblico ?? {};
@@ -175,18 +284,18 @@ export default async function ({ params, gioco = "briscola" }) {
     if (p.stato === "attesa") {
       const creatore = p.creato_da === state.io.id;
       corpo.innerHTML = `
-        <div class="pad" style="text-align:center"><div style="font-size:44px">🃏</div><h1 style="margin:4px 0">${TRE ? "Tressette" : "Briscola"} a ${p.n}</h1>
-          <p class="tenue" style="margin:0">${p.n === 4 ? "Si gioca a coppie: chi siede di fronte è in squadra con te." : p.n === 5 ? "Chiamata: asta, carta chiamata, socio segreto." : "Uno contro uno."}</p></div>
+        <div class="pad" style="text-align:center"><div style="font-size:44px">🃏</div><h1 style="margin:4px 0">${NOME_GIOCO} a ${p.n}</h1>
+          <p class="tenue" style="margin:0">${STOP ? "Ognuno per sé: punti piccoli, punto grosso e stoppata." : p.n === 4 ? "Si gioca a coppie: chi siede di fronte è in squadra con te." : p.n === 5 ? "Chiamata: asta, carta chiamata, socio segreto." : "Uno contro uno."}</p></div>
         ${p.posti.map((x, i) => `<div class="card" style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-          <b style="flex:1">${p.n === 4 ? `<span class="tenue">Coppia ${i % 2 ? "B" : "A"} · </span>` : ""}${x.persona_id ? esc(x.nome) : `<span class="tenue">posto libero</span>`}</b>
+          <b style="flex:1">${p.n === 4 && !STOP ? `<span class="tenue">Coppia ${i % 2 ? "B" : "A"} · </span>` : ""}${x.persona_id ? esc(x.nome) : `<span class="tenue">posto libero</span>`}</b>
           ${!x.persona_id ? `<button class="chip" data-siedi="${i}" style="margin:0">Siediti qui</button>` : x.persona_id === state.io.id ? `<span class="tenue">sei tu</span>` : ""}</div>`).join("")}
         <div class="pad">
           ${creatore ? `<button class="btn ambra" id="inizia">Si gioca${p.posti.some((x) => !x.persona_id) ? " (i posti liberi li prende il telefono)" : ""}</button>` : `<p class="tenue" style="text-align:center">${io >= 0 ? "Sei seduto: si parte quando lo decide chi ha aperto il tavolo." : "Scegli un posto libero."}</p>`}
           ${state.cerchie.some((c) => c.id === p.cerchia_id) ? `<button class="btn chiaro" id="invita" style="margin-top:10px">🔔 Avvisa tutto il gruppo «${esc(state.cerchie.find((c) => c.id === p.cerchia_id)?.nome ?? "")}»</button>` : ""}
           <button class="btn chiaro" id="invita-wa" style="margin-top:10px">📲 Invita un amico su WhatsApp</button>
           <p class="tenue" style="font-size:13px;text-align:center;margin:4px 0 0">L'amico entra solo a questo tavolo: non vede la famiglia né il gruppo.</p></div>`;
-      corpo.querySelector("#invita-wa").onclick = () => invitaAlGioco({ tipo: "partita", id, cerchiaId: p.cerchia_id, torna: `#/${gioco}?id=${id}`, titolo: TRE ? "Tressette" : "Briscola",
-        testo: `🃏 ${TRE ? "Tressette" : "Briscola"} a ${p.n} su Ancora, con le carte napoletane: manchi tu al tavolo.`, perche: "Manchi tu al tavolo: un minuto e ti siedi." });
+      corpo.querySelector("#invita-wa").onclick = () => invitaAlGioco({ tipo: "partita", id, cerchiaId: p.cerchia_id, torna: `#/${gioco}?id=${id}`, titolo: NOME_GIOCO,
+        testo: `🃏 ${NOME_GIOCO} a ${p.n} su Ancora, con le carte napoletane: manchi tu al tavolo.`, perche: "Manchi tu al tavolo: un minuto e ti siedi." });
       corpo.querySelectorAll("[data-siedi]").forEach((b) => b.onclick = async () => {
         const { error } = await sb.rpc("briscola_siedi", { p_partita: id, p_posto: Number(b.dataset.siedi) });
         if (error) alert(error.message); ultimaFirma = ""; aggiorna();
@@ -203,6 +312,7 @@ export default async function ({ params, gioco = "briscola" }) {
       return;
     }
 
+    if (STOP) return disegnaStoppa(p, mia, corpo, io, nome);
     const turno = Number(pub.turno), tocca = turno === io && p.stato === "in_corso";
     const manoHtml = (titolo) => io >= 0 && mia ? `<div style="margin:14px 16px 0;padding:10px;border-radius:16px;background:#F3EDE2"><div style="font-weight:800;margin-bottom:8px">${titolo}</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center">${mia.carte.slice().sort().map((c) => carta(c, { piccola: true })).join("")}</div></div>` : "";

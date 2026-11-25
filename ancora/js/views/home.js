@@ -513,7 +513,7 @@ async function tavoliAperti() {
   const carte = [...(carteGruppi ?? []), ...(carteOspite ?? []).filter((x) => !(carteGruppi ?? []).some((y) => y.id === x.id))];
   const io = state.io.id, gruppo = (id) => state.cerchie.find((c) => c.id === id)?.nome ?? "";
   const nomeDi2 = (posti, pid) => posti?.find?.((x) => x.persona_id === pid)?.nome ?? "Qualcuno";
-  const NOMI = { briscola: ["🃏", "a briscola"], tressette: ["🂡", "a tressette"], biliardo: ["🎱", "a biliardo"], calcio: ["⚽", "a calciobalilla"], auto: ["🏎️", "a una corsa"], stop: ["🃏", "a Stop"] };
+  const NOMI = { briscola: ["🃏", "a briscola"], tressette: ["🂡", "a tressette"], biliardo: ["🎱", "a biliardo"], calcio: ["⚽", "a calciobalilla"], auto: ["🏎️", "a una corsa"], stop: ["🃏", "a Stop"], stoppa: ["🃏", "a Stoppa"] };
   const righe = [];
   for (const p of carte) {
     const seduto = p.posti.some((x) => x.persona_id === io), liberi = p.posti.filter((x) => !x.persona_id).length;
