@@ -118,13 +118,17 @@ function campo({ riga = null, solo = false, livello = 0.6 }) {
   const cv = document.getElementById("cv"), ctx = cv.getContext("2d");
   document.getElementById("grande").onclick = () => { const el = document.getElementById("sala"); (el.requestFullscreen ?? el.webkitRequestFullscreen)?.call(el); };
   const sotto = document.getElementById("sotto");
-  // due pollici: a sinistra difesa e portiere, a destra centro e attacco. Si trascina per muovere, si tocca (o si spinge in su) per tirare.
-  const duo = io >= 0 && n === 2;
-  const pad = (g, ic, tit) => `<div class="pad-calcio" data-g="${g}" style="flex:1;height:118px;border-radius:18px;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.18);display:grid;place-items:center;text-align:center;touch-action:none;user-select:none;-webkit-user-select:none">
-    <div><div style="font-size:26px">${ic}</div><b style="font-size:15px">${tit}</b><div style="font-size:12px;opacity:.7">trascina ↔ · tocca = tiro</div></div></div>`;
-  sotto.innerHTML = io >= 0 ? `<div style="display:flex;gap:10px">${duo ? pad(1, "🛡️", "Difesa") + pad(2, "⚽", "Attacco") : pad(1, "⚽", ruolo(n, io))}</div>
-    <p style="text-align:center;font-size:12px;opacity:.7;margin:6px 0 0">${nomeSquadra(n, io)}${duo ? " · un pollice per parte" : ""}</p>`
+  // si punta col dito sul campo (gli omini vanno all'altezza del dito) e si tira col pulsante grande.
+  // Con l'aiuto acceso, quando non tocchi il campo le stecche seguono la palla da sole.
+  const duo = false;
+  let aiuto = true; try { aiuto = localStorage.getItem("ancora_calcio_aiuto") !== "0"; } catch { /* niente */ }
+  sotto.innerHTML = io >= 0 ? `<div style="display:flex;gap:10px;align-items:stretch">
+      <button id="aiuto" class="chip" style="margin:0;flex:0 0 auto;padding:0 14px;font-size:14px;border-radius:16px"></button>
+      <button id="tira" style="flex:1;height:84px;border:0;border-radius:20px;background:#E8B56B;color:#12302C;font:800 26px system-ui;touch-action:none;user-select:none;-webkit-user-select:none">⚽ TIRA</button></div>
+    <p style="text-align:center;font-size:12px;opacity:.75;margin:6px 0 0">${nomeSquadra(n, io)} · tocca il campo per spostare gli omini</p>`
     : `<p style="text-align:center;opacity:.8;margin:0">📺 Campo grande · si gioca con i telefoni</p>`;
+  const disegnaAiuto = () => { const b = document.getElementById("aiuto"); if (b) { b.textContent = aiuto ? "🤖 Aiuto sì" : "✋ Aiuto no"; b.classList.toggle("on", aiuto); } };
+  disegnaAiuto();
 
   // --- disegno ---
   let k = 1, vert = false, ox = 0, oy = 0, cw = 0, chh = 0;
@@ -203,44 +207,41 @@ function campo({ riga = null, solo = false, livello = 0.6 }) {
 
   // --- comandi di questo telefono ---
   let ultimoInvio = 0, daInviare = false;
-  const mio = { u: 0.5, u2: 0.5, calcio: false, calcio2: false };
+  const mio = { u: 0.5, u2: 0.5, y: C.H / 2, dito: false, calcio: false, calcio2: false };
   const calcia = (g = 0) => { if (g !== 2) mio.calcio = true; if (g !== 1 && (duo || g === 0)) mio.calcio2 = duo; invia(true); };
   function invia(subito = false) {
     if (host || io < 0) return;
     daInviare = true;
     const ora = Date.now(); if (!subito && ora - ultimoInvio < 90) return;
     ultimoInvio = ora; daInviare = false;
-    canale?.send({ type: "broadcast", event: "in", payload: { s: io, u: +mio.u.toFixed(3), k: mio.calcio ? 1 : 0, ...(duo ? { u2: +mio.u2.toFixed(3), k2: mio.calcio2 ? 1 : 0 } : {}) } });
+    canale?.send({ type: "broadcast", event: "in", payload: { s: io, u: +mio.u.toFixed(3), y: Math.round(mio.y), k: mio.calcio ? 1 : 0 } });
     mio.calcio = false; mio.calcio2 = false;
   }
   if (io >= 0) {
-    const tocchi = new Map();   // pointerId → { g, x, y, t, ux, uy }
-    sotto.querySelectorAll(".pad-calcio").forEach((el) => {
-      const g = Number(el.dataset.g);
-      el.onpointerdown = (e) => { e.preventDefault(); el.setPointerCapture(e.pointerId); tocchi.set(e.pointerId, { g, x: e.clientX, y: e.clientY, t: Date.now(), ux: e.clientX, uy: e.clientY, w: el.clientWidth, h: el.clientHeight }); el.style.background = "rgba(255,255,255,.16)"; };
-      el.onpointermove = (e) => {
-        const t = tocchi.get(e.pointerId); if (!t) return;
-        const d = vert ? (e.clientX - t.ux) / t.w : (e.clientY - t.uy) / t.h;   // tutto il pad = un po' più di tutta la corsa della stecca
-        t.ux = e.clientX; t.uy = e.clientY;
-        if (g === 2) mio.u2 = Math.min(1, Math.max(0, mio.u2 + d * 1.25)); else mio.u = Math.min(1, Math.max(0, mio.u + d * 1.25));
-        invia();
-      };
-      const su = (e) => {
-        const t = tocchi.get(e.pointerId); if (!t) return; tocchi.delete(e.pointerId); el.style.background = "rgba(255,255,255,.08)";
-        const dt = Date.now() - t.t, dx = e.clientX - t.x, dy = e.clientY - t.y;
-        if ((dt < 230 && Math.hypot(dx, dy) < 16) || (dt < 300 && -dy > 28 && Math.abs(dy) > Math.abs(dx))) {   // tocco o spinta in su = tiro
-          calcia(g === 2 ? 2 : duo ? 1 : 0); el.style.borderColor = "#E8B56B"; setTimeout(() => { el.style.borderColor = "rgba(255,255,255,.18)"; }, 160);
-          try { navigator.vibrate?.(20); } catch { /* niente */ }
-        }
-      };
-      el.onpointerup = su; el.onpointercancel = su;
-    });
+    // il dito sul campo: dall'altezza sullo schermo all'altezza nel campo
+    const altezza = (e) => {
+      const r = cv.getBoundingClientRect(); let y = vert ? (e.clientX - r.left - ox) / k : (e.clientY - r.top - oy) / k;
+      if (giraSquadra) y = C.H - y;
+      return Math.min(C.H - C.RP, Math.max(C.RP, y));
+    };
+    let ditoId = null;
+    cv.onpointerdown = (e) => { e.preventDefault(); ditoId = e.pointerId; cv.setPointerCapture(e.pointerId); mio.dito = true; mio.y = altezza(e); invia(); };
+    cv.onpointermove = (e) => { if (e.pointerId !== ditoId) return; mio.y = altezza(e); invia(); };
+    const lascia = (e) => { if (e.pointerId !== ditoId) return; ditoId = null; mio.dito = false; };
+    cv.onpointerup = lascia; cv.onpointercancel = lascia;
+    const tira = document.getElementById("tira");
+    tira.onpointerdown = (e) => {
+      e.preventDefault(); calcia(0); tira.style.transform = "scale(.96)"; tira.style.background = "#F3CB8A";
+      setTimeout(() => { tira.style.transform = ""; tira.style.background = "#E8B56B"; }, 120);
+      try { navigator.vibrate?.(20); } catch { /* niente */ }
+    };
+    document.getElementById("aiuto").onclick = () => { aiuto = !aiuto; try { localStorage.setItem("ancora_calcio_aiuto", aiuto ? "1" : "0"); } catch { /* niente */ } disegnaAiuto(); };
     onkeydown = (e) => {
       if (!document.getElementById("cv")) return;
       if (e.key === " ") { calcia(0); e.preventDefault(); }
-      const passo = 0.06;
-      if (e.key === "ArrowDown" || e.key === "ArrowRight") { mio.u = Math.min(1, mio.u + passo); mio.u2 = Math.min(1, mio.u2 + passo); invia(); }
-      if (e.key === "ArrowUp" || e.key === "ArrowLeft") { mio.u = Math.max(0, mio.u - passo); mio.u2 = Math.max(0, mio.u2 - passo); invia(); }
+      const passo = 30 * (giraSquadra ? -1 : 1);
+      if (e.key === "ArrowDown" || e.key === "ArrowRight") { mio.y = Math.min(C.H, mio.y + passo); mio.dito = true; invia(); }
+      if (e.key === "ArrowUp" || e.key === "ArrowLeft") { mio.y = Math.max(0, mio.y - passo); mio.dito = true; invia(); }
     };
   }
 
@@ -249,12 +250,23 @@ function campo({ riga = null, solo = false, livello = 0.6 }) {
     canale = sb.channel(`calcio-${riga.id}`, { config: { broadcast: { self: false } } });
     if (host) canale.on("broadcast", { event: "in" }, ({ payload: p }) => {
       if (p.s < 0 || p.s >= n) return;
-      comandi[p.s].u = p.u; if (p.k) comandi[p.s].calcio = true;
+      comandi[p.s].u = p.u; comandi[p.s].y = p.y; if (p.k) comandi[p.s].calcio = true;
       if (p.u2 !== undefined) { comandi[p.s].u2 = p.u2; if (p.k2) comandi[p.s].calcio2 = true; }
       visto[p.s] = Date.now();
     });
     else canale.on("broadcast", { event: "st" }, ({ payload }) => { prec = cur; cur = payload; curT = performance.now(); ultimoStato = Date.now(); });
     canale.subscribe();
+  }
+
+  // l'aiuto: senza dito sul campo, gli omini vanno dove sta andando la palla
+  let ultimoAiuto = 0;
+  function seguiPalla(s) {
+    if (io < 0 || !aiuto || mio.dito) return;
+    // segue con un po' di ritardo: aiuta, ma il tiro al momento giusto resta tuo
+    const ora = performance.now(), dt = Math.min(0.1, (ora - (seguiPalla.t ?? ora)) / 1000 || 1 / 120); seguiPalla.t = ora;
+    const y = Math.min(C.H - C.RP, Math.max(C.RP, s.palla.y));
+    mio.y += (y - mio.y) * (1 - Math.pow(0.88, dt * 120));
+    if (!host && performance.now() - ultimoAiuto > 60) { ultimoAiuto = performance.now(); invia(); }
   }
 
   // --- il ciclo ---
@@ -265,10 +277,11 @@ function campo({ riga = null, solo = false, livello = 0.6 }) {
       for (let p = 0; p < n; p++) {
         const assente = !umano[p] || (p !== io && !solo && Date.now() - Math.max(visto[p], avvio) > 8000);
         if (p === io) {
-          comandi[p].u = mio.u; if (mio.calcio) { comandi[p].calcio = true; mio.calcio = false; }
+          seguiPalla(st);
+          comandi[p].u = mio.u; comandi[p].y = mio.y; if (mio.calcio) { comandi[p].calcio = true; mio.calcio = false; }
           if (duo) { comandi[p].u2 = mio.u2; if (mio.calcio2) { comandi[p].calcio2 = true; mio.calcio2 = false; } }
         }
-        else if (assente) Object.assign(comandi[p], C.bot(st, n, p, solo ? livello : 0.55, memBot[p], 1 / 120), { u2: undefined });
+        else if (assente) Object.assign(comandi[p], C.bot(st, n, p, solo ? livello : 0.55, memBot[p], 1 / 120), { u2: undefined, y: undefined });
       }
       C.passo(st, n, comandi, 1 / 120);
       for (const c of comandi) { c.calcio = false; c.calcio2 = false; }
@@ -292,10 +305,7 @@ function campo({ riga = null, solo = false, livello = 0.6 }) {
         vista.stecche.forEach((s, i) => { s.off = prec.o[i] + (cur.o[i] - prec.o[i]) * t; });
       } else C.applica(vista, cur);
       // la mia stecca la vedo subito dove ho il dito (niente ritardo)
-      if (io >= 0) for (const i of C.steccheDelPosto(n, io)) {
-        const s = vista.stecche[i], mu = duo && (s.ruolo === "centro" || s.ruolo === "attacco") ? mio.u2 : mio.u;
-        const u = C.squadraDel(n, io) === 1 ? 1 - mu : mu; s.off = s.min + (s.max - s.min) * u;
-      }
+      if (io >= 0) { seguiPalla(vista); for (const i of C.steccheDelPosto(n, io)) { const s = vista.stecche[i]; s.off = C.offPerY(s, mio.y); } }
       disegna(vista); controllaGol(vista);
       if (vista.fine !== null && !salvata) { salvata = true; finale(vista); }
     } else disegna(vista);

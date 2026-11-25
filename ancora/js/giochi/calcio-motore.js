@@ -24,6 +24,16 @@ export function crea() {
   servi(st, Math.random() < 0.5 ? 0 : 1);
   return st;
 }
+// dove mettere la stecca perché l'omino più adatto stia all'altezza y
+export function offPerY(s, y) {
+  let meglio = s.off, err = Infinity;
+  for (let i = 0; i < s.n; i++) {
+    const voluto = y - H / 2 - (i - (s.n - 1) / 2) * s.passo, o = Math.min(s.max, Math.max(s.min, voluto));
+    const e = Math.abs(o - voluto) + Math.abs(o - s.off) * 0.02;
+    if (e < err) { err = e; meglio = o; }
+  }
+  return meglio;
+}
 const omini = (s) => Array.from({ length: s.n }, (_, i) => H / 2 + s.off + (i - (s.n - 1) / 2) * s.passo);
 
 function servi(st, versoSquadra) {
@@ -50,8 +60,14 @@ export function passo(st, n, comandi, dt) {
       // con due pollici: u/calcio per portiere e difesa, u2/calcio2 per centro e attacco (se non ci sono, tutto con u)
       const avanti = (s.ruolo === "centro" || s.ruolo === "attacco") && c.u2 !== undefined;
       const uu = avanti ? c.u2 : c.u, kk = avanti ? c.calcio2 : c.calcio;
-      const u = squadraDel(n, p) === 1 ? 1 - uu : uu;      // ognuno vede la sua porta in basso: la squadra 1 ha la mano rovesciata
-      s.off = s.min + (s.max - s.min) * Math.min(1, Math.max(0, u));
+      if (c.y !== undefined && c.y !== null) {
+        // si punta un'altezza del campo: ogni stecca porta lì il suo omino più adatto (veloce ma non a scatti)
+        const voluto = offPerY(s, c.y), max = 2600 * dt;
+        s.off += Math.max(-max, Math.min(max, voluto - s.off));
+      } else {
+        const u = squadraDel(n, p) === 1 ? 1 - uu : uu;      // ognuno vede la sua porta in basso: la squadra 1 ha la mano rovesciata
+        s.off = s.min + (s.max - s.min) * Math.min(1, Math.max(0, u));
+      }
       if (kk && s.calcio <= 0) s.calcio = DUR_CALCIO;
     }
   }
