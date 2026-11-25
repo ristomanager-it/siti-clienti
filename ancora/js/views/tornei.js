@@ -39,10 +39,15 @@ async function nuovo(gruppo) {
   let gioco = "briscola", formato = "campionato", gare = 5;
   const scelti = new Set([state.io.id]);
   const disegna = () => {
+    setTimeout(() => {
+      // il modulo sta sullo stesso indirizzo dell'elenco: il tasto indietro ridisegna l'elenco
+      const ind = document.getElementById("indietro");
+      if (ind) ind.onclick = (e) => { e.preventDefault(); window.scrollTo(0, 0); (async () => (await import(import.meta.url)).default({ params: { c: gruppo.id } }))(); };
+    });
     const corse = gioco === "auto";
     if (corse) formato = "campionato";
     $app().innerHTML = `
-      <header class="testa"><a class="icona" href="#/tornei?c=${gruppo.id}" aria-label="Indietro">${ICONE.indietro}</a><b>Nuovo campionato o torneo</b><span style="width:44px"></span></header>
+      <header class="testa"><a class="icona" id="indietro" href="#/tornei?c=${gruppo.id}" aria-label="Indietro">${ICONE.indietro}</a><b>Nuovo campionato o torneo</b><span style="width:44px"></span></header>
       <div class="pad" style="padding-bottom:120px">
         <b>A cosa si gioca</b>
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 16px">${Object.entries(GIOCHI).map(([k, g]) => `<button class="chip ${k === gioco ? "on" : ""}" data-g="${k}" style="margin:0">${g.ic} ${g.nome}</button>`).join("")}</div>
