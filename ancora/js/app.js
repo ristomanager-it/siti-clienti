@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "164";
+const VER = "165";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 // --- giochi aperti a tutti (gli altri li vede solo il superadmin, che li prova e li apre uno per uno) ---
@@ -787,6 +787,9 @@ export const ANCORA_INFO_PER = {
   casa: "Spese da dividere, lista della spesa, turni e calendario, senza perderci nei messaggi. E le foto delle nostre serate restano qui, non sparse nei telefoni 📸",
   gruppo: "Le foto e i video di tutto quello che facciamo insieme restano in un posto solo, per sempre, invece di perdersi nelle chat 📸\n\nE per organizzarci c'è il calendario, la chat e gli avvisi, senza caos… più qualche sfida per stare insieme anche a distanza.",
 };
+// lo stesso invito detto a più persone
+const plurale = (t) => t.replace("se hai una famiglia tua", "se avete una famiglia vostra").replace("crea anche la vostra pagina", "createne una anche voi")
+  .replace("crea anche la pagina della tua famiglia", "create anche la pagina della vostra famiglia").replace("di casa tua", "di casa vostra");
 // la spinta a portare dentro anche la propria famiglia
 export const ANCORA_ANCHE_TUA = {
   famiglia: "👨‍👩‍👧 E se hai una famiglia tua (figli, nipoti, suoceri), crea anche la vostra pagina: è gratis, così nessun ricordo va più perso.",
@@ -868,7 +871,7 @@ export async function invitaInCerchia(cerchiaId) {
     const link = `${location.origin}${location.pathname}#/iscriviti?invito=${codice}`;
     const voi = persone > 1;
     const tipo = ANCORA_INFO_PER[c?.tipo] ? c.tipo : "gruppo";
-    const testo = `${saluto()}\nHo creato ${ANCORA_PAGINA_PER[tipo]} su *Ancora*, il social privato nato in Italia per famiglie e gruppi: ci siamo solo noi, niente estranei e niente pubblicità.\n\n${ANCORA_INFO_PER[tipo]}\n\n${voi ? "Vi ho" : "Ti ho"} già preparato il posto in "${c?.nome ?? "Ancora"}": ${voi ? "entrate gratis in un minuto, ognuno col suo telefono" : "entri gratis in un minuto"} 👇\n${link}\n\n📌 Quando ${voi ? "la aprite, salvatela" : "la apri, salvala"} sulla schermata Home del telefono: così ${voi ? "vi arrivano" : "ti arrivano"} gli inviti e i messaggi.${ANCORA_ANCHE_TUA[tipo] ? `\n\n${ANCORA_ANCHE_TUA[tipo]}` : ""}`;
+    const testo = `${saluto()}\nHo creato ${ANCORA_PAGINA_PER[tipo]} su *Ancora*, il social privato nato in Italia per famiglie e gruppi: ci siamo solo noi, niente estranei e niente pubblicità.\n\n${ANCORA_INFO_PER[tipo]}\n\n${voi ? "Vi ho" : "Ti ho"} già preparato il posto in "${c?.nome ?? "Ancora"}": ${voi ? "entrate gratis in un minuto, ognuno col suo telefono" : "entri gratis in un minuto"} 👇\n${link}\n\n📌 Quando ${voi ? "la aprite, salvatela" : "la apri, salvala"} sulla schermata Home del telefono: così ${voi ? "vi arrivano" : "ti arrivano"} gli inviti e i messaggi.${ANCORA_ANCHE_TUA[tipo] ? `\n\n${voi ? plurale(ANCORA_ANCHE_TUA[tipo]) : ANCORA_ANCHE_TUA[tipo]}` : ""}`;
     try { if (navigator.share) { await navigator.share({ title: c?.nome ?? "Ancora", text: testo }); return; } } catch { return; }
     window.open(`https://wa.me/?text=${encodeURIComponent(testo)}`, "_blank");
   };
