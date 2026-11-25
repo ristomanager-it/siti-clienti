@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "165";
+const VER = "166";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 // --- giochi aperti a tutti (gli altri li vede solo il superadmin, che li prova e li apre uno per uno) ---
@@ -154,6 +154,7 @@ async function caricaIo() {
 // --- finestra in primo piano (bentornato, notifiche) ---
 export function popup({ titolo, testo, azioni = [] }) {
   const d = document.createElement("div");
+  d.dataset.popup = "1";
   d.innerHTML = `<div style="position:fixed;inset:0;background:rgba(18,48,44,.5);z-index:30;display:flex;align-items:flex-end;justify-content:center">
     <div class="card" style="margin:0;width:100%;max-width:560px;border-radius:26px 26px 0 0;padding:22px 20px calc(22px + env(safe-area-inset-bottom))">
       <b style="font-family:Fraunces,serif;font-size:24px;display:block;line-height:1.2;color:var(--notte)">${esc(titolo)}</b>
@@ -278,7 +279,10 @@ async function render() {
   try {
     await vista.default({ id, params });
     if (!PUBBLICHE.has(nome) && state.io && state.io.modalita !== "semplice") aggiungiMenu();
-    if (!PUBBLICHE.has(nome) && nome === "") setTimeout(() => benvenutoNuovo() || bentornato(), 1200);
+    if (!PUBBLICHE.has(nome) && nome === "") {
+      setTimeout(() => benvenutoNuovo() || bentornato(), 1200);
+      setTimeout(() => { dopoFamiglia(); spintaFamiglia(); }, 4500);
+    }
     if (!PUBBLICHE.has(nome) && nome === "") setTimeout(() => invitoSchermataHome() || ricordaPiu(), 2500);
     if (!PUBBLICHE.has(nome) && state.io) setTimeout(controllaAssistenza, 1500);
   }
@@ -321,6 +325,41 @@ function invitoSchermataHome(forza = false) {
 }
 
 // --- Alla prima iscrizione: cosa c'è su Ancora, e i due passi che contano (schermata Home e notifiche) ---
+// chi è in Ancora per un gruppo (amici, casa…) ma non ha ancora la pagina della sua famiglia: glielo proponiamo,
+// dal giorno dopo l'iscrizione, al massimo 3 volte e a 4 giorni di distanza
+function spintaFamiglia() {
+  if (!state.io || state.cerchie.some((c) => c.tipo === "famiglia")) return;
+  if (document.querySelector("#benvenuto-nuovo, #schermata-home, #foglio-piu, [role=dialog], [data-popup]")) return;
+  if (sessionStorage.getItem("ancora_spinta_famiglia")) return;
+  const iscritto = state.io.creato_il ? new Date(state.io.creato_il).getTime() : 0;
+  if (Date.now() - iscritto < 864e5) return;
+  let s = { volte: 0, ultima: 0 }; try { s = JSON.parse(localStorage.getItem("ancora_spinta_famiglia") ?? "null") ?? s; } catch { /* niente */ }
+  if (s.volte >= 3 || Date.now() - s.ultima < 4 * 864e5) return;
+  sessionStorage.setItem("ancora_spinta_famiglia", "1");
+  try { localStorage.setItem("ancora_spinta_famiglia", JSON.stringify({ volte: s.volte + 1, ultima: Date.now() })); } catch { /* niente */ }
+  popup({
+    titolo: "E la tua famiglia? 👨‍👩‍👧",
+    testo: "Quante foto, video e vocali di casa tua sono sparsi tra telefoni e chat? Basta cambiare telefono e spariscono.<br><br>Crea la pagina della tua famiglia: è gratis, ci siete solo voi, e i ricordi restano al sicuro per sempre, con le voci dei nonni.",
+    azioni: [{ t: "Crea la pagina della mia famiglia", fn: creaFamigliaVeloce }, { t: "Più tardi" }],
+  });
+}
+async function creaFamigliaVeloce() {
+  const nome = prompt("Come si chiama la tua famiglia?", state.io.cognome ? `Famiglia ${state.io.cognome}` : "La mia famiglia");
+  if (nome === null) return;
+  const { error } = await sb.rpc("crea_famiglia", { p_nome: nome });
+  if (error) { alert(/già in un piano/.test(error.message) ? "Fai già parte di una famiglia su Ancora." : "Non sono riuscito a crearla: " + error.message); return; }
+  try { localStorage.setItem("ancora_invita_famiglia", "1"); localStorage.setItem("ancora_spinta_famiglia", JSON.stringify({ volte: 9, ultima: Date.now() })); } catch { /* niente */ }
+  location.hash = "#/"; location.reload();
+}
+// appena creata la famiglia: subito l'invito ai parenti
+function dopoFamiglia() {
+  try { if (!localStorage.getItem("ancora_invita_famiglia")) return; localStorage.removeItem("ancora_invita_famiglia"); } catch { return; }
+  const fam = state.cerchie.find((c) => c.tipo === "famiglia");
+  if (!fam) return;
+  popup({ titolo: "Fatto! Ora chiama i tuoi 🎉", testo: `La pagina «${esc(fam.nome)}» è pronta. Manda l'invito su WhatsApp: ognuno entra col suo telefono, anche i nonni.`,
+    azioni: [{ t: "Invita la famiglia", fn: () => invitaInCerchia(fam.id) }, { t: "Più tardi" }] });
+}
+
 function benvenutoNuovo() {
   try { if (localStorage.getItem("ancora_benvenuto")) return false; } catch { return false; }
   const nuovo = state.io?.creato_il && Date.now() - new Date(state.io.creato_il).getTime() < 7 * 864e5;
@@ -788,14 +827,12 @@ export const ANCORA_INFO_PER = {
   gruppo: "Le foto e i video di tutto quello che facciamo insieme restano in un posto solo, per sempre, invece di perdersi nelle chat 📸\n\nE per organizzarci c'è il calendario, la chat e gli avvisi, senza caos… più qualche sfida per stare insieme anche a distanza.",
 };
 // lo stesso invito detto a più persone
-const plurale = (t) => t.replace("se hai una famiglia tua", "se avete una famiglia vostra").replace("crea anche la vostra pagina", "createne una anche voi")
-  .replace("crea anche la pagina della tua famiglia", "create anche la pagina della vostra famiglia").replace("di casa tua", "di casa vostra");
-// la spinta a portare dentro anche la propria famiglia
+const plurale = (t) => t.replace("per la tua famiglia", "per la vostra famiglia");
+// la spinta a portare dentro anche la propria famiglia (a chi è già in famiglia non serve: lo diciamo dopo, nell'app)
 export const ANCORA_ANCHE_TUA = {
-  famiglia: "👨‍👩‍👧 E se hai una famiglia tua (figli, nipoti, suoceri), crea anche la vostra pagina: è gratis, così nessun ricordo va più perso.",
-  amici: "👨‍👩‍👧 E crea anche la pagina della tua famiglia: è gratis, così le foto e le voci di casa tua non si perdono più.",
-  casa: "👨‍👩‍👧 E crea anche la pagina della tua famiglia: è gratis.",
-  gruppo: "👨‍👩‍👧 E crea anche la pagina della tua famiglia: è gratis, così le foto e le voci di casa tua non si perdono più.",
+  amici: "👨‍👩‍👧 Poi createla anche per la tua famiglia: è gratis.",
+  casa: "👨‍👩‍👧 Poi createla anche per la tua famiglia: è gratis.",
+  gruppo: "👨‍👩‍👧 Poi createla anche per la tua famiglia: è gratis.",
 };
 export const ANCORA_INFO = ANCORA_INFO_PER.famiglia;
 export const ANCORA_INFO_AMICI = ANCORA_INFO_PER.amici;
