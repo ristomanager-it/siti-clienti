@@ -201,7 +201,7 @@ export default async function ({ params, gioco = "briscola" }) {
 
     // l'ultimo punto vinto: resta scritto (e appena cambia lo evidenzio)
     const u = pub.ultimo, nuovo = u && u.n !== ultimoVisto; if (u) ultimoVisto = u.n;
-    const ultimoHtml = u && ["piccolo", "grosso", "stoppa"].includes(pub.fase) ? `<div class="card" style="margin:10px 16px 0;${nuovo ? "background:#FFF6E8;box-shadow:0 0 0 3px #E8B56B" : ""}">
+    const ultimoHtml = u?.tipo && ["piccolo", "grosso", "stoppa"].includes(pub.fase) ? `<div class="card" style="margin:10px 16px 0;${nuovo ? "background:#FFF6E8;box-shadow:0 0 0 3px #E8B56B" : ""}">
       <b>${u.tipo === "grosso" ? "Punto grosso" : `Punto piccolo ${u.iter}`}: ${chi(u.vincitore)} +${u.premio} 🪙</b>
       <div class="tenue" style="font-size:14px">${u.carte ? `con ${u.carte.map((c) => nomeCarta(c)).join(", ")}` : "nessuno ha giocato: va al mazziere"}
       ${(u.giocano ?? []).length > 1 ? ` · ${(u.giocano).filter((g) => g.posto !== u.vincitore).map((g) => `${chi(g.posto)} ${Math.floor(g.forza / 1000)} carte, ${g.forza % 1000}`).join(" · ")}` : ""}</div></div>` : "";
@@ -252,9 +252,9 @@ export default async function ({ params, gioco = "briscola" }) {
       <div style="margin:12px 16px 0;padding:14px 10px;border-radius:18px;background:#2E6B4F;min-height:120px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap">${centro}</div>
       ${azioni}
       ${io >= 0 && mano.length ? `<div style="margin:14px 16px 0;padding:10px;border-radius:16px;background:${tocca && pub.fase === "stoppa" ? "#FFF6E8" : "#F3EDE2"};${tocca && pub.fase === "stoppa" ? "box-shadow:0 0 0 3px #E8B56B" : ""}">
-        ${giro.length ? `<div style="font-weight:800;margin-bottom:6px">Le carte di questo giro</div>${fila(giro.slice().sort(ord), false)}<div style="font-weight:700;margin:10px 0 6px;font-size:14px" class="tenue">Tutte le tue carte</div>` : `<div style="font-weight:800;margin-bottom:8px">${tocca && pub.fase === "stoppa" ? (pub.richiesto ? `▶ Cala ${nomeV(pub.richiesto)}` : "▶ Apri con la carta che vuoi") : "Le tue carte"}</div>`}
-        <div style="display:flex;gap:5px;justify-content:center;flex-wrap:wrap">${mano.map((c) => { const ok = calabile(c);
-          return `<button data-cala="${c}" aria-label="${nomeCarta(c)}" ${ok ? "" : "disabled"} style="border:0;background:none;padding:0;cursor:${ok ? "pointer" : "default"};${pub.fase === "stoppa" && tocca && !ok ? "opacity:.35" : ""}">${carta(c, { piccola: true, attiva: ok })}</button>`; }).join("")}</div></div>`
+        ${giro.length ? `<div style="font-weight:800;margin-bottom:6px">Le carte di questo giro</div>${fila(giro.slice().sort(ord), false)}${carte.length > giro.length ? `<div style="font-weight:700;margin:10px 0 6px;font-size:14px" class="tenue">Tutte le tue carte</div>` : ""}` : `<div style="font-weight:800;margin-bottom:8px">${tocca && pub.fase === "stoppa" ? (pub.richiesto ? `▶ Cala ${nomeV(pub.richiesto)}` : "▶ Apri con la carta che vuoi") : "Le tue carte"}</div>`}
+        ${giro.length && carte.length === giro.length ? "" : `<div style="display:flex;gap:5px;justify-content:center;flex-wrap:wrap">${mano.map((c) => { const ok = calabile(c);
+          return `<button data-cala="${c}" aria-label="${nomeCarta(c)}" ${ok ? "" : "disabled"} style="border:0;background:none;padding:0;cursor:${ok ? "pointer" : "default"};${pub.fase === "stoppa" && tocca && !ok ? "opacity:.35" : ""}">${carta(c, { piccola: true, attiva: ok })}</button>`; }).join("")}</div>`}</div>`
         : io < 0 ? `<p class="pad tenue" style="text-align:center">Guardi la partita.</p>` : ""}`;
 
     corpo.querySelectorAll("[data-st]").forEach((b) => b.onclick = async () => {
