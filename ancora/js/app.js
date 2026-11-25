@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "163";
+const VER = "164";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 // --- giochi aperti a tutti (gli altri li vede solo il superadmin, che li prova e li apre uno per uno) ---
@@ -777,14 +777,22 @@ export const ANCORA_IN_BREVE = `*Ancora* è la prima app social privata della fa
 🎲 Tombola, briscola, tressette, biliardo e calciobalilla, anche da case diverse
 ✨ Con Ancora+: l'aiutante di casa (cucina, piante, compiti, viaggi), il libro stampato e il film della vostra famiglia
 È gratis, si entra in un minuto.`;
-export const ANCORA_UNA_RIGA = "📲 Ancora è la prima app social privata della famiglia e dei gruppi: ti iscrivi gratis in un minuto.";
-// le poche righe che raccontano Ancora in un invito: diverse per ogni tipo di gruppo, senza elenchi, per incuriosire
+export const ANCORA_UNA_RIGA = "📲 Ancora è il social privato nato in Italia per famiglie e gruppi: ti iscrivi gratis in un minuto e puoi creare anche la pagina della tua famiglia.";
+// gli inviti: social (solo noi), organizzazione (calendario, liste) e soprattutto i ricordi che non si perdono. Diversi per ogni tipo di gruppo.
+export const ANCORA_PAGINA_PER = { famiglia: "la pagina della nostra famiglia", amici: "la nostra pagina", coppia: "la nostra pagina, solo per noi due", casa: "la pagina di casa", gruppo: "la pagina del nostro gruppo" };
 export const ANCORA_INFO_PER = {
-  famiglia: "Solo noi, niente pubblicità né estranei: le foto e i video di tutti in un posto solo, le voci dei nonni che restano per sempre, le ricette di casa… e la sera ci si sfida pure, anche da case diverse. Guardala, poi mi dici 😉",
-  casa: "Solo chi vive qui: le spese da dividere, la lista della spesa, il calendario di casa e la nostra chat… e quando c'è da staccare, si gioca insieme anche ognuno dalla sua stanza 😄",
-  coppia: "Solo noi due: le nostre foto, i nostri ricordi, le date importanti che non dimentichiamo più… e qualche sfida per vedere chi vince 😏",
-  amici: "Solo noi, niente pubblicità né estranei: la nostra chat, le foto delle serate che non finiscono in giro… e la sera ci si sfida parlando a voce, ognuno da casa sua. Provala e mi dici 😏",
-  gruppo: "Solo noi del gruppo, niente pubblicità né estranei: chat, foto e video, il calendario per organizzarci… e qualche sorpresa per stare insieme anche a distanza 😉",
+  famiglia: "Pensaci: quante foto, video e messaggi vocali abbiamo sparsi tra telefoni, WhatsApp e cassetti? Basta cambiare telefono e spariscono. Qui li mettiamo tutti insieme, al sicuro, con le storie e le voci dei nonni che restano per sempre ❤️\n\nE serve anche ogni giorno: compleanni, calendario, liste della spesa, ricette di casa… e la sera ci si sfida a carte, anche da case diverse.",
+  amici: "Tutte le foto e i video delle nostre serate, dei viaggi, delle cene finiscono persi nelle chat. Qui restano in un posto solo, in ordine, per sempre 📸\n\nIn più la chat, il calendario per organizzarci senza 200 messaggi… e la sera ci si sfida a carte o a biliardo parlando a voce, ognuno da casa sua 😏",
+  coppia: "Tutte le nostre foto, i video, i momenti più belli in un posto solo, al sicuro, per non perderne neanche uno ❤️ E le date importanti che non scordiamo più… più qualche sfida per vedere chi vince 😏",
+  casa: "Spese da dividere, lista della spesa, turni e calendario, senza perderci nei messaggi. E le foto delle nostre serate restano qui, non sparse nei telefoni 📸",
+  gruppo: "Le foto e i video di tutto quello che facciamo insieme restano in un posto solo, per sempre, invece di perdersi nelle chat 📸\n\nE per organizzarci c'è il calendario, la chat e gli avvisi, senza caos… più qualche sfida per stare insieme anche a distanza.",
+};
+// la spinta a portare dentro anche la propria famiglia
+export const ANCORA_ANCHE_TUA = {
+  famiglia: "👨‍👩‍👧 E se hai una famiglia tua (figli, nipoti, suoceri), crea anche la vostra pagina: è gratis, così nessun ricordo va più perso.",
+  amici: "👨‍👩‍👧 E crea anche la pagina della tua famiglia: è gratis, così le foto e le voci di casa tua non si perdono più.",
+  casa: "👨‍👩‍👧 E crea anche la pagina della tua famiglia: è gratis.",
+  gruppo: "👨‍👩‍👧 E crea anche la pagina della tua famiglia: è gratis, così le foto e le voci di casa tua non si perdono più.",
 };
 export const ANCORA_INFO = ANCORA_INFO_PER.famiglia;
 export const ANCORA_INFO_AMICI = ANCORA_INFO_PER.amici;
@@ -859,7 +867,8 @@ export async function invitaInCerchia(cerchiaId) {
   const manda = async (codice, persone) => {
     const link = `${location.origin}${location.pathname}#/iscriviti?invito=${codice}`;
     const voi = persone > 1;
-    const testo = `${saluto()}\nHo trovato un'app che fa proprio al caso nostro: *Ancora*, la prima app social privata della famiglia e dei gruppi.\n\n${ANCORA_INFO_PER[c?.tipo] ?? ANCORA_INFO_PER.gruppo}\n\n${voi ? "Vi ho" : "Ti ho"} già preparato un posto in "${c?.nome ?? "Ancora"}": ${voi ? "iscrivetevi da qui, ognuno col suo telefono" : "iscriviti da qui"}, è gratis 👇\n${link}\n\n📌 Quando ${voi ? "la aprite, salvatela" : "la apri, salvala"} sulla schermata Home del telefono: così ${voi ? "vi arrivano" : "ti arrivano"} gli inviti e i messaggi.`;
+    const tipo = ANCORA_INFO_PER[c?.tipo] ? c.tipo : "gruppo";
+    const testo = `${saluto()}\nHo creato ${ANCORA_PAGINA_PER[tipo]} su *Ancora*, il social privato nato in Italia per famiglie e gruppi: ci siamo solo noi, niente estranei e niente pubblicità.\n\n${ANCORA_INFO_PER[tipo]}\n\n${voi ? "Vi ho" : "Ti ho"} già preparato il posto in "${c?.nome ?? "Ancora"}": ${voi ? "entrate gratis in un minuto, ognuno col suo telefono" : "entri gratis in un minuto"} 👇\n${link}\n\n📌 Quando ${voi ? "la aprite, salvatela" : "la apri, salvala"} sulla schermata Home del telefono: così ${voi ? "vi arrivano" : "ti arrivano"} gli inviti e i messaggi.${ANCORA_ANCHE_TUA[tipo] ? `\n\n${ANCORA_ANCHE_TUA[tipo]}` : ""}`;
     try { if (navigator.share) { await navigator.share({ title: c?.nome ?? "Ancora", text: testo }); return; } } catch { return; }
     window.open(`https://wa.me/?text=${encodeURIComponent(testo)}`, "_blank");
   };
