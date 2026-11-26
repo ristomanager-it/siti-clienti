@@ -103,12 +103,12 @@ function disegna() {
   $("#radice").innerHTML = `
     <header><span class="logo">Ancora<small>gestione</small></span><span class="sp"></span>
       <button class="esci" id="esci">Esci</button></header>
-    <main><nav>${[["panoramica", "Panoramica"], ["famiglie", "Famiglie"], ["regali", "Regali"], ["ordini", "Ordini libri"], ["omaggi", "Omaggi"], ["assistenza", "Assistenza"], ["messaggi", "Messaggi"], ["marketing", "Marketing"], ["creativita", "Creatività"], ["link", "Link e messaggi"], ["privacy", "Privacy"], ["manifesto", "Manifesto"]]
+    <main><nav>${[["panoramica", "Panoramica"], ["gruppi", "Gruppi e famiglie"], ["famiglie", "Piani"], ["regali", "Regali"], ["ordini", "Ordini libri"], ["omaggi", "Omaggi"], ["assistenza", "Assistenza"], ["messaggi", "Messaggi"], ["marketing", "Marketing"], ["creativita", "Creatività"], ["link", "Link e messaggi"], ["privacy", "Privacy"], ["manifesto", "Manifesto"]]
       .map(([k, t]) => `<button data-v="${k}" class="${k === vista ? "on" : ""}">${t}</button>`).join("")}</nav>
       <div id="corpo"><p class="tenue">Caricamento…</p></div></main>`;
   $("#esci").onclick = async () => { await sb.auth.signOut(); accesso(); };
   document.querySelectorAll("nav button").forEach((b) => b.onclick = () => { vista = b.dataset.v; disegna(); });
-  ({ panoramica, famiglie, regali, ordini, omaggi, assistenza, messaggi, marketing, creativita, link, privacy, manifesto })[vista]().catch((e) => {
+  ({ panoramica, gruppi, famiglie, regali, ordini, omaggi, assistenza, messaggi, marketing, creativita, link, privacy, manifesto })[vista]().catch((e) => {
     $("#corpo").innerHTML = `<p class="errore">Errore: ${esc(e.message)}</p>`;
   });
 }
@@ -175,6 +175,29 @@ async function panoramica() {
     <h2>Nuovi iscritti per settimana</h2>
     <div class="card">${sett.length ? `<div class="barre">${sett.map((s) =>
       `<div style="height:${Math.round(s.n / max * 100)}%" title="${esc(s.settimana)}"><i>${s.n}</i></div>`).join("")}</div>` : `<p class="tenue">Ancora nessun iscritto.</p>`}</div>`;
+}
+
+// tutte le famiglie e i gruppi: nome, chi l'ha creato, chi è entrato e quando, i link d'invito ancora aperti (mai i contenuti)
+async function gruppi() {
+  const lista = await rpc("admin_gruppi");
+  const TIPI = { famiglia: "👨‍👩‍👧 Famiglia", amici: "🍻 Amici", coppia: "❤️ Coppia", casa: "🏠 Casa", gruppo: "👥 Gruppo" };
+  const disegnaLista = (q = "") => {
+    const f = lista.filter((x) => !q || `${x.nome} ${x.creatore} ${x.membri.map((m) => m.nome).join(" ")}`.toLowerCase().includes(q.toLowerCase()));
+    $("#elenco").innerHTML = f.map((x) => `
+      <div class="card">
+        <div class="riga"><span class="nome">${esc(x.nome)}</span><span class="badge">${TIPI[x.tipo] ?? esc(x.tipo)}</span><span class="sp"></span><b>${x.persone} ${x.persone === 1 ? "persona" : "persone"}</b></div>
+        <div class="tenue">Creato da ${esc(x.creatore ?? "—")} · ${data(x.creata_il)}</div>
+        <div style="margin-top:8px">${x.membri.length ? x.membri.map((m) => `<div class="riga" style="padding:4px 0;border-top:1px solid #eee"><span>${esc(m.nome)}${m.stato !== "attivo" ? ` <small class="tenue">(${esc(m.stato)})</small>` : ""}</span><span class="sp"></span>
+          <small class="tenue">entrato ${data(m.entrato)} · visto ${fa(m.ultimo_accesso)}</small></div>`).join("") : `<span class="tenue">Ancora nessuno entrato oltre a chi l'ha creato.</span>`}</div>
+        ${x.inviti_aperti.length ? `<div class="tenue" style="margin-top:6px">🔗 Link aperti: ${x.inviti_aperti.map((i) => `${i.usi}/${i.max} entrati (fino al ${data(i.scade)})`).join(" · ")}</div>` : ""}
+      </div>`).join("") || `<p class="tenue">Nessun gruppo.</p>`;
+  };
+  const tot = lista.reduce((a, x) => a + x.persone, 0);
+  $("#corpo").innerHTML = `<div class="griglia">${kpi(lista.filter((x) => x.tipo === "famiglia").length, "famiglie")}${kpi(lista.filter((x) => x.tipo !== "famiglia").length, "gruppi")}${kpi(tot, "persone dentro (contate per gruppo)")}</div>
+    <input id="cerca" placeholder="Cerca un nome o una persona" style="width:100%;margin:12px 0">
+    <div id="elenco"></div>`;
+  disegnaLista();
+  $("#cerca").oninput = (e) => disegnaLista(e.target.value);
 }
 
 async function famiglie() {
