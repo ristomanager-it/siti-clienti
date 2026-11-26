@@ -103,12 +103,12 @@ function disegna() {
   $("#radice").innerHTML = `
     <header><span class="logo">Ancora<small>gestione</small></span><span class="sp"></span>
       <button class="esci" id="esci">Esci</button></header>
-    <main><nav>${[["panoramica", "Panoramica"], ["gruppi", "Gruppi e famiglie"], ["famiglie", "Piani"], ["regali", "Regali"], ["ordini", "Ordini libri"], ["omaggi", "Omaggi"], ["assistenza", "Assistenza"], ["messaggi", "Messaggi"], ["marketing", "Marketing"], ["creativita", "Creatività"], ["link", "Link e messaggi"], ["privacy", "Privacy"], ["manifesto", "Manifesto"]]
+    <main><nav>${[["panoramica", "Panoramica"], ["gruppi", "Gruppi e famiglie"], ["segnalazioni", "🚩 Segnalazioni"], ["famiglie", "Piani"], ["regali", "Regali"], ["ordini", "Ordini libri"], ["omaggi", "Omaggi"], ["assistenza", "Assistenza"], ["messaggi", "Messaggi"], ["marketing", "Marketing"], ["creativita", "Creatività"], ["link", "Link e messaggi"], ["privacy", "Privacy"], ["manifesto", "Manifesto"]]
       .map(([k, t]) => `<button data-v="${k}" class="${k === vista ? "on" : ""}">${t}</button>`).join("")}</nav>
       <div id="corpo"><p class="tenue">Caricamento…</p></div></main>`;
   $("#esci").onclick = async () => { await sb.auth.signOut(); accesso(); };
   document.querySelectorAll("nav button").forEach((b) => b.onclick = () => { vista = b.dataset.v; disegna(); });
-  ({ panoramica, gruppi, famiglie, regali, ordini, omaggi, assistenza, messaggi, marketing, creativita, link, privacy, manifesto })[vista]().catch((e) => {
+  ({ panoramica, gruppi, segnalazioni, famiglie, regali, ordini, omaggi, assistenza, messaggi, marketing, creativita, link, privacy, manifesto })[vista]().catch((e) => {
     $("#corpo").innerHTML = `<p class="errore">Errore: ${esc(e.message)}</p>`;
   });
 }
@@ -178,6 +178,30 @@ async function panoramica() {
 }
 
 // tutte le famiglie e i gruppi: nome, chi l'ha creato, chi è entrato e quando, i link d'invito ancora aperti (mai i contenuti)
+// solo i contenuti segnalati dagli utenti; ogni apertura di questa pagina resta registrata
+async function segnalazioni() {
+  const lista = await rpc("admin_segnalazioni");
+  const paths = lista.filter((x) => x.stato === "aperta").flatMap((x) => x.media.map((m) => m.path));
+  const url = {};
+  if (paths.length) { const { data } = await sb.storage.from("ricordi").createSignedUrls(paths, 3600); for (const d of data ?? []) url[d.path] = d.signedUrl; }
+  const media = (m) => !url[m.path] ? "" : m.tipo === "foto" ? `<img src="${url[m.path]}" style="max-width:100%;border-radius:10px;margin-top:6px">`
+    : m.tipo === "video" ? `<video src="${url[m.path]}" controls playsinline style="max-width:100%;border-radius:10px;margin-top:6px"></video>` : `<audio src="${url[m.path]}" controls style="width:100%;margin-top:6px"></audio>`;
+  $("#corpo").innerHTML = `<p class="tenue">Qui vedi solo quello che gli utenti hanno segnalato. Ogni volta che apri questa pagina resta registrato. Quando hai deciso, chiudi la segnalazione: il contenuto torna privato anche per la gestione.</p>
+    ${lista.map((x) => `<div class="card" style="${x.stato === "chiusa" ? "opacity:.6" : ""}">
+      <div class="riga"><span class="nome">🚩 ${esc(x.tipo)}</span><span class="badge">${esc(x.stato)}</span><span class="sp"></span><small class="tenue">${data(x.il)}</small></div>
+      <div class="tenue">Segnalato da ${esc(x.da)} · scritto da ${esc(x.autore ?? "—")}</div>
+      <div style="margin-top:6px"><b>Motivo:</b> ${esc(x.motivo || "—")}</div>
+      ${x.stato === "aperta" ? `${x.testo ? `<div style="margin-top:8px;padding:10px;background:#f6f3ec;border-radius:10px;white-space:pre-wrap">${esc(x.testo)}</div>` : ""}${x.media.map(media).join("")}
+        <div style="margin-top:10px"><button class="btn chiaro" data-chiudi="${x.id}">Chiudi la segnalazione</button></div>` : `<div class="tenue" style="margin-top:6px">Esito: ${esc(x.esito ?? "—")}</div>`}
+    </div>`).join("") || `<p class="tenue">Nessuna segnalazione.</p>`}`;
+  document.querySelectorAll("[data-chiudi]").forEach((b) => b.onclick = async () => {
+    const esito = window.prompt("Cosa hai deciso? (es. nessun problema, contenuto rimosso, utente avvisato)");
+    if (esito === null) return;
+    await rpc("admin_segnalazione_chiudi", { p_id: b.dataset.chiudi, p_esito: esito });
+    disegna();
+  });
+}
+
 async function gruppi() {
   const lista = await rpc("admin_gruppi");
   const TIPI = { famiglia: "👨‍👩‍👧 Famiglia", amici: "🍻 Amici", coppia: "❤️ Coppia", casa: "🏠 Casa", gruppo: "👥 Gruppo" };
