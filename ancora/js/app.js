@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "169";
+const VER = "170";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 // --- giochi aperti a tutti (gli altri li vede solo il superadmin, che li prova e li apre uno per uno) ---
@@ -905,7 +905,7 @@ export async function invitaInCerchia(cerchiaId) {
   f.innerHTML = `<div style="background:#FBF8F2;width:100%;max-width:720px;margin:0 auto;border-radius:22px 22px 0 0;padding:20px 16px calc(20px + env(safe-area-inset-bottom));max-height:90vh;overflow-y:auto">
     <b style="font-size:20px;display:block">Invita in ${esc(c?.nome ?? "Ancora")}</b>
     <p class="tenue" style="margin:4px 0 12px">Quante persone devono entrare con questo link? Lo mandi una volta (anche nel gruppo WhatsApp) e ognuno entra col suo telefono.</p>
-    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px">${[1, 2, 5, 10, 20, 30].map((n) => `<button class="btn ${n === 5 ? "ambra" : "chiaro"}" data-n="${n}" style="margin:0;padding:0;min-height:52px;font-size:18px">${n}</button>`).join("")}</div>
+    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:6px">${[1, 2, 3, 4, 5, 6, 7, 8, 10, 15, 20, 30].map((n) => `<button class="btn ${n === 5 ? "ambra" : "chiaro"}" data-n="${n}" style="margin:0;padding:0;min-height:52px;font-size:18px">${n}</button>`).join("")}</div>
     <p class="tenue" style="font-size:13px;margin:8px 0 0">1 = invito personale. Il link vale 14 giorni.</p>
     ${(attivi ?? []).length ? `<b style="display:block;margin:16px 0 6px">Link già mandati</b>${attivi.map((a) => `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-top:1px solid var(--bordo)">
       <span style="flex:1">🔗 Entrati <b>${a.usi} su ${a.max_usi}</b> <small class="tenue">· fino al ${new Date(a.scade_il).toLocaleDateString("it-IT")}</small></span>
