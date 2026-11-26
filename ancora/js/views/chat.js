@@ -69,6 +69,17 @@ async function conversazione(id) {
   // a chi non c'è più o non può rispondere si può scrivere e avere risposta in automatico
   if (!gruppo) sb.rpc("chiedi_info", { p_persona: altro }).then(({ data: i }) => { const a = document.getElementById("auto"); if (a && i?.famiglia && i.assente) a.hidden = false; });
   const box = document.getElementById("msg"), testo = document.getElementById("testo");
+  // tenendo premuto un messaggio di un altro: segnalarlo a chi gestisce Ancora
+  let pressione = null;
+  const segnalaMsg = async (id) => {
+    const motivo = prompt("Segnali questo messaggio? Scrivi il perché: lo leggerà solo chi gestisce Ancora.");
+    if (motivo === null) return;
+    const { error } = await sb.rpc("segnala", { p_ricordo: null, p_messaggio: id, p_motivo: motivo });
+    alert(error ? "Non riuscito: " + error.message : "Grazie, segnalazione inviata.");
+  };
+  box.addEventListener("contextmenu", (e) => { const b = e.target.closest("[data-msg]"); if (!b) return; e.preventDefault(); segnalaMsg(b.dataset.msg); });
+  box.addEventListener("touchstart", (e) => { const b = e.target.closest("[data-msg]"); if (!b || e.target.closest("video,audio")) return; pressione = setTimeout(() => segnalaMsg(b.dataset.msg), 700); }, { passive: true });
+  for (const ev of ["touchend", "touchmove", "touchcancel"]) box.addEventListener(ev, () => clearTimeout(pressione), { passive: true });
   let ultimo = null; const visti = new Set(); const nomi = new Map();
 
   async function carica(primo = false) {
@@ -89,7 +100,7 @@ async function conversazione(id) {
         : `<audio src="${url[m.media_path]}" controls style="width:220px;max-width:100%"></audio>`;
       box.insertAdjacentHTML("beforeend", `<div style="display:flex;gap:6px;align-items:flex-end;${mio ? "flex-direction:row-reverse" : ""}">
         ${gruppo && !mio ? avatar(m.persone ?? {}, 28, m.persone?.foto_path ? url[m.persone.foto_path] : null) : ""}
-        <div style="max-width:78%;padding:${m.media_tipo === "foto" && !m.testo ? "4px" : "9px 12px"};border-radius:18px;${mio ? "background:var(--notte);color:#FBF3E2;border-bottom-right-radius:6px" : "background:#fff;border:1px solid var(--bordo);border-bottom-left-radius:6px"}">
+        <div ${mio ? "" : `data-msg="${m.id}"`} style="max-width:78%;padding:${m.media_tipo === "foto" && !m.testo ? "4px" : "9px 12px"};border-radius:18px;${mio ? "background:var(--notte);color:#FBF3E2;border-bottom-right-radius:6px" : "background:#fff;border:1px solid var(--bordo);border-bottom-left-radius:6px"}">
           ${gruppo && !mio ? `<div style="font-size:12px;font-weight:800;color:var(--ambra);margin-bottom:2px">${esc(nomeDi(m.persone ?? {}))}</div>` : ""}
           ${media}${m.testo ? `<div style="white-space:pre-wrap;word-wrap:break-word;font-size:16px;line-height:1.35">${esc(m.testo)}</div>` : ""}
           <div style="font-size:11px;opacity:.6;text-align:right;margin-top:2px">${new Date(m.creato_il).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}</div></div></div>`);

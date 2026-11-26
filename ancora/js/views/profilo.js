@@ -24,10 +24,14 @@ export default async function ({ id, params }) {
   const volume = Math.floor(racconti / STORIE_PER_VOLUME) + 1;
   const nelVolume = racconti % STORIE_PER_VOLUME;
   const anno = p.data_nascita ? `, classe ${p.data_nascita.slice(0, 4)}` : "";
+  // trasparenza: se qualcuno segue il mio account, qui lo vedo sempre
+  const { data: seguito } = io ? await sb.from("tutele").select("genitore_id").eq("figlio_id", state.io.id).eq("stato", "attiva") : { data: [] };
+  const { data: chiSegue } = seguito?.length ? await sb.from("persone").select("nome, soprannome").in("id", seguito.map((t) => t.genitore_id)) : { data: [] };
 
   $app().innerHTML = `
     <header class="testa">${id ? `<a class="icona" href="#/" aria-label="Indietro">${ICONE.indietro}</a>` : `<span style="width:44px"></span>`}
       <b>${esc(nomeDi(p))}</b><span style="width:44px"></span></header>
+    ${chiSegue?.length ? `<a href="#/figli" class="card" style="display:block;margin:0 16px 10px;background:#FFF6E8;text-decoration:none;color:inherit">👀 <b>${esc(chiSegue.map((x) => x.soprannome || x.nome).join(", "))}</b> ${chiSegue.length === 1 ? "segue" : "seguono"} il tuo account: vede quello che pubblichi e scrivi.</a>` : ""}
     <div style="position:relative;aspect-ratio:16/9;max-height:320px;width:100%;background:${p.copertina_path ? `url('${url[p.copertina_path]}') center/cover` : "linear-gradient(135deg,#7FA37E,#4D7356)"}">
       ${io ? `<label class="chip" style="position:absolute;right:12px;bottom:10px;margin:0;background:rgba(251,248,242,.92)">📷 Copertina<input type="file" accept="image/*" id="f-copertina" hidden></label>` : ""}
     </div>

@@ -58,7 +58,8 @@ export default async function ({ id }) {
       `<div class="card"><b>${esc(nomeDi(c.persone))}</b> ${esc(c.testo)}</div>`).join("") : ""}
 
     <div class="pad" style="margin-top:12px">
-      ${r.autore_id !== state.io.id ? `<a class="btn ambra" href="#/racconta?risposta=${r.id}">Rispondi con la tua voce</a>`
+      ${r.autore_id !== state.io.id ? `<a class="btn ambra" href="#/racconta?risposta=${r.id}">Rispondi con la tua voce</a>
+          <button class="chip" id="segnala" style="margin-top:10px">🚩 Segnala</button>`
         : `<div class="card" style="margin:0 0 10px"><label style="margin-top:0">Chi lo vede</label>
             <div>${[{ id: "solo_io", nome: "Solo io" }, ...state.cerchie].map((c) => {
               const on = c.id === "solo_io" ? r.visibilita === "solo_io" : r.cerchia_id === c.id && r.visibilita === "cerchia";
@@ -76,6 +77,12 @@ export default async function ({ id }) {
     const c = b.dataset.vedo;
     await sb.from("ricordi").update(c === "solo_io" ? { visibilita: "solo_io", cerchia_id: null } : { visibilita: "cerchia", cerchia_id: c }).eq("id", id);
     location.reload();
+  });
+  document.getElementById("segnala")?.addEventListener("click", async () => {
+    const motivo = prompt("Perché lo segnali? Lo leggerà solo chi gestisce Ancora.");
+    if (motivo === null) return;
+    const { error } = await sb.rpc("segnala", { p_ricordo: r.id, p_messaggio: null, p_motivo: motivo });
+    alert(error ? "Non riuscito: " + error.message : "Grazie, segnalazione inviata.");
   });
   document.querySelector("[data-elimina]")?.addEventListener("click", async () => {
     if (!confirm("Eliminare questo ricordo per sempre?")) return;
