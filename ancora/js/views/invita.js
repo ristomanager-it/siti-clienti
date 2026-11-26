@@ -8,7 +8,7 @@ const euro = (c) => (c / 100).toFixed(2).replace(".", ",") + " €";
 export default async function () {
   const [{ data: codice }, { data: spazio }, { data: pr }] = await Promise.all([sb.rpc("mio_codice_amico"), sb.rpc("spazio_mio"), sb.rpc("premi_miei")]);
   const link = `${location.origin}${location.pathname}#/iscriviti?amico=${codice}&da=${encodeURIComponent(state.io?.soprannome || state.io?.nome || "")}`;
-  const testo = `${saluto()}\nTi consiglio *Ancora*, il social privato nato in Italia per famiglie e gruppi: ci siete solo voi, niente estranei e niente pubblicità.\n\nPensaci: quante foto, video e vocali della tua famiglia sono sparsi tra telefoni e chat? Basta cambiare telefono e spariscono. Lì restano tutti insieme, al sicuro, con le voci dei nonni che restano per sempre ❤️ E serve ogni giorno: calendario, compleanni, liste della spesa… e la sera si gioca insieme, anche da case diverse.\n\n👨‍👩‍👧 Iscriviti e crea la pagina della tua famiglia (o del tuo gruppo di amici): è gratis 👇\n${link}\n\n${SALVALA}`;
+  const testo = `${saluto()}\nTi consiglio *Ancora*, un social privato per famiglie e gruppi: foto, video e ricordi restano solo tra voi, e ci si organizza e si gioca insieme. È gratis 👇\n${link}`;
   const persone = pr?.persone ?? 0, famiglie = pr?.famiglie ?? 0, mesi = pr?.mesi ?? 0;
   const versoMese = mesi >= 12 ? 3 : persone % 3;
   const barra = (pieni, tot, colore = "#C9832E") => `<div style="display:flex;gap:4px;margin-top:8px">${Array.from({ length: tot }, (_, i) =>

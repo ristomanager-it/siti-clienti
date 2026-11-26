@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "173";
+const VER = "174";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 // --- giochi aperti a tutti (gli altri li vede solo il superadmin, che li prova e li apre uno per uno) ---
@@ -331,8 +331,20 @@ function invitoSchermataHome(forza = false) {
 // --- Alla prima iscrizione: cosa c'è su Ancora, e i due passi che contano (schermata Home e notifiche) ---
 // chi è in Ancora per un gruppo (amici, casa…) ma non ha ancora la pagina della sua famiglia: glielo proponiamo,
 // dal giorno dopo l'iscrizione, al massimo 3 volte e a 4 giorni di distanza
-export function spintaFamiglia() {
+export function spintaFamiglia(volta = 0) {
   if (!state.io || state.cerchie.some((c) => c.tipo === "famiglia")) return;
+  // chi si è iscritto da un link personale non è ancora in nessun gruppo: subito, appena chiude il benvenuto
+  if (!state.cerchie.length) {
+    if (document.querySelector("#benvenuto-nuovo, #schermata-home, #foglio-piu, [data-popup]")) { if (volta < 40) setTimeout(() => spintaFamiglia(volta + 1), 3000); return; }
+    if (sessionStorage.getItem("ancora_spinta_famiglia")) return;
+    sessionStorage.setItem("ancora_spinta_famiglia", "1");
+    popup({
+      titolo: "Crea la tua prima pagina 🏡",
+      testo: "Ancora è fatta per stare insieme: crea la pagina della tua famiglia o del tuo gruppo di amici, poi li inviti con un messaggio. È gratis.",
+      azioni: [{ t: "👨‍👩‍👧 La mia famiglia", fn: creaFamigliaVeloce }, { t: "🍻 Un gruppo di amici", fn: () => { location.hash = "#/cerchie"; } }, { t: "Più tardi" }],
+    });
+    return;
+  }
   if (document.querySelector("#benvenuto-nuovo, #schermata-home, #foglio-piu, [data-popup]")) return;
   if (sessionStorage.getItem("ancora_spinta_famiglia")) return;
   const iscritto = state.io.creato_il ? new Date(state.io.creato_il).getTime() : 0;
