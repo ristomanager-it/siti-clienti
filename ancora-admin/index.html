@@ -103,12 +103,12 @@ function disegna() {
   $("#radice").innerHTML = `
     <header><span class="logo">Ancora<small>gestione</small></span><span class="sp"></span>
       <button class="esci" id="esci">Esci</button></header>
-    <main><nav>${[["panoramica", "Panoramica"], ["gruppi", "Gruppi e famiglie"], ["segnalazioni", "🚩 Segnalazioni"], ["famiglie", "Piani"], ["regali", "Regali"], ["ordini", "Ordini libri"], ["omaggi", "Omaggi"], ["assistenza", "Assistenza"], ["messaggi", "Messaggi"], ["marketing", "Marketing"], ["creativita", "Creatività"], ["link", "Link e messaggi"], ["privacy", "Privacy"], ["manifesto", "Manifesto"]]
+    <main><nav>${[["panoramica", "Panoramica"], ["gruppi", "Gruppi e famiglie"], ["segnalazioni", "🚩 Segnalazioni"], ["famiglie", "Piani"], ["regali", "Regali"], ["ordini", "Ordini libri"], ["omaggi", "Omaggi"], ["assistenza", "Assistenza"], ["messaggi", "Messaggi"], ["marketing", "Marketing"], ["creativita", "Creatività"], ["link", "Link e messaggi"], ["privacy", "Privacy"], ["manifesto", "Manifesto"], ["impostazioni", "⚙️ Impostazioni"]]
       .map(([k, t]) => `<button data-v="${k}" class="${k === vista ? "on" : ""}">${t}</button>`).join("")}</nav>
       <div id="corpo"><p class="tenue">Caricamento…</p></div></main>`;
   $("#esci").onclick = async () => { await sb.auth.signOut(); accesso(); };
   document.querySelectorAll("nav button").forEach((b) => b.onclick = () => { vista = b.dataset.v; disegna(); });
-  ({ panoramica, gruppi, segnalazioni, famiglie, regali, ordini, omaggi, assistenza, messaggi, marketing, creativita, link, privacy, manifesto })[vista]().catch((e) => {
+  ({ panoramica, gruppi, segnalazioni, famiglie, regali, ordini, omaggi, assistenza, messaggi, marketing, creativita, link, privacy, manifesto, impostazioni })[vista]().catch((e) => {
     $("#corpo").innerHTML = `<p class="errore">Errore: ${esc(e.message)}</p>`;
   });
 }
@@ -200,6 +200,20 @@ async function segnalazioni() {
     await rpc("admin_segnalazione_chiudi", { p_id: b.dataset.chiudi, p_esito: esito });
     disegna();
   });
+}
+
+// chiavi pubbliche usate dall'app (mai quelle segrete)
+async function impostazioni() {
+  const { data: righe } = await sb.from("config_pubblica").select("chiave, valore, cambiato_il");
+  const mb = (righe ?? []).find((r) => r.chiave === "mapbox_token");
+  $("#corpo").innerHTML = `<div class="card"><b>🗺️ Token Mapbox (piste delle corse)</b>
+    <p class="tenue">Il token <b>pubblico</b> di Mapbox (inizia con <code>pk.</code>), limitato all'indirizzo dell'app. ${mb?.valore ? `Salvato il ${data(mb.cambiato_il)}: ${esc(mb.valore.slice(0, 12))}…` : "Non ancora salvato."}</p>
+    <input id="mapbox" placeholder="pk.eyJ…" style="width:100%" autocomplete="off">
+    <button class="btn" id="salva-mapbox" style="margin-top:10px">Salva</button> <span id="esito-mapbox" class="tenue"></span></div>`;
+  $("#salva-mapbox").onclick = async () => {
+    try { await rpc("admin_config_salva", { p_chiave: "mapbox_token", p_valore: $("#mapbox").value.trim() }); $("#esito-mapbox").textContent = "Salvato ✓"; $("#mapbox").value = ""; }
+    catch (e) { $("#esito-mapbox").textContent = e.message; }
+  };
 }
 
 async function gruppi() {
