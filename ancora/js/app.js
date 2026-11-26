@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "170";
+const VER = "171";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 // --- giochi aperti a tutti (gli altri li vede solo il superadmin, che li prova e li apre uno per uno) ---
@@ -146,6 +146,7 @@ async function caricaIo() {
   const { data: cerchie } = await sb.from("cerchie").select("id, nome, tipo, proprietario_id, moduli, foto_path, copertina_path, aiutante_nome").order("creata_il");
   const [{ data: piu }, { data: adulto }] = await Promise.all([sb.rpc("sono_piu"), sb.rpc("sono_adulto")]);
   state.io = io; state.famiglia = fm; state.cerchie = cerchie ?? []; state.piu = !!piu; state.adulto = adulto !== false;
+  try { localStorage.setItem("ancora_utente", "1"); } catch { /* niente */ }
   state.accessoPrima = io.ultimo_accesso_app;   // per il "bentornato" (prima di aggiornarlo)
   sb.from("persone").update({ ultimo_accesso_app: new Date().toISOString() }).eq("id", io.id).then(() => {});
   return io;
@@ -253,7 +254,10 @@ async function render() {
 
   if (!PUBBLICHE.has(nome) && !state.io && !(await caricaIo())) {
     // chi arriva dal link principale vede la pagina di vendita; da un link a un gioco, un ricordo, una ricetta… dopo l'accesso torna lì
-    location.hash = nome === "" ? "#/scopri" : `#/accesso?torna=${encodeURIComponent(location.hash)}`; return;
+    // la pagina di presentazione è solo per chi non ci conosce: chi ha Ancora sulla schermata Home o è già stato dentro va dritto all'accesso
+    let giaDentro = false; try { giaDentro = !!localStorage.getItem("ancora_utente"); } catch { /* niente */ }
+    const app = navigator.standalone || matchMedia("(display-mode: standalone)").matches;
+    location.hash = nome === "" ? (app || giaDentro ? "#/accesso" : "#/scopri") : `#/accesso?torna=${encodeURIComponent(location.hash)}`; return;
   }
   const barra = document.getElementById("barra");
   barra.hidden = PUBBLICHE.has(nome) || state.io?.modalita === "semplice";

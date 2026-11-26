@@ -23,9 +23,13 @@ export default async function ({ params }) {
   const qs = [invito && `invito=${invito}`, ricetta && `ricetta=${encodeURIComponent(ricetta)}`, torna && `torna=${encodeURIComponent(torna)}`].filter(Boolean).join("&");
   const ant = invito ? await fetch(`${SUPABASE_URL}/functions/v1/invito?codice=${encodeURIComponent(invito)}`).then((r) => r.json()).catch(() => null) : null;
   const { anteprima } = invito ? await import("./iscriviti.js") : {};
+  // aperta dalla schermata Home (iPhone tiene l'accesso separato da Safari): prima email e password, che si scrivono qui;
+  // il link su WhatsApp si aprirebbe in Safari e non qui
+  const app = navigator.standalone || matchMedia("(display-mode: standalone)").matches;
   $app().innerHTML = `${ant && !ant.errore ? anteprima(ant) : ""}
     <div class="pad" style="padding-top:64px"><span class="logo" style="font-size:44px">Ancora</span><div class="tenue" style="font-weight:700;letter-spacing:.02em;margin:-4px 0 18px">Il cloud dei tuoi ricordi</div>
-    <p id="gancio" style="font-family:Fraunces,serif;font-size:25px;line-height:1.25;color:var(--notte);min-height:94px;margin-bottom:4px;transition:opacity .5s">${GANCI[0]}</p>
+    ${app ? `<p style="font-family:Fraunces,serif;font-size:24px;line-height:1.25;color:var(--notte);margin-bottom:4px">Bentornato! Entra con l'email e la password che hai scelto quando ti sei iscritto.</p>`
+      : `<p id="gancio" style="font-family:Fraunces,serif;font-size:25px;line-height:1.25;color:var(--notte);min-height:94px;margin-bottom:4px;transition:opacity .5s">${GANCI[0]}</p>`}
     </div>
     <form id="f" class="card">
       <label for="tel">Il tuo numero di telefono</label>
@@ -35,14 +39,14 @@ export default async function ({ params }) {
       <p id="esito" role="status"></p>
       <p style="text-align:center;margin:8px 0 0">Non hai un account? <a href="#/iscriviti${qs ? "?" + qs : ""}"><b>Crealo gratis</b></a></p>
     </form>
-    <details class="card"><summary style="font-weight:800;cursor:pointer;min-height:32px">Entra con email e password</summary>
+    <details class="card" ${app ? "open" : ""} style="${app ? "order:-1" : ""}"><summary style="font-weight:800;cursor:pointer;min-height:32px">Entra con email e password</summary>
       <form id="fe">
         <label for="em">Email</label><input id="em" type="email" autocomplete="username" required>
         <label for="pw">Password</label><input id="pw" type="password" autocomplete="current-password" required>
         <button class="btn" style="margin-top:12px">Entra</button>
         <p id="esitoe" role="status"></p>
       </form></details>
-    <div class="pad"><a class="btn ambra" href="#/scopri">Scopri Ancora</a>
+    <div class="pad">${app ? "" : `<a class="btn ambra" href="#/scopri">Scopri Ancora</a>`}
       <a class="btn chiaro" style="margin-top:10px" href="#/regala">Regala Ancora</a>
       <p style="text-align:center"><a href="#/scopri">Scopri Ancora</a> · <a href="#/perche">Perché Ancora</a></p></div>`;
 
@@ -53,6 +57,7 @@ export default async function ({ params }) {
     location.hash = dopo;
   };
 
+  if (app) { const d = document.querySelector("details.card"), f = document.getElementById("f"); if (d && f) f.before(d); }
   let g = 0;
   const giro = setInterval(() => {
     const el = document.getElementById("gancio");
