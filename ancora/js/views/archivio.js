@@ -62,7 +62,7 @@ export default async function ({ params }) {
   const carica = async (files) => {
     const lista = [...files];
     let fatti = 0;
-    for (const f of lista) {
+    for (let f of lista) {
       coda.innerHTML = `<div class="card" style="margin:10px 0 0">Carico ${fatti + 1} di ${lista.length}: ${esc(f.name || "file")}…
         <div class="barra-prog" style="background:#EFEAE0"><i style="width:${Math.round(fatti / lista.length * 100)}%"></i></div></div>`;
       if ((spazio?.byte ?? 0) + f.size > (spazio?.quota_gb ?? 2) * 1e9) {
@@ -74,6 +74,7 @@ export default async function ({ params }) {
         continue;
       }
       const tipo = tipoDi(f);
+      if (tipo === "video") { const { videoPronto } = await import("../video.js"); f = await videoPronto(f); if (!f) continue; }
       const { data: r, error } = await sb.from("ricordi").insert({
         autore_id: state.io.id, tipo, visibilita: "solo_io", in_memoria: true,
       }).select("id").single();

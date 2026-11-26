@@ -23,8 +23,13 @@ export default async function ({ id }) {
     ${tutte(a, id)}`;
   const input = document.getElementById("file"); if (!input) return;
   input.onchange = async () => {
-    const files = [...input.files].slice(0, 30), stato = document.getElementById("stato");
+    let files = [...input.files].slice(0, 30); const stato = document.getElementById("stato");
     if (!files.length) return;
+    if (files.some((f) => f.type.startsWith("video"))) {
+      const { videoPronto } = await import("../video.js");
+      const pronti = []; for (const f of files) { const x = await videoPronto(f); if (x) pronti.push(x); }
+      files = pronti; if (!files.length) return;
+    }
     stato.textContent = `Caricamento di ${files.length} ${files.length === 1 ? "file" : "file"}…`;
     const r = await fetch(API, { method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ codice: id, file: files.map((f) => ({ tipo: f.type, byte: f.size })) }) }).then((x) => x.json()).catch(() => ({}));

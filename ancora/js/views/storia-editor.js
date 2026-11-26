@@ -152,11 +152,12 @@ export function apriEditor(file, cerchie, cerchiaIniziale) {
       const media = $("[data-media]");
       let blob = file, tipoMedia = video ? "video" : "foto", ext = (file.name.split(".").pop() || (video ? "mp4" : "jpg")).toLowerCase().slice(0, 5);
       if (!video) { blob = await cuoci(media, sopra, strati.getBoundingClientRect()); ext = "jpg"; }
+      else { const { videoPronto } = await import("../video.js"); blob = await videoPronto(file); if (!blob) { ok.disabled = false; ok.textContent = "Condividi"; return; } ext = blob.type === "video/mp4" ? "mp4" : ext; }
       const dettagli = (video && sopra.length) || musica?.libreria ? { ...(video && sopra.length ? { sopra } : {}), ...(musica?.libreria ? { musica: { id: musica.id, nome: musica.name } } : {}) } : null;
       const { data: r, error } = await sb.from("ricordi").insert({ autore_id: state.io.id, tipo: "storia", visibilita: "cerchia", cerchia_id: $("[data-chi]").value, in_memoria: true, dettagli }).select("id").single();
       if (error) throw error;
       const path = `${state.io.id}/${r.id}/${tipoMedia}.${ext}`;
-      const up = await sb.storage.from("ricordi").upload(path, blob, { contentType: video ? file.type || undefined : "image/jpeg" });
+      const up = await sb.storage.from("ricordi").upload(path, blob, { contentType: video ? blob.type || file.type || undefined : "image/jpeg" });
       if (up.error) { await sb.from("ricordi").delete().eq("id", r.id); throw up.error; }
       await sb.from("ricordi_media").insert({ ricordo_id: r.id, path, tipo: tipoMedia, byte: blob.size, mime: video ? file.type || null : "image/jpeg", ordine: 0 });
       if (musica && !musica.libreria) {

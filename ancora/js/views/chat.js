@@ -122,7 +122,12 @@ async function conversazione(id) {
   document.getElementById("file").onchange = (e) => {
     const f = e.target.files?.[0]; if (!f) return;
     if (f.size > 50 * 1024 * 1024) { alert("Il file supera i 50 MB."); return; }
-    invia({ file: f, tipo: f.type.startsWith("video") ? "video" : "foto" }); e.target.value = "";
+    e.target.value = "";
+    (async () => {
+      let ff = f;
+      if (f.type.startsWith("video")) { const { videoPronto } = await import("../video.js"); ff = await videoPronto(f); if (!ff) return; }
+      invia({ file: ff, tipo: ff.type.startsWith("video") ? "video" : "foto" });
+    })();
   };
 
   // vocale: tieni premuto e parla, lascia per inviare

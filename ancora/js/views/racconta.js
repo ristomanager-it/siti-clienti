@@ -228,8 +228,10 @@ export default async function ({ params }) {
       await sb.from("ricordi_media").insert({ ricordo_id: r.id, path, tipo: "audio", durata_sec: secondi, byte: blob.size, mime: blob.type || null });
       // trascrizione lato server (funzione da aggiungere: trascrivi-ricordo)
     }
-    for (const [i, f] of files.entries()) {
+    const { videoPronto } = await import("../video.js");
+    for (let [i, f] of files.entries()) {
       const tipoF = f.type.startsWith("video") ? "video" : "foto";
+      if (tipoF === "video") { f = await videoPronto(f); if (!f) continue; }
       if (f.size > 50 * 1024 * 1024) { alert(`"${f.name}" supera i 50 MB e non è stato caricato.`); continue; }
       const path = `${base}/${tipoF}-${i}.${f.name.split(".").pop()}`;
       await sb.storage.from("ricordi").upload(path, f, { contentType: f.type });
