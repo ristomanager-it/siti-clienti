@@ -8,7 +8,10 @@ export default async function ({ params }) {
   // arrivo dal link di invito: entra nella cerchia/famiglia e ricarica i dati
   if (params?.invito) {
     await sb.rpc("accetta_invito", { p_codice: params.invito });
-    location.replace(String(params.torna ?? "").startsWith("#/") ? params.torna : "#/"); location.reload(); return;
+    // si apre direttamente il gruppo appena raggiunto
+    const { data: ultimo } = await sb.from("cerchia_membri").select("cerchia_id").eq("persona_id", state.io.id).eq("stato", "attivo").order("aggiunto_il", { ascending: false }).limit(1).maybeSingle();
+    if (ultimo?.cerchia_id) try { localStorage.setItem("ancora_cerchia", ultimo.cerchia_id); } catch { /* niente */ }
+    location.replace(String(params.torna ?? "").startsWith("#/") ? params.torna : ultimo?.cerchia_id ? `#/?c=${ultimo.cerchia_id}` : "#/"); location.reload(); return;
   }
   if (state.io.modalita === "semplice") return semplice();
 

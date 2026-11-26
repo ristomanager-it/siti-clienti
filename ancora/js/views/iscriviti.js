@@ -12,9 +12,9 @@ export default async function ({ params } = {}) {
   if ((await sb.auth.getSession()).data.session) { location.replace(dopo); if (invito) location.reload(); return; }
   const ant = invito ? await fetch(`${SUPABASE_URL}/functions/v1/invito?codice=${encodeURIComponent(invito)}`).then((r) => r.json()).catch(() => null) : null;
   $app().innerHTML = `${ant && !ant.errore ? anteprima(ant) : ""}
-    <div class="pad" style="padding-top:${ant && !ant.errore ? 18 : 48}px">${ant && !ant.errore ? "" : `<span class="logo" style="font-size:40px">Ancora</span><div class="tenue" style="font-weight:700;margin:-4px 0 18px">La prima app social privata della famiglia e dei gruppi</div>`}
-      <h1 style="font-size:28px;line-height:1.2">${params?.perche ? `${params?.da ? `👋 ${esc(params.da)} ti ha invitato. ` : ""}${esc(params.perche)}` : ant && !ant.errore ? "Ti hanno preparato un posto." : invito ? "Ti aspettano in famiglia." : ricetta ? "Un minuto e leggi la ricetta." : params?.da ? `👋 ${esc(params.da)} ti invita su Ancora.` : "Crea il tuo account gratis."}</h1>
-      <p style="font-size:16px;margin:0">${invito ? "Crea il tuo account e sei dentro." : "La tua famiglia, i tuoi gruppi, i tuoi ricordi. Gratis, senza carta di credito."}</p></div>
+    <div class="pad" style="padding-top:${ant && !ant.errore ? 4 : 48}px">${ant && !ant.errore ? "" : `<span class="logo" style="font-size:40px">Ancora</span><div class="tenue" style="font-weight:700;margin:-4px 0 18px">La prima app social privata della famiglia e dei gruppi</div>`}
+      <h1 style="font-size:28px;line-height:1.2">${params?.perche ? `${params?.da ? `👋 ${esc(params.da)} ti ha invitato. ` : ""}${esc(params.perche)}` : ant && !ant.errore ? "Crea il tuo account e sei dentro." : invito ? "Ti aspettano in famiglia." : ricetta ? "Un minuto e leggi la ricetta." : params?.da ? `👋 ${esc(params.da)} ti invita su Ancora.` : "Crea il tuo account gratis."}</h1>
+      <p style="font-size:16px;margin:0">${ant && !ant.errore ? "Gratis, un minuto. Poi entri subito nel gruppo." : invito ? "Crea il tuo account e sei dentro." : "La tua famiglia, i tuoi gruppi, i tuoi ricordi. Gratis, senza carta di credito."}</p></div>
     <form id="f" class="card">
       <div class="riga" style="gap:8px">
         <div style="flex:1"><label for="nome" style="margin-top:0">Nome</label><input id="nome" required maxlength="40" autocomplete="given-name"></div>
@@ -55,17 +55,12 @@ const FUNZIONI = `<div style="margin-top:8px;line-height:1.75">📸 Foto, video 
 const FUNZIONI_AMICI = `<div style="margin-top:8px;line-height:1.75">💬 La chat del gruppo e i messaggi a due<br>📸 Le foto e i video delle serate, solo tra voi<br>📅 Il calendario per organizzarsi<br>🎲 Briscola, tressette, biliardo, calciobalilla e tombola, anche da case diverse<br>🎙️ Ai tavoli ci si parla a voce</div>`;
 
 export function anteprima(a) {
-  return `<div style="position:relative;aspect-ratio:16/9;max-height:240px;width:100%;background:${a.copertina ? `url('${a.copertina}') center/cover` : "linear-gradient(135deg,#7FA37E,#4D7356)"}"></div>
-    <div class="pad" style="display:flex;gap:14px;align-items:flex-end;margin-top:-44px;position:relative">
-      <span style="width:84px;height:84px;border-radius:42px;border:4px solid var(--carta);flex-shrink:0;display:grid;place-items:center;font-family:Fraunces,serif;font-size:28px;font-weight:700;color:#fff;
-        background:${a.foto ? `url('${a.foto}') center/cover` : "var(--notte)"}">${a.foto ? "" : esc((a.cerchia ?? "A")[0])}</span>
-      <div style="padding-bottom:4px"><span class="tenue" style="font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.06em">${esc(a.da)} ti invita in</span>
+  // l'invito non è una pubblicità: chi ti invita, dove, e subito dentro
+  return `<div class="pad" style="display:flex;gap:14px;align-items:center;padding-top:28px">
+      <span style="width:64px;height:64px;border-radius:32px;flex-shrink:0;display:grid;place-items:center;font-family:Fraunces,serif;font-size:24px;font-weight:700;color:#fff;
+        background:${a.foto ? `url('${a.foto}') center/cover` : a.copertina ? `url('${a.copertina}') center/cover` : "var(--notte)"}">${a.foto || a.copertina ? "" : esc((a.cerchia ?? "A")[0])}</span>
+      <div><span class="tenue" style="font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.06em">${esc(a.da)} ti invita in</span>
         <b style="display:block;font-family:Fraunces,serif;font-size:24px;line-height:1.15">${esc(a.cerchia)}</b>
-        <span class="tenue" style="font-size:14px">${a.membri} ${a.membri === 1 ? "persona" : "persone"}${a.ricordi ? ` · ${a.ricordi} ricordi` : ""}</span></div>
-    </div>
-    <div class="pad" style="padding-top:0"><div class="card" style="margin:0;background:#FBF4E6;font-size:15px;line-height:1.5">
-      <b style="font-family:Fraunces,serif;font-size:18px">La prima app social privata della famiglia e dei gruppi</b><br>
-      Come un social, ma <b>solo per voi</b>: si entra solo su invito, niente pubblicità né estranei.
-${a.tipo === "famiglia" ? FUNZIONI : FUNZIONI_AMICI}
-      <b>Si comincia gratis.</b></div></div>`;
+        <span class="tenue" style="font-size:14px">${a.membri} ${a.membri === 1 ? "persona" : "persone"} già dentro</span></div>
+    </div>`;
 }
