@@ -83,7 +83,7 @@ const SEZIONI = [
   ["voce", "Parlarsi ai tavoli", `
     <p>In ogni gioco, in basso, c'è <b>🎙️ Parla</b>: chi lo preme entra nella voce del tavolo e si sente con gli altri, come in una chiamata. 🔇 per il muto, ✕ per uscire. La prima volta il telefono chiede il permesso del microfono. L'audio va diretto da telefono a telefono.</p>`],
   ["premi", "Invita e guadagna Ancora+", `
-    <p>Dal menu: <b>Invita e guadagna</b>. Ogni 3 persone che entrano col tuo link (o dai tuoi inviti ai giochi, alle ricette, alle cartoline): <b>1 mese di Ancora+</b>, fino a 12. Alla quinta famiglia nuova che porti: <b>1 anno</b>.</p>
+    <p>Dal menu: <b>Invita e guadagna</b>. Per chi entra col tuo link (o dai tuoi inviti ai giochi, alle ricette, alle cartoline) Ancora è gratis. Quando una famiglia che hai portato si abbona ad Ancora+, il <b>20% del suo primo pagamento</b> è tuo; alla quinta famiglia abbonata, <b>1 anno di Ancora+</b>.</p>
     <p>Quando una famiglia che hai portato passa ad Ancora+, il <b>20%</b> del suo primo pagamento è tuo: se paghi Ancora+ te lo rimborsiamo sulla carta, se no diventa giorni di Ancora+ gratis.</p>`],
   ["cartoline", "Le cartoline dei ricordi", `
     <p>Apri un ricordo della famiglia e tocca <b>💌 Fanne una cartolina</b>: ti prepara un'immagine da mandare su WhatsApp o mettere negli stati. Chi la riceve vede l'inizio; per leggerlo tutto e sentire la voce si iscrive. Il diario, le lettere chiuse e i ricordi privati non si condividono.</p>`],
