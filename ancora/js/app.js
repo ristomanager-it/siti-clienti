@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "168";
+const VER = "169";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 // --- giochi aperti a tutti (gli altri li vede solo il superadmin, che li prova e li apre uno per uno) ---
@@ -826,6 +826,14 @@ export const ANCORA_INFO_PER = {
   casa: "Spese da dividere, lista della spesa, turni e calendario, senza perderci nei messaggi. E le foto delle nostre serate restano qui, non sparse nei telefoni 📸",
   gruppo: "Le foto e i video di tutto quello che facciamo insieme restano in un posto solo, per sempre, invece di perdersi nelle chat 📸\n\nE per organizzarci c'è il calendario, la chat e gli avvisi, senza caos… più qualche sfida per stare insieme anche a distanza.",
 };
+// cosa ci si fa, in una riga (l'invito al gruppo è corto: il resto lo scoprono dentro)
+export const ANCORA_QUI_PER = {
+  famiglia: "tenere insieme foto, video e ricordi di famiglia, organizzarci e giocare insieme anche da lontano",
+  amici: "tenere le foto delle nostre serate, organizzarci senza mille messaggi e sfidarci a carte",
+  coppia: "tenere le nostre foto e i nostri ricordi, solo per noi due",
+  casa: "dividere le spese, fare la lista della spesa e organizzarci",
+  gruppo: "tenere foto e video di quello che facciamo insieme e organizzarci senza caos",
+};
 // lo stesso invito detto a più persone
 const plurale = (t) => t.replace("per la tua famiglia", "per la vostra famiglia");
 // la spinta a portare dentro anche la propria famiglia (a chi è già in famiglia non serve: lo diciamo dopo, nell'app)
@@ -907,8 +915,9 @@ export async function invitaInCerchia(cerchiaId) {
   const manda = async (codice, persone) => {
     const link = `${location.origin}${location.pathname}#/iscriviti?invito=${codice}`;
     const voi = persone > 1;
-    const tipo = ANCORA_INFO_PER[c?.tipo] ? c.tipo : "gruppo";
-    const testo = `${saluto()}\nHo creato ${ANCORA_PAGINA_PER[tipo]} su *Ancora*, il social privato nato in Italia per famiglie e gruppi: ci siamo solo noi, niente estranei e niente pubblicità.\n\n${ANCORA_INFO_PER[tipo]}\n\n${voi ? "Vi ho" : "Ti ho"} già preparato il posto in "${c?.nome ?? "Ancora"}": ${voi ? "entrate gratis in un minuto, ognuno col suo telefono" : "entri gratis in un minuto"} 👇\n${link}\n\n📌 Quando ${voi ? "la aprite, salvatela" : "la apri, salvala"} sulla schermata Home del telefono: così ${voi ? "vi arrivano" : "ti arrivano"} gli inviti e i messaggi.${ANCORA_ANCHE_TUA[tipo] ? `\n\n${voi ? plurale(ANCORA_ANCHE_TUA[tipo]) : ANCORA_ANCHE_TUA[tipo]}` : ""}`;
+    const tipo = ANCORA_QUI_PER[c?.tipo] ? c.tipo : "gruppo";
+    // corto: chi lo riceve scopre il resto entrando
+    const testo = `${saluto()}\nHo creato ${tipo === "famiglia" ? "la pagina della nostra famiglia" : `il gruppo "${c?.nome ?? "Ancora"}"`} su *Ancora*: qui possiamo ${ANCORA_QUI_PER[tipo]}.\n\n${voi ? "Entrate da qui, è gratis" : "Entra da qui, è gratis"} 👇\n${link}\n\n📌 ${voi ? "Salvatela" : "Salvala"} sulla schermata Home, così ${voi ? "vi arrivano" : "ti arrivano"} i messaggi.`;
     try { if (navigator.share) { await navigator.share({ title: c?.nome ?? "Ancora", text: testo }); return; } } catch { return; }
     window.open(`https://wa.me/?text=${encodeURIComponent(testo)}`, "_blank");
   };
