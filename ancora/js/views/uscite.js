@@ -9,8 +9,9 @@ const centesimi = (v) => { const n = Number(String(v ?? "").replace(/[^\d,.-]/g,
 const pulisciIban = (s) => String(s ?? "").replace(/\s+/g, "").toUpperCase();
 const ultimoPagamento = () => { try { return JSON.parse(localStorage.getItem("ancora_mio_pagamento") ?? "{}"); } catch { return {}; } };
 
+let filmSubito = false;
 export default async function ({ params }) {
-  if (params?.id) return pagina(params.id);
+  if (params?.id) { filmSubito = !!params.film; return pagina(params.id); }
   const gruppo = state.cerchie.find((c) => c.id === params?.c) ?? state.cerchie[0];
   if (!gruppo) { $app().innerHTML = `<p class="pad">Prima entra in un gruppo.</p>`; return; }
   if (params?.nuova || params?.modifica) return modulo(gruppo, params.modifica);
@@ -211,6 +212,7 @@ async function fotoSerata(u) {
   const apri = (da = 0) => film(u, lista, url, da);
   document.getElementById("film")?.addEventListener("click", () => apri(0));
   box.querySelectorAll("[data-film]").forEach((d) => d.onclick = () => apri(Number(d.dataset.film)));
+  if (filmSubito && lista.length) { filmSubito = false; apri(0); }
 }
 
 // il film: le foto a tutto schermo che si muovono piano e sfumano una nell'altra, i video brevi in mezzo
@@ -252,10 +254,24 @@ function film(u, lista, url, da = 0) {
 }
 
 /** Per la home del gruppo: le prossime uscite, con "ci sei?" a un tocco. */
+// "Un anno fa": intorno all'anniversario torna l'uscita, con la prima foto, e si apre il film
+async function annoFa(cerchia) {
+  const { data } = await sb.rpc("anno_fa", { p_cerchia: cerchia });
+  if (!data?.length) return "";
+  const url = await urlMediaMolti(data.map((u) => u.copertina).filter(Boolean));
+  return data.map((u) => `<a href="#/uscita?id=${u.id}&film=1" class="card" style="display:block;margin:0 16px 10px;padding:0;overflow:hidden;text-decoration:none;color:#fff;position:relative;min-height:150px;background:#2b2b2b">
+    ${url[u.copertina] ? `<img src="${url[u.copertina]}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">` : ""}
+    <span style="position:absolute;inset:0;background:linear-gradient(transparent 30%,rgba(0,0,0,.7))"></span>
+    <span style="position:absolute;left:14px;right:14px;bottom:12px"><small style="opacity:.9">📸 ${u.anni > 1 ? `${u.anni} anni fa` : "Un anno fa"}</small>
+      <b style="display:block;font:700 21px Fraunces,serif">${esc(u.titolo)}</b>
+      <span style="font-size:14px;opacity:.9">${u.foto} foto · 🎬 guarda il film</span></span></a>`).join("");
+}
+
 export async function prossimeUscite(cerchia) {
+  let ricordo = ""; try { ricordo = await annoFa(cerchia); } catch { /* niente */ }
   const { data } = await sb.from("uscite").select("id, titolo, quando, dove, uscite_adesioni(persona_id, risposta)")
     .eq("cerchia_id", cerchia).eq("annullata", false).gte("quando", new Date(Date.now() - 6 * 3600e3).toISOString()).order("quando").limit(3);
-  return (data ?? []).map((u) => {
+  return ricordo + (data ?? []).map((u) => {
     const si = u.uscite_adesioni.filter((a) => a.risposta === "si").length, mia = u.uscite_adesioni.find((a) => a.persona_id === state.io.id)?.risposta;
     return `<a href="#/uscita?id=${u.id}" class="card" style="display:flex;gap:12px;align-items:center;margin:0 16px 10px;text-decoration:none;color:inherit;border:2px solid ${mia ? "transparent" : "#E8B56B"}">
       <span style="font-size:30px">🎉</span><span style="flex:1;min-width:0"><b style="display:block">${esc(u.titolo)}</b>
