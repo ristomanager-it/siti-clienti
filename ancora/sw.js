@@ -1,5 +1,5 @@
 // Service worker: cache dell'app e notifiche push (gratuite, a differenza di WhatsApp)
-const CACHE = "ancora-v178";
+const CACHE = "ancora-v179";
 const FILE = ["./", "index.html", "css/app.css", "js/app.js", "manifest.webmanifest"];
 
 self.addEventListener("install", (e) => { self.skipWaiting(); e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILE))); });
@@ -15,7 +15,9 @@ self.addEventListener("fetch", (e) => {
 self.addEventListener("push", (e) => {
   const d = e.data ? e.data.json() : {};
   e.waitUntil((async () => {
-    await self.registration.showNotification(d.titolo ?? "Ancora", { body: d.testo ?? "", icon: "icons/icon-192.png", badge: "icons/favicon-32.png", data: { url: d.url ?? "./#/" } });
+    await self.registration.showNotification(d.titolo ?? "Ancora", { body: d.testo ?? "", icon: "icons/icon-192.png", badge: "icons/favicon-32.png", data: { url: d.url ?? "./#/" },
+      // i giochi, se scelto "poche": senza suono e al posto della precedente (non si accumulano)
+      ...(d.silenziosa ? { silent: true } : {}), ...(d.tag ? { tag: d.tag, renotify: false } : {}) });
     // numerino rosso sull'icona dell'app: quante notifiche non ancora aperte
     const n = (await self.registration.getNotifications()).length;
     try { await self.navigator.setAppBadge?.(n || 1); } catch { /* non supportato */ }

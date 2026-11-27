@@ -1,5 +1,5 @@
 // Profilo di una persona: numeri, "Chiedi", il suo libro che cresce, l'album a griglia.
-import { sb, state, $app, esc, nomeDi, avatar, urlMediaMolti, ICONE, attivaNotifiche, notificheAttive, cambiaImmagine, chiediSuMisura, passaPiu } from "../app.js";
+import { sb, state, $app, esc, nomeDi, avatar, urlMediaMolti, ICONE, attivaNotifiche, notificheAttive, cambiaImmagine, chiediSuMisura, passaPiu, sceltaNotificheGiochi, NOTIFICHE_GIOCHI } from "../app.js";
 import { SUPABASE_URL } from "../config.js";
 
 const STORIE_PER_VOLUME = 25;
@@ -88,6 +88,7 @@ export default async function ({ id, params }) {
         <label class="riga" style="font-weight:800;color:var(--testo);margin:0"><input type="checkbox" id="c-misura" ${state.io.domande_su_misura ? "checked" : ""} style="width:22px;height:22px"> Domande su misura</label>
         <p class="tenue" style="margin:6px 0 0;font-size:14px">Le prossime domande partono da quello che racconti, per far venire fuori come la pensi e come decidi. I tuoi testi li legge solo un programma, in automatico, per scrivere la domanda: nessuna persona li vede. Puoi toglierle quando vuoi.</p></div>
       <div class="riga" style="margin-bottom:12px"><b style="flex:1">Notifiche</b><button class="chip" id="notif" style="margin:0">…</button></div>
+      <div class="riga" style="margin-bottom:12px"><b style="flex:1">Notifiche dei giochi</b><button class="chip" id="notif-giochi" style="margin:0">${NOTIFICHE_GIOCHI[state.io.notifiche_giochi ?? "poche"].split(" (")[0]}</button></div>
       ${[["vacanze", "Vacanze"], ["compiti", "Compiti"], ["esami", "Esami"]].map(([k, t]) =>
         `<label class="riga" style="margin:10px 0;font-weight:700;color:var(--testo)"><input type="checkbox" data-mio-modulo="${k}" ${spenti.has(k) ? "" : "checked"} style="width:22px;height:22px"> ${t}</label>`).join("")}
     </div>`);
@@ -122,6 +123,7 @@ export default async function ({ id, params }) {
     const aggiornaN = async () => { const on = await notificheAttive(); bN.textContent = on ? "✓ Attive" : "Attiva"; bN.classList.toggle("on", on); };
     aggiornaN();
     bN.onclick = async () => { if (!(await notificheAttive())) { await attivaNotifiche(); aggiornaN(); } };
+    document.getElementById("notif-giochi").onclick = () => sceltaNotificheGiochi((k) => { document.getElementById("notif-giochi").textContent = NOTIFICHE_GIOCHI[k].split(" (")[0]; });
     document.querySelectorAll("[data-mio-modulo]").forEach((c) => c.onchange = async () => {
       const s = new Set(state.io.moduli_spenti ?? []);
       c.checked ? s.delete(c.dataset.mioModulo) : s.add(c.dataset.mioModulo);

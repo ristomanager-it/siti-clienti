@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "178";
+const VER = "179";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 // --- giochi aperti a tutti (gli altri li vede solo il superadmin, che li prova e li apre uno per uno) ---
@@ -334,6 +334,21 @@ function invitoSchermataHome(forza = false) {
 }
 
 // --- Alla prima iscrizione: cosa c'è su Ancora, e i due passi che contano (schermata Home e notifiche) ---
+// quante notifiche dei giochi: si sceglie dal Profilo o dalla pagina Giochi
+export const NOTIFICHE_GIOCHI = { tutte: "🔔 Tutte", poche: "🔉 Poche (senza suono, una ogni 3 ore)", solo_mie: "👤 Solo quando tocca a me", nessuna: "🔕 Nessuna" };
+export function sceltaNotificheGiochi(dopo = () => {}) {
+  const ora = state.io?.notifiche_giochi ?? "poche";
+  popup({
+    titolo: "Notifiche dei giochi",
+    testo: "Quando qualcuno apre un tavolo o finisce una partita nel gruppo. «Solo quando tocca a me» lascia passare solo i tornei in cui giochi tu.",
+    azioni: [...Object.entries(NOTIFICHE_GIOCHI).map(([k, t]) => ({ t: (k === ora ? "✓ " : "") + t, fn: async () => {
+      const { error } = await sb.from("persone").update({ notifiche_giochi: k }).eq("id", state.io.id);
+      if (error) return alert("Non salvato: " + error.message);
+      state.io.notifiche_giochi = k; dopo(k);
+    } })), { t: "Chiudi" }],
+  });
+}
+
 // chi è in Ancora per un gruppo (amici, casa…) ma non ha ancora la pagina della sua famiglia: glielo proponiamo,
 // dal giorno dopo l'iscrizione, al massimo 3 volte e a 4 giorni di distanza
 export function spintaFamiglia(volta = 0) {

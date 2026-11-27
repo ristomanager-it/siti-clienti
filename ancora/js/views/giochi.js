@@ -1,5 +1,5 @@
 // La sala giochi di famiglia: tombola, carte, biliardo, calciobalilla, il gioco della famiglia.
-import { state, $app, esc, ICONE, sb, giochiPermessi } from "../app.js";
+import { state, $app, esc, ICONE, sb, giochiPermessi, sceltaNotificheGiochi, NOTIFICHE_GIOCHI } from "../app.js";
 
 const GIOCHI = [
   { icona: "🎄", nome: "Tombola", testo: "Uno fa il banco e scrive i premi, tutti con le cartelle sul telefono. Si segnano da sole, e l'app tiene la cassa.", link: "#/tombola", chiave: "tombola", pronto: true },
@@ -22,7 +22,7 @@ export default async function ({ params } = {}) {
   const giochi = GIOCHI.filter((g) => !g.chiave || vede(g.chiave)).filter((g) => g.pronto || gp.admin || GIOCHI.some((x) => x.chiave && vede(x.chiave)));
   const fam = (params?.c && state.cerchie.find((c) => c.id === params.c)) ?? state.cerchie.find((c) => c.tipo === "famiglia") ?? state.cerchie[0];
   $app().innerHTML = `
-    <header class="testa"><a class="icona" href="#/" aria-label="Indietro">${ICONE.indietro}</a><b>🎲 Giochi</b><span style="width:44px"></span></header>
+    <header class="testa"><a class="icona" href="#/" aria-label="Indietro">${ICONE.indietro}</a><b>🎲 Giochi</b><button class="icona" id="notif-giochi" aria-label="Notifiche dei giochi" style="font-size:22px">${(state.io.notifiche_giochi ?? "poche") === "nessuna" ? "🔕" : (state.io.notifiche_giochi ?? "poche") === "tutte" ? "🔔" : "🔉"}</button></header>
     <div class="pad" style="padding-bottom:120px">
       <p class="tenue" style="margin-top:0">Si gioca tra voi, anche da case diverse. Con chi giochi?</p>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin:0 0 16px">${state.cerchie.map((c) => `<a href="#/giochi?c=${c.id}" class="chip ${c.id === fam?.id ? "on" : ""}" style="margin:0;text-decoration:none">${esc(c.nome)}</a>`).join("")}</div>
@@ -35,6 +35,7 @@ export default async function ({ params } = {}) {
         <span style="flex:1"><b style="display:block;font-size:18px">${g.nome}${g.piu ? ` <small style="font-size:12px;background:#E8B56B;color:#fff;border-radius:8px;padding:1px 6px;vertical-align:middle">Ancora+</small>` : ` <small style="font-size:12px;background:#E1F5EE;color:#085041;border-radius:8px;padding:1px 6px;vertical-align:middle">gratis</small>`}</b><span class="tenue">${g.testo}</span></span>
         ${g.pronto ? `<span style="font-size:22px" aria-hidden="true">›</span>` : `<small class="chip" style="margin:0">presto</small>`}</${g.pronto ? "a" : "div"}>${g.chiave ? interruttore(g.chiave) : ""}${g.chiave && gp.admin ? `<div style="height:10px"></div>` : ""}`).join("")}
     </div>`;
+  document.getElementById("notif-giochi").onclick = () => sceltaNotificheGiochi((k) => { document.getElementById("notif-giochi").textContent = k === "nessuna" ? "🔕" : k === "tutte" ? "🔔" : "🔉"; });
   document.querySelectorAll("[data-apri]").forEach((b) => b.onclick = async () => {
     const k = b.dataset.apri, aperto = !gp.aperti.has(k);
     if (aperto && !confirm("Rendere questo gioco visibile a tutti?")) return;
