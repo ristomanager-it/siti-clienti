@@ -70,6 +70,7 @@ async function modulo(gruppo, idModifica) {
         <input id="intestatario" placeholder="Intestato a" value="${esc(pag.intestatario ?? "")}" style="margin-top:8px">
         <input id="paypal" placeholder="Nome PayPal.me (facoltativo)" value="${esc(pag.paypal ?? "")}" style="margin-top:8px">
         <input id="revolut" placeholder="Nome Revolut.me (facoltativo)" value="${esc(pag.revolut ?? "")}" style="margin-top:8px">
+        <input id="satispay" inputmode="tel" placeholder="Numero Satispay (facoltativo)" value="${esc(pag.satispay ?? "")}" style="margin-top:8px">
         <p class="tenue" style="font-size:13px;margin:6px 0 0">I soldi vanno direttamente a te: Ancora non li tocca. Questi dati li vede solo il gruppo.</p></div>
       <button class="btn ambra" style="margin-top:16px">${u ? "Salva" : "Crea e avvisa il gruppo"}</button>
       <div style="height:100px"></div></form>`;
@@ -82,8 +83,9 @@ async function modulo(gruppo, idModifica) {
     const tipo = document.querySelector("[name=tipo]:checked").value, imp = centesimi(document.getElementById("importo").value);
     const pagamento = { iban: pulisciIban(document.getElementById("iban").value) || undefined, intestatario: document.getElementById("intestatario").value.trim() || undefined,
       paypal: document.getElementById("paypal").value.trim().replace(/^.*paypal\.me\//i, "").replace(/\/.*$/, "") || undefined,
-      revolut: document.getElementById("revolut").value.trim().replace(/^.*revolut\.me\//i, "").replace(/[/?].*$/, "").replace(/^@/, "") || undefined };
-    if (tipo !== "nessuno" && !pagamento.iban && !pagamento.paypal && !pagamento.revolut) return alert("Scrivi almeno un modo per pagarti: IBAN, PayPal o Revolut.");
+      revolut: document.getElementById("revolut").value.trim().replace(/^.*revolut\.me\//i, "").replace(/[/?].*$/, "").replace(/^@/, "") || undefined,
+      satispay: document.getElementById("satispay").value.replace(/[^\d+]/g, "") || undefined };
+    if (tipo !== "nessuno" && !pagamento.iban && !pagamento.paypal && !pagamento.revolut && !pagamento.satispay) return alert("Scrivi almeno un modo per pagarti: IBAN, PayPal, Revolut o Satispay.");
     try { localStorage.setItem("ancora_mio_pagamento", JSON.stringify(pagamento)); } catch { /* niente */ }
     const q = document.getElementById("quando").value;
     const { data: id, error } = await sb.rpc("uscita_salva", { p_id: u?.id ?? null, p_cerchia: gruppo.id, p_titolo: document.getElementById("titolo").value,
@@ -134,6 +136,7 @@ async function pagina(id) {
           ${p.iban ? `<button class="btn chiaro" data-copia="${esc(p.iban)}" style="margin:0">🏦 Copia IBAN ${esc(p.iban.slice(0, 4))}…${esc(p.iban.slice(-4))}${p.intestatario ? ` · ${esc(p.intestatario)}` : ""}</button>` : ""}
           ${linkPaypal ? `<a class="btn chiaro" href="${linkPaypal}" target="_blank" rel="noopener" style="margin:0">Paga con PayPal · ${euro(quota)}</a>` : ""}
           ${linkRevolut ? `<a class="btn chiaro" href="${linkRevolut}" target="_blank" rel="noopener" style="margin:0">Paga con Revolut · ${euro(quota)}</a>` : ""}
+          ${p.satispay ? `<button class="btn chiaro" data-satispay="${esc(p.satispay)}" style="margin:0">Paga con Satispay · ${euro(quota)} al ${esc(p.satispay)}</button>` : ""}
           <button class="btn ${mia.pagato_il ? "chiaro" : "ambra"}" id="ho-pagato" style="margin:0">${mia.pagato_il ? "Non ho ancora pagato" : "✓ Ho pagato"}</button></div>` : ""}</div>` : ""}
 
       ${soldi ? `<p class="tenue" style="margin:12px 0 0">💶 ${u.quota_cent ? `${euro(u.quota_cent)} a testa` : `Conto ${euro(u.totale_cent)} diviso tra ${gruppi.si.length}: ${euro(quota)} a testa`}</p>` : ""}
@@ -160,11 +163,17 @@ async function pagina(id) {
   document.querySelectorAll("[data-copia]").forEach((b) => b.onclick = async () => {
     try { await navigator.clipboard.writeText(b.dataset.copia); b.textContent = "✓ IBAN copiato: incollalo nella tua banca"; } catch { prompt("Copia l'IBAN:", b.dataset.copia); }
   });
+  // Satispay: si paga ai contatti col numero di telefono. Copio il numero e apro l'app.
+  document.querySelectorAll("[data-satispay]").forEach((b) => b.onclick = async () => {
+    try { await navigator.clipboard.writeText(b.dataset.satispay); } catch { /* niente */ }
+    b.textContent = `✓ Numero copiato: in Satispay scegli "Invia" e incollalo`;
+    location.href = "satispay://";
+  });
   document.getElementById("annulla")?.addEventListener("click", async () => { if (confirm("Annullare l'uscita?")) { await sb.rpc("uscita_annulla", { p_uscita: id }); ricarica(); } });
   document.getElementById("conto")?.addEventListener("click", async () => {
     const v = centesimi(prompt("Quanto è venuto il conto in tutto? (es. 240)"));
     if (!v) return;
-    if (!p.iban && !p.paypal && !p.revolut) { alert("Prima aggiungi come pagarti (IBAN, PayPal o Revolut): tocca ✏️ in alto."); return; }
+    if (!p.iban && !p.paypal && !p.revolut && !p.satispay) { alert("Prima aggiungi come pagarti (IBAN, PayPal, Revolut o Satispay): tocca ✏️ in alto."); return; }
     const { error } = await sb.rpc("uscita_salva", { p_id: id, p_cerchia: u.cerchia_id, p_titolo: u.titolo, p_quando: u.quando, p_dove: u.dove ?? "", p_note: u.note ?? "",
       p_quota_cent: null, p_totale_cent: v, p_pagamento: p, p_nascosta_a: u.nascosta_a ?? [] });
     if (error) alert(error.message); ricarica();
