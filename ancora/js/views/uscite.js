@@ -14,8 +14,8 @@ export default async function ({ params }) {
   if (params?.id) { filmSubito = !!params.film; return pagina(params.id); }
   const gruppo = state.cerchie.find((c) => c.id === params?.c) ?? state.cerchie[0];
   if (!gruppo) { $app().innerHTML = `<p class="pad">Prima entra in un gruppo.</p>`; return; }
-  if (params?.nuova || params?.modifica) return modulo(gruppo, params.modifica);
-  const { data: lista } = await sb.from("uscite").select("id, titolo, quando, dove, annullata, creato_da, uscite_adesioni(persona_id, risposta)")
+  if (params?.nuova || params?.modifica) return modulo(gruppo, params.modifica, !!params.regalo);
+  const { data: lista } = await sb.from("uscite").select("id, tipo, titolo, quando, dove, annullata, creato_da, uscite_adesioni(persona_id, risposta)")
     .eq("cerchia_id", gruppo.id).order("quando", { ascending: false, nullsFirst: true }).limit(60);
   const ora = Date.now();
   const prossime = (lista ?? []).filter((u) => !u.annullata && (!u.quando || new Date(u.quando).getTime() > ora - 6 * 3600e3)).reverse();
@@ -23,21 +23,23 @@ export default async function ({ params }) {
   const riga = (u) => {
     const si = u.uscite_adesioni.filter((a) => a.risposta === "si").length, mia = u.uscite_adesioni.find((a) => a.persona_id === state.io.id)?.risposta;
     return `<a href="#/uscita?id=${u.id}" class="card" style="display:block;margin:0 0 10px;text-decoration:none;color:inherit;${u.annullata ? "opacity:.5" : ""}">
-      <div class="riga"><b style="flex:1;font-size:18px">${esc(u.titolo)}</b>${u.annullata ? `<span class="chip" style="margin:0">annullata</span>` : mia ? `<span class="chip ${mia === "si" ? "on" : ""}" style="margin:0">${mia === "si" ? "ci sei" : mia === "no" ? "non ci sei" : "forse"}</span>` : `<span class="chip" style="margin:0;background:#FFE9C7">rispondi</span>`}</div>
-      <div class="tenue" style="margin-top:4px">📅 ${esc(quandoTesto(u.quando))}${u.dove ? ` · 📍 ${esc(u.dove)}` : ""} · 👥 ${si}</div></a>`;
+      <div class="riga"><b style="flex:1;font-size:18px">${u.tipo === "regalo" ? "🎁 " : ""}${esc(u.titolo)}</b>${u.annullata ? `<span class="chip" style="margin:0">annullata</span>` : mia ? `<span class="chip ${mia === "si" ? "on" : ""}" style="margin:0">${mia === "si" ? (u.tipo === "regalo" ? "partecipi" : "ci sei") : mia === "no" ? (u.tipo === "regalo" ? "non partecipi" : "non ci sei") : "forse"}</span>` : `<span class="chip" style="margin:0;background:#FFE9C7">rispondi</span>`}</div>
+      <div class="tenue" style="margin-top:4px">📅 ${esc(u.tipo === "regalo" && !u.quando ? "Senza scadenza" : quandoTesto(u.quando))}${u.dove ? ` · 📍 ${esc(u.dove)}` : ""} · 👥 ${si}</div></a>`;
   };
   $app().innerHTML = `
     <header class="testa"><a class="icona" href="#/?c=${gruppo.id}" aria-label="Indietro">${ICONE.indietro}</a><b>🎉 Uscite · ${esc(gruppo.nome)}</b><span style="width:44px"></span></header>
     <div class="pad" style="padding-top:0">
-      <a class="btn ambra" href="#/uscite?c=${gruppo.id}&nuova=1" style="margin:0 0 16px">+ Organizza un'uscita</a>
-      ${prossime.length ? `<h2 style="padding-left:0">In programma</h2>${prossime.map(riga).join("")}` : `<p class="tenue">Niente in programma. Una cena, una serata, un viaggio: crea l'uscita, il gruppo risponde chi c'è e alla fine dividete il conto.</p>`}
+      <div class="riga" style="gap:8px;margin:0 0 16px"><a class="btn ambra" href="#/uscite?c=${gruppo.id}&nuova=1" style="margin:0;flex:1">+ Un'uscita</a>
+        <a class="btn" href="#/uscite?c=${gruppo.id}&nuova=1&regalo=1" style="margin:0;flex:1">🎁 Un regalo</a></div>
+      ${prossime.length ? `<h2 style="padding-left:0">In programma</h2>${prossime.map(riga).join("")}` : `<p class="tenue">Niente in programma. Una cena, una serata, un viaggio: crea l'uscita, il gruppo risponde chi c'è e alla fine dividete il conto. Oppure un regalo di gruppo: le idee si votano, il festeggiato non vede niente, e ognuno mette la sua parte.</p>`}
       ${passate.length ? `<h2 style="padding-left:0">Già fatte</h2>${passate.map(riga).join("")}` : ""}
       <div style="height:100px"></div></div>`;
 }
 
-async function modulo(gruppo, idModifica) {
+async function modulo(gruppo, idModifica, regaloNuovo = false) {
   let u = null;
   if (idModifica) ({ data: u } = await sb.from("uscite").select("*").eq("id", idModifica).maybeSingle());
+  const regalo = u ? u.tipo === "regalo" : regaloNuovo;
   const pag = u?.pagamento ?? ultimoPagamento();
   // chi c'è nel gruppo (per le sorprese: a chi nasconderla)
   const [{ data: mem }, { data: cer }] = await Promise.all([
@@ -48,24 +50,28 @@ async function modulo(gruppo, idModifica) {
   const nascosti = new Set(u?.nascosta_a ?? []);
   const locale = (d) => { if (!d) return ""; const x = new Date(d); x.setMinutes(x.getMinutes() - x.getTimezoneOffset()); return x.toISOString().slice(0, 16); };
   $app().innerHTML = `
-    <header class="testa"><a class="icona" href="${u ? `#/uscita?id=${u.id}` : `#/uscite?c=${gruppo.id}`}" aria-label="Indietro">${ICONE.indietro}</a><b>${u ? "Modifica l'uscita" : "Nuova uscita"}</b><span style="width:44px"></span></header>
+    <header class="testa"><a class="icona" href="${u ? `#/uscita?id=${u.id}` : `#/uscite?c=${gruppo.id}`}" aria-label="Indietro">${ICONE.indietro}</a><b>${regalo ? (u ? "Modifica il regalo" : "🎁 Regalo di gruppo") : u ? "Modifica l'uscita" : "Nuova uscita"}</b><span style="width:44px"></span></header>
     <form id="f" class="pad" style="padding-top:0">
-      <label>Cosa si fa</label><input id="titolo" required maxlength="80" placeholder="Cena da Corrado, Calcetto, Weekend a Napoli…" value="${esc(u?.titolo ?? "")}">
-      <label>Quando</label><input id="quando" type="datetime-local" value="${locale(u?.quando)}">
-      <label>Dove</label><input id="dove" maxlength="120" placeholder="Il posto o l'indirizzo" value="${esc(u?.dove ?? "")}">
-      <label>Note</label><textarea id="note" rows="2" placeholder="Cosa portare, a che ora ci si vede…">${esc(u?.note ?? "")}</textarea>
-      ${membri.size ? `<div class="card" style="margin:16px 0 0">
+      ${regalo && membri.size ? `<div class="card" style="margin:0 0 4px">
+        <b>🎁 Per chi è?</b>
+        <p class="tenue" style="margin:4px 0 8px;font-size:14px">Tocca il festeggiato: per lui questo regalo non esiste, niente notifiche, niente di niente. Se non è nel gruppo, scrivilo solo nel titolo.</p>
+        <div>${[...membri].map(([id, p]) => `<button type="button" class="chip ${nascosti.has(id) ? "on" : ""}" data-nascondi="${id}">${nascosti.has(id) ? "🤫 " : ""}${esc(nomeDi(p ?? {}))}</button>`).join("")}</div></div>` : ""}
+      <label>${regalo ? "Il regalo" : "Cosa si fa"}</label><input id="titolo" required maxlength="80" placeholder="${regalo ? "Regalo per i 50 anni di…, Per la maestra, Nozze di…" : "Cena da Corrado, Calcetto, Weekend a Napoli…"}" value="${esc(u?.titolo ?? "")}">
+      <label>${regalo ? "Entro quando (la festa)" : "Quando"}</label><input id="quando" type="datetime-local" value="${locale(u?.quando)}">
+      ${regalo ? "" : `<label>Dove</label><input id="dove" maxlength="120" placeholder="Il posto o l'indirizzo" value="${esc(u?.dove ?? "")}">`}
+      <label>Note</label><textarea id="note" rows="2" placeholder="${regalo ? "Cosa gli piace, la taglia, cosa ha già…" : "Cosa portare, a che ora ci si vede…"}">${esc(u?.note ?? "")}</textarea>
+      ${membri.size && !regalo ? `<div class="card" style="margin:16px 0 0">
         <b>🤫 È una sorpresa?</b>
         <p class="tenue" style="margin:4px 0 8px;font-size:14px">Tocca chi non deve saperlo (es. il festeggiato): per lui quest'uscita non esiste, niente notifiche, niente di niente.</p>
         <div>${[...membri].map(([id, p]) => `<button type="button" class="chip ${nascosti.has(id) ? "on" : ""}" data-nascondi="${id}">${nascosti.has(id) ? "🤫 " : ""}${esc(nomeDi(p ?? {}))}</button>`).join("")}</div></div>` : ""}
       <div class="card" style="margin:16px 0 0">
         <b>💶 I soldi (se servono)</b>
         <div class="riga" style="gap:8px;margin:10px 0 0">
-          <label class="riga" style="margin:0;gap:6px;font-weight:700"><input type="radio" name="tipo" value="nessuno" ${!u?.quota_cent && !u?.totale_cent ? "checked" : ""}> Niente</label>
+          <label class="riga" style="margin:0;gap:6px;font-weight:700"><input type="radio" name="tipo" value="nessuno" ${!u?.quota_cent && !u?.totale_cent && !regalo ? "checked" : ""}> ${regalo ? "Dopo" : "Niente"}</label>
           <label class="riga" style="margin:0;gap:6px;font-weight:700"><input type="radio" name="tipo" value="quota" ${u?.quota_cent ? "checked" : ""}> A testa</label>
-          <label class="riga" style="margin:0;gap:6px;font-weight:700"><input type="radio" name="tipo" value="totale" ${u?.totale_cent ? "checked" : ""}> Conto da dividere</label></div>
+          <label class="riga" style="margin:0;gap:6px;font-weight:700"><input type="radio" name="tipo" value="totale" ${u?.totale_cent || (regalo && !u) ? "checked" : ""}> ${regalo ? "Prezzo da dividere" : "Conto da dividere"}</label></div>
         <input id="importo" inputmode="decimal" placeholder="Importo in €" value="${u?.quota_cent ? (u.quota_cent / 100).toString().replace(".", ",") : u?.totale_cent ? (u.totale_cent / 100).toString().replace(".", ",") : ""}" style="margin-top:10px">
-        <p class="tenue" style="font-size:13px;margin:6px 0 0">"Conto da dividere": lo scrivi anche dopo, e si divide tra chi ha detto che c'è.</p>
+        <p class="tenue" style="font-size:13px;margin:6px 0 0">${regalo ? "Il prezzo si divide tra chi partecipa. Se non lo sai ancora, lascialo vuoto: quando scegli l'idea votata, il suo prezzo diventa il totale." : `"Conto da dividere": lo scrivi anche dopo, e si divide tra chi ha detto che c'è.`}</p>
         <label style="margin-top:12px">Dove ti pagano</label>
         <input id="iban" placeholder="IBAN" value="${esc(pag.iban ?? "")}" autocomplete="off">
         <input id="intestatario" placeholder="Intestato a" value="${esc(pag.intestatario ?? "")}" style="margin-top:8px">
@@ -73,7 +79,7 @@ async function modulo(gruppo, idModifica) {
         <input id="revolut" placeholder="Nome Revolut.me (facoltativo)" value="${esc(pag.revolut ?? "")}" style="margin-top:8px">
         <input id="satispay" inputmode="tel" placeholder="Numero Satispay (facoltativo)" value="${esc(pag.satispay ?? "")}" style="margin-top:8px">
         <p class="tenue" style="font-size:13px;margin:6px 0 0">I soldi vanno direttamente a te: Ancora non li tocca. Questi dati li vede solo il gruppo.</p></div>
-      <button class="btn ambra" style="margin-top:16px">${u ? "Salva" : "Crea e avvisa il gruppo"}</button>
+      <button class="btn ambra" style="margin-top:16px">${u ? "Salva" : regalo ? "Crea e avvisa il gruppo (lui no)" : "Crea e avvisa il gruppo"}</button>
       <div style="height:100px"></div></form>`;
   document.querySelectorAll("[data-nascondi]").forEach((b) => b.onclick = () => {
     const id = b.dataset.nascondi; nascosti.has(id) ? nascosti.delete(id) : nascosti.add(id);
@@ -86,11 +92,18 @@ async function modulo(gruppo, idModifica) {
       paypal: document.getElementById("paypal").value.trim().replace(/^.*paypal\.me\//i, "").replace(/\/.*$/, "") || undefined,
       revolut: document.getElementById("revolut").value.trim().replace(/^.*revolut\.me\//i, "").replace(/[/?].*$/, "").replace(/^@/, "") || undefined,
       satispay: document.getElementById("satispay").value.replace(/[^\d+]/g, "") || undefined };
-    if (tipo !== "nessuno" && !pagamento.iban && !pagamento.paypal && !pagamento.revolut && !pagamento.satispay) return alert("Scrivi almeno un modo per pagarti: IBAN, PayPal, Revolut o Satispay.");
+    if (tipo !== "nessuno" && (imp || !regalo) && !pagamento.iban && !pagamento.paypal && !pagamento.revolut && !pagamento.satispay) return alert("Scrivi almeno un modo per pagarti: IBAN, PayPal, Revolut o Satispay.");
     try { localStorage.setItem("ancora_mio_pagamento", JSON.stringify(pagamento)); } catch { /* niente */ }
     const q = document.getElementById("quando").value;
+    if (regalo && !u) {
+      const { data: id, error } = await sb.rpc("regalo_crea", { p_cerchia: gruppo.id, p_titolo: document.getElementById("titolo").value, p_per: [...nascosti],
+        p_quando: q ? new Date(q).toISOString() : null, p_note: document.getElementById("note").value,
+        p_quota_cent: tipo === "quota" ? imp : null, p_totale_cent: tipo === "totale" ? imp : null, p_pagamento: pagamento });
+      if (error) return alert("Non salvato: " + error.message);
+      location.hash = `#/uscita?id=${id}`; return;
+    }
     const { data: id, error } = await sb.rpc("uscita_salva", { p_id: u?.id ?? null, p_cerchia: gruppo.id, p_titolo: document.getElementById("titolo").value,
-      p_quando: q ? new Date(q).toISOString() : null, p_dove: document.getElementById("dove").value, p_note: document.getElementById("note").value,
+      p_quando: q ? new Date(q).toISOString() : null, p_dove: document.getElementById("dove")?.value ?? "", p_note: document.getElementById("note").value,
       p_quota_cent: tipo === "quota" ? imp : null, p_totale_cent: tipo === "totale" ? imp : null, p_pagamento: pagamento, p_nascosta_a: [...nascosti] });
     if (error) return alert("Non salvata: " + error.message);
     location.hash = `#/uscita?id=${id}`;
@@ -114,21 +127,22 @@ async function pagina(id) {
   const daIncassare = soldi && organizzo ? gruppi.si.filter((a) => a.persona_id !== io) : [];
   const { data: nn } = (u.nascosta_a ?? []).length ? await sb.from("persone").select("nome, soprannome").in("id", u.nascosta_a) : { data: [] };
   const nascostiNomi = (nn ?? []).map((x) => x.soprannome || x.nome).join(", ") || "qualcuno";
+  const regalo = u.tipo === "regalo";
 
   $app().innerHTML = `
-    <header class="testa"><a class="icona" href="#/uscite?c=${u.cerchia_id}" aria-label="Indietro">${ICONE.indietro}</a><b>🎉 Uscita</b>${organizzo && !u.annullata ? `<a class="icona" href="#/uscite?c=${u.cerchia_id}&modifica=${u.id}" aria-label="Modifica" style="font-size:20px">✏️</a>` : `<span style="width:44px"></span>`}</header>
+    <header class="testa"><a class="icona" href="#/uscite?c=${u.cerchia_id}" aria-label="Indietro">${ICONE.indietro}</a><b>${regalo ? "🎁 Regalo di gruppo" : "🎉 Uscita"}</b>${organizzo && !u.annullata ? `<a class="icona" href="#/uscite?c=${u.cerchia_id}&modifica=${u.id}" aria-label="Modifica" style="font-size:20px">✏️</a>` : `<span style="width:44px"></span>`}</header>
     <div class="pad" style="padding-top:0">
       <h1 style="margin:0;font-family:Fraunces,serif;font-size:30px;line-height:1.15">${esc(u.titolo)}</h1>
       ${u.annullata ? `<p style="color:var(--rosso);font-weight:800">Annullata</p>` : ""}
-      <p style="margin:8px 0 0;font-size:17px">📅 <b>${esc(quandoTesto(u.quando))}</b></p>
+      ${regalo && !u.quando ? "" : `<p style="margin:8px 0 0;font-size:17px">📅 ${regalo ? "Entro " : ""}<b>${esc(quandoTesto(u.quando))}</b></p>`}
       ${u.dove ? `<p style="margin:4px 0 0;font-size:17px">📍 <a href="https://maps.google.com/?q=${encodeURIComponent(u.dove)}" target="_blank" rel="noopener">${esc(u.dove)}</a></p>` : ""}
       <p class="tenue" style="margin:4px 0 0">Organizza ${esc(org ? nome(org) : "—")}</p>
-      ${(u.nascosta_a ?? []).length ? `<p style="margin:10px 0 0;padding:10px 12px;border-radius:12px;background:#F3E8FF;font-weight:700">🤫 Sorpresa: ${esc(nascostiNomi)} non la vede. Acqua in bocca!</p>` : ""}
+      ${(u.nascosta_a ?? []).length ? `<p style="margin:10px 0 0;padding:10px 12px;border-radius:12px;background:#F3E8FF;font-weight:700">🤫 ${regalo ? `È per ${esc(nascostiNomi)}: non vede niente di questa pagina.` : `Sorpresa: ${esc(nascostiNomi)} non la vede.`} Acqua in bocca!</p>` : ""}
       ${u.note ? `<p style="white-space:pre-wrap;margin:10px 0 0">${esc(u.note)}</p>` : ""}
 
       ${u.annullata ? "" : `<div class="card" style="margin:16px 0 0">
-        <b>Ci sei?</b>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px">${[["si", "👍 Ci sono"], ["forse", "🤔 Forse"], ["no", "👎 No"]].map(([k, t]) =>
+        <b>${regalo ? "Partecipi al regalo?" : "Ci sei?"}</b>
+        <div style="display:grid;grid-template-columns:${regalo ? "1fr 1fr" : "1fr 1fr 1fr"};gap:8px;margin-top:10px">${(regalo ? [["si", "🎁 Partecipo"], ["no", "👎 No"]] : [["si", "👍 Ci sono"], ["forse", "🤔 Forse"], ["no", "👎 No"]]).map(([k, t]) =>
           `<button class="btn ${mia?.risposta === k ? "ambra" : "chiaro"}" data-risp="${k}" style="margin:0;min-height:48px;padding:0 6px">${t}</button>`).join("")}</div></div>`}
 
       ${devo ? `<div class="card" style="margin:12px 0 0;background:${mia.ricevuto_il ? "#E8F4EC" : "#FFF6E8"}">
@@ -140,28 +154,31 @@ async function pagina(id) {
           ${p.satispay ? `<button class="btn chiaro" data-satispay="${esc(p.satispay)}" style="margin:0">Paga con Satispay · ${euro(quota)} al ${esc(p.satispay)}</button>` : ""}
           <button class="btn ${mia.pagato_il ? "chiaro" : "ambra"}" id="ho-pagato" style="margin:0">${mia.pagato_il ? "Non ho ancora pagato" : "✓ Ho pagato"}</button></div>` : ""}</div>` : ""}
 
-      ${soldi ? `<p class="tenue" style="margin:12px 0 0">💶 ${u.quota_cent ? `${euro(u.quota_cent)} a testa` : `Conto ${euro(u.totale_cent)} diviso tra ${gruppi.si.length}: ${euro(quota)} a testa`}</p>` : ""}
+      ${soldi ? `<p class="tenue" style="margin:12px 0 0">💶 ${u.quota_cent ? `${euro(u.quota_cent)} a testa` : `${regalo ? "Regalo" : "Conto"} ${euro(u.totale_cent)} diviso tra ${gruppi.si.length}: ${euro(quota)} a testa`}</p>` : ""}
 
       ${daIncassare.length ? `<div class="card" style="margin:12px 0 0"><b>Chi ti deve pagare</b>
         ${daIncassare.map((a) => `<div class="riga" style="padding:8px 0;border-top:1px solid var(--bordo)"><span style="flex:1">${esc(nome(a))} · ${euro(quota)}</span>
           ${a.ricevuto_il ? `<span class="chip on" style="margin:0">✅ ricevuto</span>` : `<button class="chip ${a.pagato_il ? "on" : ""}" data-ricevuto="${a.persona_id}" style="margin:0">${a.pagato_il ? "Dice di aver pagato · conferma" : "Segna ricevuto"}</button>`}</div>`).join("")}
         <p class="tenue" style="margin:8px 0 0;font-size:14px">Incassati ${daIncassare.filter((a) => a.ricevuto_il).length} su ${daIncassare.length}</p></div>` : ""}
 
-      <h2 style="padding-left:0">👥 Chi c'è · ${gruppi.si.length}</h2>
+      ${regalo ? `<h2 style="padding-left:0">💡 Le idee</h2><div id="idee"><p class="tenue">Carico…</p></div>` : ""}
+
+      <h2 style="padding-left:0">${regalo ? "🎁 Partecipano" : "👥 Chi c'è"} · ${gruppi.si.length}</h2>
       <p style="margin:0">${gruppi.si.map((a) => esc(nome(a))).join(", ") || "Ancora nessuno"}</p>
       ${gruppi.forse.length ? `<p class="tenue" style="margin:8px 0 0">🤔 Forse: ${gruppi.forse.map((a) => esc(nome(a))).join(", ")}</p>` : ""}
       ${gruppi.no.length ? `<p class="tenue" style="margin:4px 0 0">👎 Non ci sono: ${gruppi.no.map((a) => esc(nome(a))).join(", ")}</p>` : ""}
 
-      <h2 style="padding-left:0">📸 Le foto della serata</h2>
+      <h2 style="padding-left:0">📸 ${regalo ? "Le foto della consegna" : "Le foto della serata"}</h2>
       <div id="usc-foto"><p class="tenue">Carico…</p></div>
 
       ${organizzo && !u.annullata ? `<div style="margin-top:24px">
-        ${u.totale_cent == null && !u.quota_cent ? `<button class="btn chiaro" id="conto" style="margin:0 0 8px">🧾 Scrivi il conto da dividere</button>` : ""}
-        <button class="chip" id="annulla" style="margin:0;color:var(--rosso)">Annulla l'uscita</button></div>` : ""}
+        ${u.totale_cent == null && !u.quota_cent ? `<button class="btn chiaro" id="conto" style="margin:0 0 8px">🧾 ${regalo ? "Scrivi quanto costa il regalo" : "Scrivi il conto da dividere"}</button>` : ""}
+        <button class="chip" id="annulla" style="margin:0;color:var(--rosso)">${regalo ? "Annulla il regalo" : "Annulla l'uscita"}</button></div>` : ""}
       <div style="height:100px"></div></div>`;
 
   const ricarica = () => pagina(id);
   fotoSerata(u);
+  if (regalo) idee(u, organizzo, ricarica);
   document.querySelectorAll("[data-risp]").forEach((b) => b.onclick = async () => { await sb.rpc("uscita_rispondi", { p_uscita: id, p_risposta: b.dataset.risp }); ricarica(); });
   document.getElementById("ho-pagato")?.addEventListener("click", async () => { await sb.rpc("uscita_pagato", { p_uscita: id, p_si: !mia.pagato_il }); ricarica(); });
   document.querySelectorAll("[data-ricevuto]").forEach((b) => b.onclick = async () => { await sb.rpc("uscita_ricevuto", { p_uscita: id, p_persona: b.dataset.ricevuto, p_si: true }); ricarica(); });
@@ -176,7 +193,7 @@ async function pagina(id) {
   });
   document.getElementById("annulla")?.addEventListener("click", async () => { if (confirm("Annullare l'uscita?")) { await sb.rpc("uscita_annulla", { p_uscita: id }); ricarica(); } });
   document.getElementById("conto")?.addEventListener("click", async () => {
-    const v = centesimi(prompt("Quanto è venuto il conto in tutto? (es. 240)"));
+    const v = centesimi(prompt(regalo ? "Quanto costa il regalo in tutto? (es. 120)" : "Quanto è venuto il conto in tutto? (es. 240)"));
     if (!v) return;
     if (!p.iban && !p.paypal && !p.revolut && !p.satispay) { alert("Prima aggiungi come pagarti (IBAN, PayPal, Revolut o Satispay): tocca ✏️ in alto."); return; }
     const { error } = await sb.rpc("uscita_salva", { p_id: id, p_cerchia: u.cerchia_id, p_titolo: u.titolo, p_quando: u.quando, p_dove: u.dove ?? "", p_note: u.note ?? "",
@@ -269,12 +286,69 @@ async function annoFa(cerchia) {
 
 export async function prossimeUscite(cerchia) {
   let ricordo = ""; try { ricordo = await annoFa(cerchia); } catch { /* niente */ }
-  const { data } = await sb.from("uscite").select("id, titolo, quando, dove, uscite_adesioni(persona_id, risposta)")
-    .eq("cerchia_id", cerchia).eq("annullata", false).gte("quando", new Date(Date.now() - 6 * 3600e3).toISOString()).order("quando").limit(3);
+  const { data } = await sb.from("uscite").select("id, tipo, titolo, quando, dove, creata_il, uscite_adesioni(persona_id, risposta)")
+    .eq("cerchia_id", cerchia).eq("annullata", false)
+    .or(`quando.gte.${new Date(Date.now() - 6 * 3600e3).toISOString()},and(tipo.eq.regalo,quando.is.null,creata_il.gte.${new Date(Date.now() - 45 * 864e5).toISOString()})`)
+    .order("quando", { nullsFirst: false }).limit(3);
   return ricordo + (data ?? []).map((u) => {
     const si = u.uscite_adesioni.filter((a) => a.risposta === "si").length, mia = u.uscite_adesioni.find((a) => a.persona_id === state.io.id)?.risposta;
     return `<a href="#/uscita?id=${u.id}" class="card" style="display:flex;gap:12px;align-items:center;margin:0 16px 10px;text-decoration:none;color:inherit;border:2px solid ${mia ? "transparent" : "#E8B56B"}">
-      <span style="font-size:30px">🎉</span><span style="flex:1;min-width:0"><b style="display:block">${esc(u.titolo)}</b>
-      <span class="tenue" style="font-size:14px">${esc(quandoTesto(u.quando))} · 👥 ${si}${mia ? "" : " · <b style='color:var(--ambra)'>ci sei?</b>"}</span></span><span style="font-size:22px">›</span></a>`;
+      <span style="font-size:30px">${u.tipo === "regalo" ? "🎁" : "🎉"}</span><span style="flex:1;min-width:0"><b style="display:block">${esc(u.titolo)}</b>
+      <span class="tenue" style="font-size:14px">${u.tipo === "regalo" ? `Regalo di gruppo · 🎁 ${si}` : `${esc(quandoTesto(u.quando))} · 👥 ${si}`}${mia ? "" : ` · <b style='color:var(--ambra)'>${u.tipo === "regalo" ? "partecipi?" : "ci sei?"}</b>`}</span></span><span style="font-size:22px">›</span></a>`;
   }).join("");
+}
+
+// --- 💡 Le idee del regalo: ognuno propone, tutti votano, chi organizza sceglie ---
+async function idee(u, organizzo, ricarica) {
+  const box = document.getElementById("idee"); if (!box) return;
+  const { data } = await sb.from("uscite_idee").select("id, testo, link, prezzo_cent, proposta_da, persone:proposta_da(nome, soprannome), uscite_idee_voti(persona_id)")
+    .eq("uscita_id", u.id).order("creata_il");
+  const io = state.io.id;
+  const lista = (data ?? []).map((i) => ({ ...i, voti: i.uscite_idee_voti ?? [], mio: (i.uscite_idee_voti ?? []).some((v) => v.persona_id === io) }))
+    .sort((a, b) => (b.id === u.idea_scelta) - (a.id === u.idea_scelta) || b.voti.length - a.voti.length);
+  const link = (l) => { try { const x = new URL(l); return `<a href="${esc(x.href)}" target="_blank" rel="noopener noreferrer" style="font-size:14px;font-weight:700">🔗 ${esc(x.hostname.replace(/^www\./, ""))}</a>`; } catch { return ""; } };
+  box.innerHTML = `${lista.map((i) => {
+    const scelta = i.id === u.idea_scelta;
+    return `<div class="card" style="margin:0 0 8px;${scelta ? "border:2px solid #2F7A4F;background:#EEF7F0" : ""}">
+      ${scelta ? `<b style="color:#2F7A4F;font-size:13px;letter-spacing:.4px">✅ SCELTO</b>` : ""}
+      <div class="riga" style="gap:10px;align-items:flex-start">
+        <div style="flex:1;min-width:0"><b style="font-size:17px">${esc(i.testo)}</b>
+          <div class="tenue" style="font-size:14px;margin-top:2px">${i.prezzo_cent != null ? `${euro(i.prezzo_cent)} · ` : ""}proposta da ${i.proposta_da === io ? "te" : esc(nomeDi(i.persone ?? {}))}</div>
+          ${i.link ? link(i.link) : ""}</div>
+        <button class="chip ${i.mio ? "on" : ""}" data-voto="${i.id}" style="margin:0;flex-shrink:0">👍 ${i.voti.length}</button></div>
+      ${organizzo && !u.annullata ? `<div class="riga" style="gap:6px;margin-top:8px">
+        <button class="chip" data-scegli="${scelta ? "" : i.id}" style="margin:0">${scelta ? "Togli la scelta" : "✅ Scegli questa"}</button>
+        <button class="chip" data-togli="${i.id}" style="margin:0;color:var(--rosso)">Togli</button></div>`
+        : i.proposta_da === io ? `<button class="chip" data-togli="${i.id}" style="margin:8px 0 0;color:var(--rosso)">Togli</button>` : ""}</div>`;
+  }).join("") || `<p class="tenue" style="margin:0 0 8px">Ancora nessuna idea. Proponi la prima: gli altri la votano con 👍.</p>`}
+  ${u.annullata ? "" : `<form id="nuova-idea" class="card" style="margin:0">
+    <input id="idea-testo" maxlength="200" placeholder="Un'idea: es. Il weekend alle terme" required>
+    <div class="riga" style="gap:8px;margin-top:8px"><input id="idea-prezzo" inputmode="decimal" placeholder="Prezzo €" style="flex:1"><input id="idea-link" type="url" placeholder="Link (facoltativo)" style="flex:2"></div>
+    <button class="btn chiaro" style="margin:8px 0 0">💡 Proponi</button></form>`}`;
+  box.querySelectorAll("[data-voto]").forEach((b) => b.onclick = async () => {
+    const i = lista.find((x) => x.id === b.dataset.voto);
+    if (i.mio) await sb.from("uscite_idee_voti").delete().eq("idea_id", i.id).eq("persona_id", io);
+    else await sb.from("uscite_idee_voti").insert({ idea_id: i.id, persona_id: io });
+    idee(u, organizzo, ricarica);
+  });
+  box.querySelectorAll("[data-scegli]").forEach((b) => b.onclick = async () => {
+    const { error } = await sb.rpc("regalo_scegli", { p_uscita: u.id, p_idea: b.dataset.scegli || null });
+    if (error) return alert(error.message);
+    const p = u.pagamento ?? {};
+    if (b.dataset.scegli && !p.iban && !p.paypal && !p.revolut && !p.satispay) alert("Scelto! Ora aggiungi come ti pagano la quota (IBAN, PayPal, Revolut o Satispay): tocca ✏️ in alto.");
+    ricarica();
+  });
+  box.querySelectorAll("[data-togli]").forEach((b) => b.onclick = async () => {
+    if (!confirm("Togliere questa idea?")) return;
+    await sb.from("uscite_idee").delete().eq("id", b.dataset.togli); idee(u, organizzo, ricarica);
+  });
+  const f = document.getElementById("nuova-idea");
+  if (f) f.onsubmit = async (e) => {
+    e.preventDefault();
+    const l = document.getElementById("idea-link").value.trim();
+    const { error } = await sb.from("uscite_idee").insert({ uscita_id: u.id, testo: document.getElementById("idea-testo").value.trim(),
+      prezzo_cent: centesimi(document.getElementById("idea-prezzo").value), link: /^https?:\/\//i.test(l) ? l : null, proposta_da: io });
+    if (error) return alert("Non salvata: " + error.message);
+    idee(u, organizzo, ricarica);
+  };
 }
