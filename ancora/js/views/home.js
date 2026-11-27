@@ -560,7 +560,8 @@ async function tavoliAperti() {
 // ✅ i primi passi di chi è appena entrato, e 📸 la domanda del giorno del gruppo (risposte visibili dopo aver risposto)
 async function oggiNelGruppo(cerchia) {
   const box = document.getElementById("oggi-gruppo"); if (!box || !cerchia) return;
-  const [{ data: passi }, { data: dom }] = await Promise.all([sb.rpc("primi_passi"), sb.rpc("domanda_di_oggi", { p_cerchia: cerchia })]);
+  // la domanda del giorno è sospesa (da ripensare): per ora solo i primi passi
+  const { data: passi } = await sb.rpc("primi_passi"); const dom = null;
   let html = "";
   const p = (passi ?? []).find((x) => x.cerchia === cerchia) ?? (passi ?? [])[0];
   if (p) {
