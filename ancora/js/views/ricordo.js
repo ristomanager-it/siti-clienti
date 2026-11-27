@@ -245,8 +245,9 @@ async function firmata(src) {
 }
 export async function sulSocial(btn, r, media, url) {
   const prima = btn.innerHTML; btn.disabled = true; btn.style.opacity = ".5"; if (btn.id === "social") btn.textContent = "Preparo…";
-  const link = `${location.origin}${location.pathname}#/scopri?utm_source=social&utm_medium=condivisione`;
-  const testo = `${r.titolo ? r.titolo + "\n\n" : ""}📲 Lo conservo su Ancora, il social privato per famiglie e gruppi: ${link}`;
+  // corto e pulito: niente parametri lunghi nel link (quando ci sarà il dominio, sarà ancora più corto)
+  const link = `${location.origin}${location.pathname}`;
+  const testo = `${r.titolo ? r.titolo + "\n\n" : ""}📲 Dal nostro album su Ancora\n${link}`;
   try {
     const files = [];
     for (const [i, m] of media.slice(0, 10).entries()) {
