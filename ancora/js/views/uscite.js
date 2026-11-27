@@ -1,7 +1,7 @@
 // 🎉 Le uscite del gruppo: cena, serata, viaggio. Chi c'è, il conto, chi ha pagato.
 // I soldi non passano da Ancora: si paga direttamente a chi organizza (IBAN, PayPal.me, Revolut.me) e si segna "ho pagato".
 // #/uscite?c=<gruppo> → elenco · #/uscite?c=<gruppo>&nuova=1 → nuova · #/uscita?id=<uscita> → la pagina dell'uscita
-import { sb, state, $app, esc, ICONE, nomeDi } from "../app.js";
+import { sb, state, $app, esc, ICONE, nomeDi, urlMediaMolti } from "../app.js";
 
 const euro = (c) => (c / 100).toLocaleString("it-IT", { minimumFractionDigits: c % 100 ? 2 : 0, maximumFractionDigits: 2 }) + " €";
 const quandoTesto = (d) => d ? new Date(d).toLocaleString("it-IT", { weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) : "Data da decidere";
@@ -151,12 +151,16 @@ async function pagina(id) {
       ${gruppi.forse.length ? `<p class="tenue" style="margin:8px 0 0">🤔 Forse: ${gruppi.forse.map((a) => esc(nome(a))).join(", ")}</p>` : ""}
       ${gruppi.no.length ? `<p class="tenue" style="margin:4px 0 0">👎 Non ci sono: ${gruppi.no.map((a) => esc(nome(a))).join(", ")}</p>` : ""}
 
+      <h2 style="padding-left:0">📸 Le foto della serata</h2>
+      <div id="usc-foto"><p class="tenue">Carico…</p></div>
+
       ${organizzo && !u.annullata ? `<div style="margin-top:24px">
         ${u.totale_cent == null && !u.quota_cent ? `<button class="btn chiaro" id="conto" style="margin:0 0 8px">🧾 Scrivi il conto da dividere</button>` : ""}
         <button class="chip" id="annulla" style="margin:0;color:var(--rosso)">Annulla l'uscita</button></div>` : ""}
       <div style="height:100px"></div></div>`;
 
   const ricarica = () => pagina(id);
+  fotoSerata(u);
   document.querySelectorAll("[data-risp]").forEach((b) => b.onclick = async () => { await sb.rpc("uscita_rispondi", { p_uscita: id, p_risposta: b.dataset.risp }); ricarica(); });
   document.getElementById("ho-pagato")?.addEventListener("click", async () => { await sb.rpc("uscita_pagato", { p_uscita: id, p_si: !mia.pagato_il }); ricarica(); });
   document.querySelectorAll("[data-ricevuto]").forEach((b) => b.onclick = async () => { await sb.rpc("uscita_ricevuto", { p_uscita: id, p_persona: b.dataset.ricevuto, p_si: true }); ricarica(); });
@@ -178,6 +182,73 @@ async function pagina(id) {
       p_quota_cent: null, p_totale_cent: v, p_pagamento: p, p_nascosta_a: u.nascosta_a ?? [] });
     if (error) alert(error.message); ricarica();
   });
+}
+
+// le foto e i video di tutti (anche di chi non ha Ancora, col link), e il film della serata
+async function fotoSerata(u) {
+  const box = document.getElementById("usc-foto"); if (!box) return;
+  const { data: al } = await sb.from("album_eventi").select("id, codice").eq("uscita_id", u.id).maybeSingle();
+  const { data: foto } = al ? await sb.from("album_foto").select("id, path, mime, nome_ospite").eq("album_id", al.id).order("creato_il") : { data: [] };
+  const url = await urlMediaMolti((foto ?? []).map((f) => f.path));
+  const lista = (foto ?? []).filter((f) => url[f.path]);
+  box.innerHTML = `
+    ${lista.length ? `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-bottom:10px">${lista.slice(0, 12).map((f, i) =>
+      `<div data-film="${i}" style="aspect-ratio:1;border-radius:10px;overflow:hidden;background:#000;position:relative;cursor:pointer">${(f.mime ?? "").startsWith("video")
+        ? `<video src="${url[f.path]}#t=0.5" muted playsinline preload="metadata" style="width:100%;height:100%;object-fit:cover"></video><span style="position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:26px">▶</span>`
+        : `<img src="${url[f.path]}" alt="" loading="lazy" style="width:100%;height:100%;object-fit:cover">`}</div>`).join("")}</div>
+      ${lista.length > 12 ? `<p class="tenue" style="margin:0 0 8px">e altre ${lista.length - 12}</p>` : ""}` : `<p class="tenue" style="margin-top:0">Ancora nessuna foto. Durante la serata ognuno mette le sue: alla fine ci sono tutte, in un posto solo.</p>`}
+    ${lista.length >= 3 ? `<button class="btn ambra" id="film" style="margin:0 0 8px">🎬 Guarda il film della serata</button>` : ""}
+    <button class="btn ${lista.length >= 3 ? "chiaro" : "ambra"}" id="aggiungi-foto" style="margin:0 0 8px">📸 Aggiungi le tue foto e video</button>
+    <button class="btn chiaro" id="link-foto" style="margin:0">🔗 Link per chi non ha Ancora</button>`;
+  const prendiAlbum = async () => { const { data, error } = await sb.rpc("uscita_album", { p_uscita: u.id }); if (error) { alert(error.message); return null; } return data; };
+  document.getElementById("aggiungi-foto").onclick = async () => { const a = await prendiAlbum(); if (a) location.hash = `#/evento/${a.codice}`; };
+  document.getElementById("link-foto").onclick = async () => {
+    const a = await prendiAlbum(); if (!a) return;
+    const link = `${location.origin}${location.pathname}#/evento/${a.codice}`;
+    const testo = `📸 Le foto di "${u.titolo}": mettiamole tutte qui, senza scaricare niente 👇\n${link}`;
+    try { if (navigator.share) await navigator.share({ text: testo }); else { await navigator.clipboard.writeText(link); alert("Link copiato"); } } catch { /* annullato */ }
+  };
+  const apri = (da = 0) => film(u, lista, url, da);
+  document.getElementById("film")?.addEventListener("click", () => apri(0));
+  box.querySelectorAll("[data-film]").forEach((d) => d.onclick = () => apri(Number(d.dataset.film)));
+}
+
+// il film: le foto a tutto schermo che si muovono piano e sfumano una nell'altra, i video brevi in mezzo
+function film(u, lista, url, da = 0) {
+  const o = document.createElement("div");
+  o.style.cssText = "position:fixed;inset:0;z-index:80;background:#000;color:#fff;overflow:hidden";
+  o.innerHTML = `<style>
+    @keyframes kb1{from{transform:scale(1.05) translate(0,0)}to{transform:scale(1.22) translate(-3%,-2%)}}
+    @keyframes kb2{from{transform:scale(1.2) translate(-2%,2%)}to{transform:scale(1.04) translate(2%,0)}}
+    .scena{position:absolute;inset:0;opacity:0;transition:opacity 1s ease}.scena.on{opacity:1}
+    .scena img,.scena video{width:100%;height:100%;object-fit:cover}</style>
+    <div id="palco" style="position:absolute;inset:0"></div>
+    <div style="position:absolute;left:0;right:0;bottom:0;padding:18px 18px calc(22px + env(safe-area-inset-bottom));background:linear-gradient(transparent,rgba(0,0,0,.65));pointer-events:none">
+      <div style="font:700 26px Fraunces,serif">${esc(u.titolo)}</div>
+      <div style="opacity:.85">${u.quando ? new Date(u.quando).toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" }) : ""}${u.dove ? ` · ${esc(u.dove)}` : ""}</div></div>
+    <div id="barretta" style="position:absolute;top:calc(10px + env(safe-area-inset-top));left:12px;right:60px;display:flex;gap:3px">${lista.map(() => `<i style="flex:1;height:3px;border-radius:2px;background:rgba(255,255,255,.35)"></i>`).join("")}</div>
+    <button id="chiudi-film" aria-label="Chiudi" style="position:absolute;top:calc(2px + env(safe-area-inset-top));right:8px;width:44px;height:44px;border:0;background:none;color:#fff;font-size:28px">×</button>`;
+  document.body.appendChild(o);
+  const palco = o.querySelector("#palco"), tacche = [...o.querySelectorAll("#barretta i")];
+  let i = da, timer = null, chiuso = false;
+  const mostra = () => {
+    if (chiuso) return;
+    if (i >= lista.length) { i = 0; }
+    tacche.forEach((t, k) => t.style.background = k <= i ? "#fff" : "rgba(255,255,255,.35)");
+    const f = lista[i], video = (f.mime ?? "").startsWith("video");
+    const sc = document.createElement("div"); sc.className = "scena";
+    sc.innerHTML = video ? `<video src="${url[f.path]}" playsinline muted autoplay></video>`
+      : `<img src="${url[f.path]}" alt="" style="animation:${i % 2 ? "kb2" : "kb1"} 5s ease-out forwards">`;
+    palco.appendChild(sc); requestAnimationFrame(() => requestAnimationFrame(() => sc.classList.add("on")));
+    [...palco.children].slice(0, -2).forEach((x) => x.remove());
+    let durata = 4000;
+    if (video) { const v = sc.querySelector("video"); v.onloadedmetadata = () => { clearTimeout(timer); timer = setTimeout(avanti, Math.min(8000, (v.duration || 4) * 1000)); }; durata = 8000; }
+    timer = setTimeout(avanti, durata);
+  };
+  const avanti = () => { clearTimeout(timer); i++; mostra(); };
+  palco.onclick = (e) => { clearTimeout(timer); i = e.clientX < innerWidth / 3 ? Math.max(0, i - 1) : i + 1; mostra(); };
+  o.querySelector("#chiudi-film").onclick = () => { chiuso = true; clearTimeout(timer); o.remove(); };
+  mostra();
 }
 
 /** Per la home del gruppo: le prossime uscite, con "ci sei?" a un tocco. */
