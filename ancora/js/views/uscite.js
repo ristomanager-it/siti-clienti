@@ -38,6 +38,13 @@ async function modulo(gruppo, idModifica) {
   let u = null;
   if (idModifica) ({ data: u } = await sb.from("uscite").select("*").eq("id", idModifica).maybeSingle());
   const pag = u?.pagamento ?? ultimoPagamento();
+  // chi c'è nel gruppo (per le sorprese: a chi nasconderla)
+  const [{ data: mem }, { data: cer }] = await Promise.all([
+    sb.from("cerchia_membri").select("persona_id, persone(nome, cognome, soprannome)").eq("cerchia_id", gruppo.id).eq("stato", "attivo"),
+    sb.from("cerchie").select("proprietario_id, persone:proprietario_id(nome, cognome, soprannome)").eq("id", gruppo.id).maybeSingle()]);
+  const membri = new Map();
+  for (const m of [...(mem ?? []), ...(cer ? [{ persona_id: cer.proprietario_id, persone: cer.persone }] : [])]) if (m.persona_id !== state.io.id) membri.set(m.persona_id, m.persone);
+  const nascosti = new Set(u?.nascosta_a ?? []);
   const locale = (d) => { if (!d) return ""; const x = new Date(d); x.setMinutes(x.getMinutes() - x.getTimezoneOffset()); return x.toISOString().slice(0, 16); };
   $app().innerHTML = `
     <header class="testa"><a class="icona" href="${u ? `#/uscita?id=${u.id}` : `#/uscite?c=${gruppo.id}`}" aria-label="Indietro">${ICONE.indietro}</a><b>${u ? "Modifica l'uscita" : "Nuova uscita"}</b><span style="width:44px"></span></header>
@@ -46,6 +53,10 @@ async function modulo(gruppo, idModifica) {
       <label>Quando</label><input id="quando" type="datetime-local" value="${locale(u?.quando)}">
       <label>Dove</label><input id="dove" maxlength="120" placeholder="Il posto o l'indirizzo" value="${esc(u?.dove ?? "")}">
       <label>Note</label><textarea id="note" rows="2" placeholder="Cosa portare, a che ora ci si vede…">${esc(u?.note ?? "")}</textarea>
+      ${membri.size ? `<div class="card" style="margin:16px 0 0">
+        <b>🤫 È una sorpresa?</b>
+        <p class="tenue" style="margin:4px 0 8px;font-size:14px">Tocca chi non deve saperlo (es. il festeggiato): per lui quest'uscita non esiste, niente notifiche, niente di niente.</p>
+        <div>${[...membri].map(([id, p]) => `<button type="button" class="chip ${nascosti.has(id) ? "on" : ""}" data-nascondi="${id}">${nascosti.has(id) ? "🤫 " : ""}${esc(nomeDi(p ?? {}))}</button>`).join("")}</div></div>` : ""}
       <div class="card" style="margin:16px 0 0">
         <b>💶 I soldi (se servono)</b>
         <div class="riga" style="gap:8px;margin:10px 0 0">
@@ -62,6 +73,10 @@ async function modulo(gruppo, idModifica) {
         <p class="tenue" style="font-size:13px;margin:6px 0 0">I soldi vanno direttamente a te: Ancora non li tocca. Questi dati li vede solo il gruppo.</p></div>
       <button class="btn ambra" style="margin-top:16px">${u ? "Salva" : "Crea e avvisa il gruppo"}</button>
       <div style="height:100px"></div></form>`;
+  document.querySelectorAll("[data-nascondi]").forEach((b) => b.onclick = () => {
+    const id = b.dataset.nascondi; nascosti.has(id) ? nascosti.delete(id) : nascosti.add(id);
+    b.classList.toggle("on", nascosti.has(id)); b.textContent = (nascosti.has(id) ? "🤫 " : "") + nomeDi(membri.get(id) ?? {});
+  });
   document.getElementById("f").onsubmit = async (e) => {
     e.preventDefault();
     const tipo = document.querySelector("[name=tipo]:checked").value, imp = centesimi(document.getElementById("importo").value);
@@ -73,7 +88,7 @@ async function modulo(gruppo, idModifica) {
     const q = document.getElementById("quando").value;
     const { data: id, error } = await sb.rpc("uscita_salva", { p_id: u?.id ?? null, p_cerchia: gruppo.id, p_titolo: document.getElementById("titolo").value,
       p_quando: q ? new Date(q).toISOString() : null, p_dove: document.getElementById("dove").value, p_note: document.getElementById("note").value,
-      p_quota_cent: tipo === "quota" ? imp : null, p_totale_cent: tipo === "totale" ? imp : null, p_pagamento: pagamento });
+      p_quota_cent: tipo === "quota" ? imp : null, p_totale_cent: tipo === "totale" ? imp : null, p_pagamento: pagamento, p_nascosta_a: [...nascosti] });
     if (error) return alert("Non salvata: " + error.message);
     location.hash = `#/uscita?id=${id}`;
   };
@@ -94,6 +109,8 @@ async function pagina(id) {
   const linkPaypal = p.paypal ? `https://paypal.me/${encodeURIComponent(p.paypal)}/${(quota / 100).toFixed(2)}EUR` : null;
   const linkRevolut = p.revolut ? `https://revolut.me/${encodeURIComponent(p.revolut)}` : null;
   const daIncassare = soldi && organizzo ? gruppi.si.filter((a) => a.persona_id !== io) : [];
+  const { data: nn } = (u.nascosta_a ?? []).length ? await sb.from("persone").select("nome, soprannome").in("id", u.nascosta_a) : { data: [] };
+  const nascostiNomi = (nn ?? []).map((x) => x.soprannome || x.nome).join(", ") || "qualcuno";
 
   $app().innerHTML = `
     <header class="testa"><a class="icona" href="#/uscite?c=${u.cerchia_id}" aria-label="Indietro">${ICONE.indietro}</a><b>🎉 Uscita</b>${organizzo && !u.annullata ? `<a class="icona" href="#/uscite?c=${u.cerchia_id}&modifica=${u.id}" aria-label="Modifica" style="font-size:20px">✏️</a>` : `<span style="width:44px"></span>`}</header>
@@ -103,6 +120,7 @@ async function pagina(id) {
       <p style="margin:8px 0 0;font-size:17px">📅 <b>${esc(quandoTesto(u.quando))}</b></p>
       ${u.dove ? `<p style="margin:4px 0 0;font-size:17px">📍 <a href="https://maps.google.com/?q=${encodeURIComponent(u.dove)}" target="_blank" rel="noopener">${esc(u.dove)}</a></p>` : ""}
       <p class="tenue" style="margin:4px 0 0">Organizza ${esc(org ? nome(org) : "—")}</p>
+      ${(u.nascosta_a ?? []).length ? `<p style="margin:10px 0 0;padding:10px 12px;border-radius:12px;background:#F3E8FF;font-weight:700">🤫 Sorpresa: ${esc(nascostiNomi)} non la vede. Acqua in bocca!</p>` : ""}
       ${u.note ? `<p style="white-space:pre-wrap;margin:10px 0 0">${esc(u.note)}</p>` : ""}
 
       ${u.annullata ? "" : `<div class="card" style="margin:16px 0 0">
@@ -148,7 +166,7 @@ async function pagina(id) {
     if (!v) return;
     if (!p.iban && !p.paypal && !p.revolut) { alert("Prima aggiungi come pagarti (IBAN, PayPal o Revolut): tocca ✏️ in alto."); return; }
     const { error } = await sb.rpc("uscita_salva", { p_id: id, p_cerchia: u.cerchia_id, p_titolo: u.titolo, p_quando: u.quando, p_dove: u.dove ?? "", p_note: u.note ?? "",
-      p_quota_cent: null, p_totale_cent: v, p_pagamento: p });
+      p_quota_cent: null, p_totale_cent: v, p_pagamento: p, p_nascosta_a: u.nascosta_a ?? [] });
     if (error) alert(error.message); ricarica();
   });
 }
