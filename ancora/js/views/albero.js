@@ -1,6 +1,6 @@
 // Albero genealogico di una famiglia (una cerchia di tipo famiglia).
 // Generazioni in righe, coppie affiancate, linee dai genitori ai figli. Si completa insieme: tocca una persona per aggiungere.
-import { sb, state, $app, esc, ICONE, passaPiu, seServePiu } from "../app.js";
+import { sb, state, $app, esc, ICONE, passaPiu, seServePiu, urlMediaMolti, cambiaImmagine, avatar } from "../app.js";
 
 const W = 128, H = 70, GAP = 22, COPPIA = 10, RIGA = 140, MARGINE = 24;
 
@@ -56,6 +56,12 @@ export default async function ({ params }) {
     return;
   }
 
+  const conAccount = [...new Set(nodi.map((n) => n.persona_id).filter(Boolean))];
+  const { data: profili } = conAccount.length ? await sb.from("persone").select("id, foto_path").in("id", conAccount) : { data: [] };
+  const fotoProfilo = new Map((profili ?? []).map((p) => [p.id, p.foto_path]));
+  const fotoDi = (n) => n.foto_path ?? fotoProfilo.get(n.persona_id) ?? null;
+  const urlFoto = await urlMediaMolti([...new Set(nodi.map(fotoDi).filter(Boolean))]).catch(() => ({}));
+  for (const n of nodi) n._foto = urlFoto[fotoDi(n)] ?? null;
   disegna(nodi, legami ?? [], (n) => uniti ? (n.alberi?.length > 1) : altrove(n).length > 0);
   if (!uniti) proponiCollegamenti(nodi, tuttiN ?? [], altrove, nomeAlbero, famiglie.length);
   // zoom: con 30, 50 persone l'albero è largo; si rimpicciolisce, si ingrandisce, si vede tutto
@@ -75,6 +81,9 @@ export default async function ({ params }) {
   document.querySelectorAll("[data-nodo]").forEach((g) => g.addEventListener("click", () =>
     uniti ? schedaUnita(nodi.find((n) => n.id === g.dataset.nodo), nomeAlbero)
           : scheda(nodi.find((n) => n.id === g.dataset.nodo), nodi, legami ?? [], cerchiaId, { tuttiN: tuttiN ?? [], altrove, nomeAlbero })));
+  // tornando da "Racconta un ricordo di…" si riapre la sua scheda
+  const torna = !uniti && params.n && nodi.find((n) => n.id === params.n);
+  if (torna) scheda(torna, nodi, legami ?? [], cerchiaId, { tuttiN: tuttiN ?? [], altrove, nomeAlbero });
 }
 
 // --- Collegare le famiglie: spiegazione semplice + proposte con un tocco (stesso nome e cognome in un altro albero) ---
@@ -274,11 +283,14 @@ function disegna(nodi, legami, collegato = () => false) {
     const x = pos.get(n.id), yy = y(n.id);
     const memoria = n.morte || n.anno_morte;
     const io = n.persona_id === state.io.id;
+    const f = n._foto, cx = f ? x + 50 + (W - 50) / 2 : x + W / 2, lung = f ? 10 : 15;
     return `<g data-nodo="${n.id}" style="cursor:pointer" role="button" aria-label="${esc(n.nome)}">
       <rect x="${x}" y="${yy}" width="${W}" height="${H}" rx="16" fill="${memoria ? "#EFEAE0" : "#fff"}" stroke="${io ? "#C9832E" : "#E8E1D4"}" stroke-width="${io ? 3 : 1.5}"/>
-      <text x="${x + W / 2}" y="${yy + 28}" text-anchor="middle" font-family="Manrope, sans-serif" font-weight="800" font-size="14" fill="#12302C">${esc(taglia(n.soprannome ?? n.nome, 15))}</text>
-      <text x="${x + W / 2}" y="${yy + 45}" text-anchor="middle" font-family="Manrope, sans-serif" font-size="12" fill="#5D635F">${esc(taglia(n.cognome ?? "", 16))}</text>
-      <text x="${x + W / 2}" y="${yy + 61}" text-anchor="middle" font-family="Manrope, sans-serif" font-size="11" fill="#5D635F">${esc(anni(n))}${memoria ? " ✝" : ""}</text>
+      ${f ? `<clipPath id="cp-${n.id}"><circle cx="${x + 28}" cy="${yy + H / 2}" r="21"/></clipPath>
+        <image href="${esc(f)}" x="${x + 7}" y="${yy + H / 2 - 21}" width="42" height="42" preserveAspectRatio="xMidYMid slice" clip-path="url(#cp-${n.id})"/>` : ""}
+      <text x="${cx}" y="${yy + 28}" text-anchor="middle" font-family="Manrope, sans-serif" font-weight="800" font-size="14" fill="#12302C">${esc(taglia(n.soprannome ?? n.nome, lung))}</text>
+      <text x="${cx}" y="${yy + 45}" text-anchor="middle" font-family="Manrope, sans-serif" font-size="12" fill="#5D635F">${esc(taglia(n.cognome ?? "", lung + 1))}</text>
+      <text x="${cx}" y="${yy + 61}" text-anchor="middle" font-family="Manrope, sans-serif" font-size="11" fill="#5D635F">${esc(anni(n))}${memoria ? " ✝" : ""}</text>
       ${collegato(n) ? `<circle cx="${x + W - 6}" cy="${yy + 6}" r="11" fill="#0F5257"/><text x="${x + W - 6}" y="${yy + 10}" text-anchor="middle" font-size="11">🔗</text>` : ""}
     </g>`;
   }).join("");
@@ -300,8 +312,19 @@ function scheda(n, nodi, legami, cerchiaId, { tuttiN, altrove, nomeAlbero }) {
 
   f.innerHTML = `<div style="position:fixed;inset:0;background:rgba(18,48,44,.45);z-index:20" id="velo"></div>
     <div class="card" style="position:fixed;left:0;right:0;bottom:0;margin:0;border-radius:24px 24px 0 0;z-index:21;max-height:88vh;overflow:auto;padding-bottom:calc(20px + env(safe-area-inset-bottom))">
-      <div class="riga"><b style="flex:1;font-size:20px;font-family:Fraunces,serif">${esc(n.nome)} ${esc(n.cognome ?? "")}</b><button class="chip" id="chiudi">Chiudi</button></div>
-      <p class="tenue" style="margin:4px 0 0">${[gen.length ? `Figlio/a di ${gen.join(" e ")}` : "", coniugi.length ? `Coniuge: ${coniugi.join(", ")}` : "", figli.length ? `Figli: ${figli.join(", ")}` : ""].filter(Boolean).map(esc).join("<br>")}</p>
+      <div class="riga" style="gap:12px">
+        <label style="position:relative;cursor:pointer;flex-shrink:0">${avatar({ id: n.id, nome: n.soprannome ?? n.nome }, 64, n._foto)}
+          <span style="position:absolute;right:-2px;bottom:-2px;width:26px;height:26px;border-radius:13px;background:var(--carta);display:grid;place-items:center;font-size:13px;box-shadow:0 1px 4px rgba(0,0,0,.2)">📷</span>
+          <input type="file" accept="image/*" id="foto-nodo" hidden></label>
+        <b style="flex:1;font-size:20px;font-family:Fraunces,serif">${esc(n.soprannome ?? n.nome)}${n.soprannome ? `<small class="tenue" style="display:block;font:500 14px Manrope,sans-serif">${esc(n.nome)} ${esc(n.cognome ?? "")}</small>` : ` ${esc(n.cognome ?? "")}`}</b>
+        <button class="chip" id="chiudi">Chiudi</button></div>
+      <p class="tenue" style="margin:8px 0 0">${[gen.length ? `Figlio/a di ${gen.join(" e ")}` : "", coniugi.length ? `Coniuge: ${coniugi.join(", ")}` : "", figli.length ? `Figli: ${figli.join(", ")}` : ""].filter(Boolean).map(esc).join("<br>")}</p>
+      <h3 style="margin:18px 0 8px;font-family:Fraunces,serif">${(n.morte || n.anno_morte) ? "🕯️ Per ricordare" : "📖 I suoi ricordi"}</h3>
+      <div id="ricordi-nodo"><p class="tenue">Carico…</p></div>
+      <a class="btn ambra" style="margin:8px 0 0" href="#/racconta?c=${cerchiaId}&nodo=${n.id}&spunto=${encodeURIComponent(`Un ricordo di ${n.soprannome ?? n.nome}: com'era, cosa diceva, una volta insieme`)}">🎙️ Racconta un ricordo di ${esc(n.soprannome ?? n.nome)}</a>
+      <button class="btn chiaro" id="collega-ric" style="margin:8px 0 0">📸 Metti una foto già caricata</button>
+      <div id="scegli-ric"></div>
+      <details style="margin-top:16px"><summary style="cursor:pointer;font-weight:700">✏️ Modifica i dati e aggiungi parenti</summary>
       <form id="mod">
         <div class="riga"><div style="flex:1"><label for="m-nome">Nome</label><input id="m-nome" value="${esc(n.nome)}" required></div>
           <div style="flex:1"><label for="m-cognome">Cognome</label><input id="m-cognome" value="${esc(n.cognome ?? "")}"></div></div>
@@ -339,7 +362,14 @@ function scheda(n, nodi, legami, cerchiaId, { tuttiN, altrove, nomeAlbero }) {
             <button class="chip" id="colleg-ok" style="margin:0">Collega</button></div>` : ""}`;
       })()}
       ${n.persona_id ? "" : `<button class="chip" id="elimina" style="margin-top:16px">Togli dall'albero</button>`}
+      </details>
     </div>`;
+  ricordiNodo(n, cerchiaId);
+  document.getElementById("foto-nodo").onchange = async (e) => {
+    const file = e.target.files[0]; if (!file) return;
+    if (await cambiaImmagine({ file, tabella: "albero_nodi", id: n.id, campo: "foto", cartella: `cerchia/${cerchiaId}`, vecchia: n.foto_path })) location.reload();
+  };
+  document.getElementById("collega-ric").onclick = () => scegliRicordo(n, cerchiaId);
 
   const chiudi = () => { f.innerHTML = ""; };
   document.getElementById("velo").onclick = chiudi;
@@ -418,3 +448,48 @@ function scheda(n, nodi, legami, cerchiaId, { tuttiN, altrove, nomeAlbero }) {
 const somiglia = (a, b) => (a.nome?.toLowerCase() === b.nome?.toLowerCase() ? 2 : 0)
   + (a.cognome && a.cognome?.toLowerCase() === b.cognome?.toLowerCase() ? 2 : 0)
   + ((a.anno_nascita ?? a.nascita?.slice(0, 4)) == (b.anno_nascita ?? b.nascita?.slice(0, 4)) && (a.anno_nascita || a.nascita) ? 1 : 0);
+
+// --- l'albero vivo: i ricordi legati a una persona (e, se è iscritta, quelli raccontati da lei) ---
+const copertinaDi = (r) => (r.ricordi_media ?? []).filter((m) => m.tipo === "foto").sort((a, b) => (a.ordine ?? 0) - (b.ordine ?? 0))[0]?.path;
+function tessere(lista, url) {
+  return `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px">${lista.map((r) => {
+    const c = copertinaDi(r), voce = (r.ricordi_media ?? []).some((m) => m.tipo === "audio");
+    return `<a href="#/ricordo/${r.id}" style="aspect-ratio:1;border-radius:10px;overflow:hidden;position:relative;display:block;text-decoration:none;color:#12302C;background:${c && url[c] ? `url('${url[c]}') center/cover` : "#EFEAE0"}">
+      ${c && url[c] ? "" : `<span style="position:absolute;inset:8px;font-size:12px;line-height:1.3;overflow:hidden">${voce ? "🎙️ " : "✍️ "}${esc((r.titolo || r.testo || "").slice(0, 70))}</span>`}
+      ${c && voce ? `<span style="position:absolute;right:4px;bottom:4px;background:rgba(0,0,0,.55);color:#fff;border-radius:10px;padding:1px 6px;font-size:12px">🎙️</span>` : ""}</a>`;
+  }).join("")}</div>`;
+}
+async function ricordiNodo(n, cerchiaId) {
+  const box = document.getElementById("ricordi-nodo"); if (!box) return;
+  const campi = "id, titolo, testo, creato_il, ricordi_media(path, tipo, ordine)";
+  const [{ data: legati }, { data: suoi }] = await Promise.all([
+    sb.from("albero_ricordi").select(`ricordo_id, ricordi(${campi})`).eq("nodo_id", n.id).order("creato_il", { ascending: false }),
+    n.persona_id ? sb.from("ricordi").select(campi).eq("autore_id", n.persona_id).eq("cerchia_id", cerchiaId).order("creato_il", { ascending: false }).limit(9) : { data: [] },
+  ]);
+  const di = (legati ?? []).map((x) => x.ricordi).filter(Boolean);
+  const da = (suoi ?? []).filter((r) => !di.some((x) => x.id === r.id));
+  const url = await urlMediaMolti([...di, ...da].map(copertinaDi).filter(Boolean)).catch(() => ({}));
+  const nome = esc(n.soprannome ?? n.nome);
+  box.innerHTML = (di.length ? tessere(di, url) : `<p class="tenue" style="margin:0">Ancora niente su ${nome}. Una foto, un vocale con la sua storia, una frase che diceva sempre: qui restano per chi verrà dopo.</p>`)
+    + (da.length ? `<p class="tenue" style="margin:12px 0 6px">Raccontati da ${nome}</p>${tessere(da, url)}` : "");
+}
+async function scegliRicordo(n, cerchiaId) {
+  const box = document.getElementById("scegli-ric");
+  if (box.innerHTML) { box.innerHTML = ""; return; }
+  box.innerHTML = `<p class="tenue">Carico le foto del gruppo…</p>`;
+  const { data } = await sb.from("ricordi").select("id, titolo, testo, ricordi_media!inner(path, tipo, ordine)")
+    .eq("cerchia_id", cerchiaId).eq("ricordi_media.tipo", "foto").order("creato_il", { ascending: false }).limit(45);
+  const lista = (data ?? []).filter(copertinaDi);
+  if (!lista.length) { box.innerHTML = `<p class="tenue">Nel gruppo non ci sono ancora foto. Usa "Racconta un ricordo" e aggiungi lì la foto.</p>`; return; }
+  const url = await urlMediaMolti(lista.map(copertinaDi));
+  box.innerHTML = `<p class="tenue" style="margin:10px 0 6px">Tocca le foto in cui c'è ${esc(n.soprannome ?? n.nome)}</p>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:4px">${lista.map((r) =>
+      `<button type="button" data-ric="${r.id}" style="aspect-ratio:1;border:0;border-radius:10px;padding:0;background:url('${url[copertinaDi(r)]}') center/cover;position:relative"></button>`).join("")}</div>`;
+  box.querySelectorAll("[data-ric]").forEach((b) => b.onclick = async () => {
+    b.disabled = true; b.style.outline = "4px solid #C9832E";
+    const { error } = await sb.from("albero_ricordi").insert({ nodo_id: n.id, ricordo_id: b.dataset.ric, cerchia_id: cerchiaId });
+    if (error && !String(error.code) .startsWith("23505")) { alert("Non collegata: " + error.message); return; }
+    b.innerHTML = `<span style="position:absolute;right:4px;top:4px;background:#C9832E;color:#fff;border-radius:12px;width:24px;height:24px;display:grid;place-items:center">✓</span>`;
+    ricordiNodo(n, cerchiaId);
+  });
+}

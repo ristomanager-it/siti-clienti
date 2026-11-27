@@ -241,6 +241,10 @@ export default async function ({ params }) {
     if (domanda) await sb.from("domande_inviate").update({ stato: "risposta", risposta_il: new Date().toISOString() }).eq("id", domanda.id);
     if (testo || domanda || domandaSett) chiediSuMisura();
     if (apre) { alert(`Lettera chiusa. Si aprirà il ${new Date(apre + "T12:00").toLocaleDateString("it-IT", { day: "numeric", month: "long", year: "numeric" })}.`); location.hash = "#/archivio"; return; }
+    if (params.nodo && params.c) {
+      await sb.from("albero_ricordi").insert({ nodo_id: params.nodo, ricordo_id: r.id, cerchia_id: params.c });
+      location.hash = `#/albero?c=${params.c}&n=${params.nodo}`; return;
+    }
     location.hash = rispostaA ? `#/ricordo/${rispostaA.id}` : "#/";
   };
 }
