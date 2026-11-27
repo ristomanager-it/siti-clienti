@@ -243,8 +243,8 @@ async function firmata(src) {
   g.fillStyle = "#fff"; g.textBaseline = "top"; g.fillText(scritta, x, y + h * 0.05);
   return new Promise((ok) => c.toBlob((b) => ok(b), "image/jpeg", 0.9));
 }
-async function sulSocial(btn, r, media, url) {
-  const prima = btn.textContent; btn.disabled = true; btn.textContent = "Preparo…";
+export async function sulSocial(btn, r, media, url) {
+  const prima = btn.innerHTML; btn.disabled = true; btn.style.opacity = ".5"; if (btn.id === "social") btn.textContent = "Preparo…";
   const link = `${location.origin}${location.pathname}#/scopri?utm_source=social&utm_medium=condivisione`;
   const testo = `${r.titolo ? r.titolo + "\n\n" : ""}📲 Lo conservo su Ancora, il social privato per famiglie e gruppi: ${link}`;
   try {
@@ -261,5 +261,5 @@ async function sulSocial(btn, r, media, url) {
       alert("Foto scaricate. Il testo con il link è copiato: incollalo nel post.");
     }
   } catch (e) { if (e?.name !== "AbortError") alert("Non sono riuscito a prepararle: " + (e?.message ?? e)); }
-  btn.disabled = false; btn.textContent = prima;
+  btn.disabled = false; btn.style.opacity = ""; btn.innerHTML = prima;
 }

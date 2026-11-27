@@ -219,6 +219,15 @@ export default async function ({ params }) {
     };
   });
 
+  // condividi fuori da Ancora (Instagram, Facebook, stati…): solo i post tuoi
+  document.querySelectorAll("[data-social]").forEach((b) => b.onclick = async () => {
+    const { data: r } = await sb.from("ricordi").select("id, titolo, ricordi_media(path, tipo, ordine)").eq("id", b.dataset.social).maybeSingle();
+    if (!r) return;
+    const media = (r.ricordi_media ?? []).filter((m) => m.tipo === "foto" || m.tipo === "video").sort((x, y) => (x.ordine ?? 0) - (y.ordine ?? 0));
+    const url = await urlMediaMolti(media.map((m) => m.path));
+    const { sulSocial } = await import("./ricordo.js");
+    sulSocial(b, r, media, url);
+  });
   document.querySelectorAll("[data-cuore]").forEach((b) => b.onclick = async () => {
     const id = b.dataset.cuore;
     if (b.classList.contains("on")) {
@@ -269,6 +278,7 @@ function post(r, url, i) {
       <button class="icona ${mio ? "on" : ""}" data-cuore="${r.id}" aria-label="Mi piace">${ICONE.cuore}</button>
       <a class="icona" href="#/ricordo/${r.id}" aria-label="Commenta">${ICONE.commento}</a>
       <a class="icona" href="#/racconta?risposta=${r.id}" aria-label="Rispondi con un vocale">${ICONE.mic}</a>
+      ${r.autore_id === state.io.id && (foto.length || video) ? `<button class="icona" data-social="${r.id}" aria-label="Condividi sui social" style="margin-left:auto">${ICONE.condividi}</button>` : ""}
     </div>
     <div class="didascalia"><b style="font-size:14px" id="n-${r.id}" data-n="${cuori.length}" data-mio="${mio ? 1 : 0}">${cuori.length} cuori</b>
       ${r.titolo ? `<span class="q">${esc(r.titolo)}</span>` : ""}
