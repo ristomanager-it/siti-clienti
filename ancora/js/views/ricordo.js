@@ -1,5 +1,5 @@
 // Un ricordo: foto grandi, la sua voce, il testo, le risposte a voce e i commenti.
-import { sb, state, $app, esc, quando, nomeDi, avatar, pulsanteVoce, urlMediaMolti, ICONE, ANCORA_UNA_RIGA } from "../app.js";
+import { sb, state, $app, esc, quando, nomeDi, avatar, pulsanteVoce, urlMediaMolti, ICONE, ANCORA_UNA_RIGA, conLink } from "../app.js";
 
 export default async function ({ id }) {
   const { data: r } = await sb.from("ricordi")
@@ -28,9 +28,9 @@ export default async function ({ id }) {
     ${video.map((v) => `<div class="foto" style="aspect-ratio:auto;background:#000;margin-bottom:8px"><video src="${esc(url[v.path])}" controls playsinline preload="metadata" style="width:100%;max-height:75vh;display:block"></video></div>`).join("")}
     ${!foto.length && video.length && !r.testo && !audio ? "" : foto.length
       ? foto.map((f, i) => `<div class="foto" style="background-image:url('${url[f.path]}');margin-bottom:8px">${i === 0 && audio ? pulsanteVoce(url[audio.path], audio.durata_sec) : ""}</div>`).join("")
-        + (r.testo ? `<div class="didascalia" style="margin-top:6px">${esc(r.testo)}</div>` : "")
+        + (r.testo ? `<div class="didascalia" style="margin-top:6px;white-space:pre-line">${conLink(r.testo)}</div>` : "")
       : video.length && !r.testo && !audio ? ""
-      : `<div class="lettera">${esc(r.testo ?? "")}${audio ? `<div style="margin-top:14px">${pulsanteVoce(url[audio.path], audio.durata_sec, 1, "margin:0;background:rgba(18,48,44,.9)")}</div>` : ""}</div>`}
+      : `<div class="lettera">${conLink(r.testo ?? "")}${audio ? `<div style="margin-top:14px">${pulsanteVoce(url[audio.path], audio.durata_sec, 1, "margin:0;background:rgba(18,48,44,.9)")}</div>` : ""}</div>`}
     ${r.tipo === "ricetta" ? `<div class="card" style="margin-top:12px">
       <span class="tenue" style="text-transform:uppercase;font-weight:800;letter-spacing:.5px">Ingredienti${r.dettagli?.porzioni ? ` · per ${r.dettagli.porzioni} persone` : ""}</span>
       <ul style="padding-left:20px;margin:8px 0 0;line-height:1.7">${(r.dettagli?.ingredienti ?? []).map((i) => `<li>${esc(i)}</li>`).join("")}</ul>
@@ -45,6 +45,10 @@ export default async function ({ id }) {
       <b style="display:block">💌 Fanne una cartolina</b>
       <p class="tenue" style="margin:4px 0 10px">Da mandare su WhatsApp o mettere negli stati. Chi la riceve vede la foto e le prime righe${audio ? " e, per sentire la voce," : "; per leggerlo tutto"} si iscrive gratis. Il resto della famiglia resta privato.</p>
       <div id="cart-azioni"></div></div>` : ""}
+    ${r.autore_id === state.io.id && (foto.length || video.length) ? `<div class="card" style="margin-top:12px">
+      <b style="display:block">📲 Mettilo sui social</b>
+      <p class="tenue" style="margin:4px 0 10px">Le tue ${foto.length ? "foto" : ""}${foto.length && video.length ? " e i tuoi " : ""}${video.length ? "video" : ""} su Instagram, Facebook, TikTok o negli stati. Qui su Ancora resta tutto privato.</p>
+      <button class="btn chiaro" id="social" style="margin:0">📲 Condividi fuori da Ancora</button></div>` : ""}
     <div class="pad tenue">${cuori.length ? `♥ ${cuori.map((c) => esc(nomeDi(c.persone))).join(", ")}` : ""}</div>
 
     ${(risposte ?? []).length ? `<h2>Risposte</h2>` + risposte.map((x) => {
@@ -55,7 +59,7 @@ export default async function ({ id }) {
     }).join("") : ""}
 
     ${commenti.length ? `<h2>Commenti</h2>` + commenti.map((c) =>
-      `<div class="card"><b>${esc(nomeDi(c.persone))}</b> ${esc(c.testo)}</div>`).join("") : ""}
+      `<div class="card"><b>${esc(nomeDi(c.persone))}</b> ${conLink(c.testo)}</div>`).join("") : ""}
 
     <div class="pad" style="margin-top:12px">
       ${r.autore_id !== state.io.id ? `<a class="btn ambra" href="#/racconta?risposta=${r.id}">Rispondi con la tua voce</a>
@@ -100,6 +104,7 @@ export default async function ({ id }) {
     location.reload();
   };
   if (r.tipo === "ricetta" && r.autore_id === state.io.id) condivisioneRicetta(r);
+  document.getElementById("social")?.addEventListener("click", (e) => sulSocial(e.target, r, [...foto, ...video], url));
   if (cartolinaPossibile(r)) cartolina(r, { foto: foto[0] ? url[foto[0].path] : null, voce: !!audio });
 }
 
@@ -221,4 +226,40 @@ export async function condivisioneRicetta(r) {
     window.open(`https://wa.me/?text=${encodeURIComponent(`${testo}\n${link}`)}`, "_blank");
   };
   await disegna(r.link_pubblico);
+}
+
+// --- Sui social: le tue foto (con un piccolo "Ancora" nell'angolo) e i tuoi video, più due righe con il link ---
+async function firmata(src) {
+  const img = await new Promise((ok, ko) => { const i = new Image(); i.crossOrigin = "anonymous"; i.onload = () => ok(i); i.onerror = ko; i.src = src; });
+  const lato = 2048, k = Math.min(1, lato / Math.max(img.width, img.height));
+  const c = document.createElement("canvas"); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+  const g = c.getContext("2d"); g.drawImage(img, 0, 0, c.width, c.height);
+  const h = Math.max(22, Math.round(c.width * 0.032)), pad = Math.round(h * 0.55);
+  try { await document.fonts.load(`700 ${h}px Fraunces`); } catch { /* niente */ }
+  g.font = `700 ${h}px Fraunces, Georgia, serif`;
+  const scritta = "Ancora", lw = g.measureText(scritta).width;
+  const x = c.width - lw - pad * 2.2, y = c.height - h - pad * 2.2;
+  g.fillStyle = "rgba(15,82,87,.78)"; g.beginPath(); g.roundRect?.(x - pad, y - pad * 0.6, lw + pad * 2, h + pad * 1.4, h); g.fill();
+  g.fillStyle = "#fff"; g.textBaseline = "top"; g.fillText(scritta, x, y + h * 0.05);
+  return new Promise((ok) => c.toBlob((b) => ok(b), "image/jpeg", 0.9));
+}
+async function sulSocial(btn, r, media, url) {
+  const prima = btn.textContent; btn.disabled = true; btn.textContent = "Preparo…";
+  const link = `${location.origin}${location.pathname}#/scopri?utm_source=social&utm_medium=condivisione`;
+  const testo = `${r.titolo ? r.titolo + "\n\n" : ""}📲 Lo conservo su Ancora, il social privato per famiglie e gruppi: ${link}`;
+  try {
+    const files = [];
+    for (const [i, m] of media.slice(0, 10).entries()) {
+      if (m.tipo === "foto") { const b = await firmata(url[m.path]); files.push(new File([b], `ancora-${i + 1}.jpg`, { type: "image/jpeg" })); }
+      else { const b = await (await fetch(url[m.path])).blob(); const est = (b.type.split("/")[1] || "mp4").replace("quicktime", "mov"); files.push(new File([b], `ancora-${i + 1}.${est}`, { type: b.type || "video/mp4" })); }
+    }
+    try { await navigator.clipboard?.writeText(testo); } catch { /* niente */ }
+    if (navigator.canShare?.({ files })) { await navigator.share({ files, text: testo }); }
+    else {
+      // computer o browser senza condivisione dei file: si scaricano, e il testo è già copiato
+      for (const f of files) { const a = document.createElement("a"); a.href = URL.createObjectURL(f); a.download = f.name; a.click(); }
+      alert("Foto scaricate. Il testo con il link è copiato: incollalo nel post.");
+    }
+  } catch (e) { if (e?.name !== "AbortError") alert("Non sono riuscito a prepararle: " + (e?.message ?? e)); }
+  btn.disabled = false; btn.textContent = prima;
 }

@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "187";
+const VER = "188";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 // --- giochi aperti a tutti (gli altri li vede solo il superadmin, che li prova e li apre uno per uno) ---
@@ -854,6 +854,20 @@ export const ANCORA_IN_BREVE = `*Ancora* è la prima app social privata della fa
 🎲 Tombola, briscola, tressette, biliardo e calciobalilla, anche da case diverse
 ✨ Con Ancora+: l'aiutante di casa (cucina, piante, compiti, viaggi), il libro stampato e il film della vostra famiglia
 È gratis, si entra in un minuto.`;
+/** Testo sicuro con i link cliccabili; un link YouTube si vede con la sua anteprima. */
+export function conLink(t) {
+  const sicuro = esc(t ?? "");
+  let yt = null;
+  const html = sicuro.replace(/\bhttps?:\/\/[^\s<]+[^\s<.,;:!?)"'»]/g, (u) => {
+    const vero = u.replace(/&amp;/g, "&");
+    const m = vero.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([\w-]{11})/);
+    if (m && !yt) yt = { id: m[1], href: u };
+    let corto = u.replace(/^https?:\/\/(www\.)?/, ""); if (corto.length > 40) corto = corto.slice(0, 38) + "…";
+    return `<a href="${u}" target="_blank" rel="noopener noreferrer" style="color:var(--petrolio,#0F5257);font-weight:700;word-break:break-all">${corto}</a>`;
+  });
+  return html + (yt ? `<a href="${yt.href}" target="_blank" rel="noopener noreferrer" style="display:block;margin-top:8px;position:relative;border-radius:12px;overflow:hidden;aspect-ratio:16/9;background:#000 url('https://i.ytimg.com/vi/${yt.id}/hqdefault.jpg') center/cover">
+    <span style="position:absolute;inset:0;display:grid;place-items:center;color:#fff;font-size:44px;text-shadow:0 2px 8px rgba(0,0,0,.6)">▶</span></a>` : "");
+}
 export const ANCORA_UNA_RIGA = "📲 Ancora è il social privato nato in Italia per famiglie e gruppi: ti iscrivi gratis in un minuto e puoi creare anche la pagina della tua famiglia.";
 // gli inviti: social (solo noi), organizzazione (calendario, liste) e soprattutto i ricordi che non si perdono. Diversi per ogni tipo di gruppo.
 export const ANCORA_PAGINA_PER = { famiglia: "la pagina della nostra famiglia", amici: "la nostra pagina", coppia: "la nostra pagina, solo per noi due", casa: "la pagina di casa", gruppo: "la pagina del nostro gruppo" };

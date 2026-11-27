@@ -1,5 +1,5 @@
 // Il feed della famiglia: storie della settimana in alto, poi i ricordi con foto grande e voce.
-import { sb, state, $app, esc, quando, nomeDi, avatar, pulsanteVoce, urlMediaMolti, ICONE, settimana, testata, aggiorna, cambiaImmagine, invitaInCerchia, giochiPermessi, giocoVisibile } from "../app.js";
+import { sb, state, $app, esc, quando, nomeDi, avatar, pulsanteVoce, urlMediaMolti, ICONE, settimana, testata, aggiorna, cambiaImmagine, invitaInCerchia, giochiPermessi, giocoVisibile, conLink } from "../app.js";
 
 let gpHome = { admin: false, aperti: new Set() };
 export default async function ({ params }) {
@@ -257,7 +257,7 @@ function post(r, url, i) {
         <div class="carosello">${foto.map((f, k) => `<img src="${esc(url[f.path] ?? "")}" alt="" ${k ? 'loading="lazy"' : ""} draggable="false">`).join("")}</div>
         ${foto.length > 1 ? `<span class="conta">1/${foto.length}</span><div class="pallini">${foto.map((_, k) => `<i class="${k ? "" : "on"}"></i>`).join("")}</div>` : ""}
         ${voce}<span class="cuore-grande" aria-hidden="true">${ICONE.cuore}</span></div>`
-    : `<div class="lettera"><span data-testo="${r.id}">${esc(r.testo ?? "")}</span>${voce ? `<div style="margin-top:14px">${voce.replace('class="voce"', 'class="voce" style="margin:0;background:rgba(18,48,44,.9)"')}</div>` : ""}</div>`;
+    : `<div class="lettera"><span data-testo="${r.id}">${conLink(r.testo ?? "")}</span>${voce ? `<div style="margin-top:14px">${voce.replace('class="voce"', 'class="voce" style="margin:0;background:rgba(18,48,44,.9)"')}</div>` : ""}</div>`;
   return `<article class="post" style="position:relative">
     <a class="post-testa" href="#/profilo/${r.autore_id}">${avatar(r.persone, 38, r.persone?.foto_path ? url[r.persone.foto_path] : null)}
       <div><b>${esc(nomeDi(r.persone))}</b><small>${quando(r.creato_il)}</small></div></a>
@@ -272,7 +272,7 @@ function post(r, url, i) {
     </div>
     <div class="didascalia"><b style="font-size:14px" id="n-${r.id}" data-n="${cuori.length}" data-mio="${mio ? 1 : 0}">${cuori.length} cuori</b>
       ${r.titolo ? `<span class="q">${esc(r.titolo)}</span>` : ""}
-      ${foto.length || video ? `<span data-testo="${r.id}">${esc(r.testo ?? "")}</span>` : ""}
+      ${foto.length || video ? `<span data-testo="${r.id}">${conLink(r.testo ?? "")}</span>` : ""}
     </div></article>`;
 }
 
@@ -397,7 +397,7 @@ function guardaStorie(gruppi, gi, url, conAggiungi = false) {
         <button id="st-ind" aria-label="Indietro" style="position:absolute;left:0;top:0;bottom:0;width:35%;background:none;border:0"></button>
         <button id="st-av" aria-label="Avanti" style="position:absolute;right:0;top:0;bottom:0;width:65%;background:none;border:0"></button>
       </div>
-      ${r.testo ? `<p style="margin:0;padding:8px 16px 0;font-size:17px">${esc(r.testo)}</p>` : ""}
+      ${r.testo ? `<p style="margin:0;padding:8px 16px 0;font-size:17px">${conLink(r.testo)}</p>` : ""}
       ${gr.autore === state.io.id ? `<div id="st-reazioni" style="padding:8px 16px 0;font-size:15px;opacity:.9"></div>`
         : `<div style="display:flex;justify-content:space-around;padding:8px 10px 0">${["❤️", "😂", "😍", "😮", "😢", "👏", "🔥"].map((e) => `<button data-emo="${e}" aria-label="Reagisci ${e}" style="background:none;border:0;font-size:30px;width:46px;height:46px">${e}</button>`).join("")}</div>`}
       <div style="display:flex;align-items:center;gap:12px;padding:6px 16px calc(14px + env(safe-area-inset-bottom))">
@@ -607,7 +607,7 @@ async function oggiNelGruppo(cerchia) {
         ${(risp ?? []).map((r) => `<div style="display:flex;gap:10px;padding:10px 0;border-top:1px solid var(--bordo)">
           ${avatar(r.persone ?? {}, 34, r.persone?.foto_path ? url[r.persone.foto_path] : null)}
           <div style="flex:1;min-width:0"><b>${esc(r.persona_id === state.io.id ? "Tu" : nomeDi(r.persone ?? {}))}</b>
-            ${r.testo ? `<div style="white-space:pre-wrap">${esc(r.testo)}</div>` : ""}
+            ${r.testo ? `<div style="white-space:pre-wrap">${conLink(r.testo)}</div>` : ""}
             ${r.media_path && url[r.media_path] ? (r.media_tipo === "video" ? `<video src="${url[r.media_path]}" controls playsinline style="width:100%;border-radius:12px;margin-top:6px"></video>`
               : `<img src="${url[r.media_path]}" alt="" style="width:100%;border-radius:12px;margin-top:6px">`) : ""}</div></div>`).join("")}
         ${dom.risposte < dom.membri ? `<p class="tenue" style="margin:8px 0 0;font-size:13px">Mancano ${dom.membri - dom.risposte}: le loro risposte arrivano qui.</p>` : ""}</div>`;

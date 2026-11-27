@@ -1,5 +1,5 @@
 // Le risposte alla domanda della settimana, e tutte quelle delle settimane passate: la famiglia che si racconta.
-import { sb, state, $app, esc, nomeDi, avatar, pulsanteVoce, urlMediaMolti, ICONE, settimana } from "../app.js";
+import { sb, state, $app, esc, nomeDi, avatar, pulsanteVoce, urlMediaMolti, ICONE, settimana, conLink } from "../app.js";
 
 export default async function ({ params }) {
   const cerchia = state.cerchie.find((c) => c.id === params.c) ?? state.cerchie.find((c) => c.tipo === "famiglia");
@@ -30,7 +30,7 @@ export default async function ({ params }) {
           return `<div class="card">
             <a class="riga" href="#/ricordo/${r.id}" style="text-decoration:none;color:inherit">${avatar(r.persone, 32, r.persone?.foto_path ? url[r.persone.foto_path] : null)}<b style="flex:1">${esc(nomeDi(r.persone))}</b></a>
             ${f ? `<div class="foto" style="margin:10px 0 0;aspect-ratio:4/3;background-image:url('${url[f.path]}')"></div>` : ""}
-            ${r.testo ? `<p style="margin:10px 0 0;white-space:pre-line">${esc(r.testo)}</p>` : ""}
+            ${r.testo ? `<p style="margin:10px 0 0;white-space:pre-line">${conLink(r.testo)}</p>` : ""}
             ${a ? pulsanteVoce(url[a.path], a.durata_sec, i + 2, "margin:10px 0 0;background:var(--notte)") : ""}
           </div>`;
         }).join("")}`;

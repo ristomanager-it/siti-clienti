@@ -69,6 +69,7 @@ export default async function ({ params }) {
       <p id="esito" role="status"></p>
     </div>`;
 
+  if (params.condivisi) riprendiCondivisi();
   document.getElementById("isric").onchange = (e) => { document.getElementById("ric").hidden = !e.target.checked; };
 
   document.querySelectorAll("#cerchie .chip").forEach((b) => b.onclick = () => {
@@ -247,4 +248,21 @@ export default async function ({ params }) {
     }
     location.hash = rispostaA ? `#/ricordo/${rispostaA.id}` : "#/";
   };
+}
+
+// arrivato con "Condividi → Ancora" da un'altra app: il testo o il link e i file sono pronti nella pagina
+async function riprendiCondivisi() {
+  try {
+    const c = await caches.open("ancora-condivisi");
+    const t = await c.match("condivisi/testo"); const testo = t ? await t.text() : "";
+    if (testo) { const el = document.getElementById("testo"); el.value = testo; el.dispatchEvent(new Event("input", { bubbles: true })); }
+    const dt = new DataTransfer();
+    for (const k of await c.keys()) {
+      if (k.url.endsWith("/testo")) continue;
+      const r = await c.match(k); const b = await r.blob();
+      dt.items.add(new File([b], decodeURIComponent(r.headers.get("X-Nome") || "file"), { type: b.type }));
+    }
+    if (dt.files.length) { const f = document.getElementById("foto"); f.files = dt.files; f.dispatchEvent(new Event("change", { bubbles: true })); }
+    for (const k of await c.keys()) await c.delete(k);
+  } catch { /* niente */ }
 }

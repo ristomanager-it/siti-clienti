@@ -1,5 +1,5 @@
 // Service worker: cache dell'app e notifiche push (gratuite, a differenza di WhatsApp)
-const CACHE = "ancora-v187";
+const CACHE = "ancora-v188";
 const FILE = ["./", "index.html", "css/app.css", "js/app.js", "manifest.webmanifest"];
 
 self.addEventListener("install", (e) => { self.skipWaiting(); e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILE))); });
@@ -7,6 +7,24 @@ self.addEventListener("activate", (e) => e.waitUntil(
   caches.keys().then((k) => Promise.all(k.filter((x) => x !== CACHE).map((x) => caches.delete(x)))).then(() => self.clients.claim()),
 ));
 self.addEventListener("fetch", (e) => {
+  // condiviso dentro Ancora da un'altra app (Android): foto, video o un link → la pagina "Racconta" già pronta
+  const u = new URL(e.request.url);
+  if (e.request.method === "POST" && u.origin === location.origin && u.pathname.endsWith("/condividi")) {
+    e.respondWith((async () => {
+      const d = await e.request.formData();
+      const c = await caches.open("ancora-condivisi");
+      for (const k of await c.keys()) await c.delete(k);
+      const testo = [d.get("title"), d.get("text"), d.get("url")].filter((x) => x && String(x).trim()).join("\n");
+      await c.put("condivisi/testo", new Response(testo));
+      let i = 0;
+      for (const f of d.getAll("media")) {
+        if (!(f instanceof File) || !f.size) continue;
+        await c.put(`condivisi/${i++}`, new Response(f, { headers: { "Content-Type": f.type, "X-Nome": encodeURIComponent(f.name || `file-${i}`) } }));
+      }
+      return Response.redirect(`./#/racconta?condivisi=1`, 303);
+    })());
+    return;
+  }
   if (e.request.method !== "GET" || new URL(e.request.url).origin !== location.origin) return;
   // sempre la versione più nuova (il telefono non tiene file vecchi); offline, quella salvata
   e.respondWith(fetch(e.request, { cache: "no-cache" }).catch(() => caches.match(e.request)));

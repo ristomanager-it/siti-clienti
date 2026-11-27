@@ -1,6 +1,6 @@
 // Chat di famiglia: #/chat = elenco (gruppi delle famiglie + messaggi a due); #/chat/c-<cerchia> o #/chat/d-<persona> = conversazione.
 // Si aggiorna da sola ogni pochi secondi mentre è aperta. Foto, video e vocali come in ogni chat.
-import { sb, state, $app, esc, avatar, nomeDi, urlMediaMolti, quando, personeConosciute } from "../app.js";
+import { sb, state, $app, esc, avatar, nomeDi, urlMediaMolti, quando, personeConosciute, conLink } from "../app.js";
 
 export default async function ({ id }) {
   if (id) return conversazione(id);
@@ -102,7 +102,7 @@ async function conversazione(id) {
         ${gruppo && !mio ? avatar(m.persone ?? {}, 28, m.persone?.foto_path ? url[m.persone.foto_path] : null) : ""}
         <div ${mio ? "" : `data-msg="${m.id}"`} style="max-width:78%;padding:${m.media_tipo === "foto" && !m.testo ? "4px" : "9px 12px"};border-radius:18px;${mio ? "background:var(--notte);color:#FBF3E2;border-bottom-right-radius:6px" : "background:#fff;border:1px solid var(--bordo);border-bottom-left-radius:6px"}">
           ${gruppo && !mio ? `<div style="font-size:12px;font-weight:800;color:var(--ambra);margin-bottom:2px">${esc(nomeDi(m.persone ?? {}))}</div>` : ""}
-          ${media}${m.testo ? `<div style="white-space:pre-wrap;word-wrap:break-word;font-size:16px;line-height:1.35">${esc(m.testo)}</div>` : ""}
+          ${media}${m.testo ? `<div style="white-space:pre-wrap;word-wrap:break-word;font-size:16px;line-height:1.35">${conLink(m.testo)}</div>` : ""}
           <div style="font-size:11px;opacity:.6;text-align:right;margin-top:2px">${new Date(m.creato_il).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}</div></div></div>`);
       ultimo = m.creato_il;
     }
