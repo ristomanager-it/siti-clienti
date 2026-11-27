@@ -27,17 +27,18 @@ export default async function ({ params }) {
   // il link su WhatsApp si aprirebbe in Safari e non qui
   const app = navigator.standalone || matchMedia("(display-mode: standalone)").matches;
   $app().innerHTML = `${ant && !ant.errore ? anteprima(ant) : ""}
-    <div class="pad" style="padding-top:64px"><span class="logo" style="font-size:44px">Ancora</span><div class="tenue" style="font-weight:700;letter-spacing:.02em;margin:-4px 0 18px">Il cloud dei tuoi ricordi</div>
+    ${ant && !ant.errore ? `<div class="pad" style="padding-top:4px"><h1 style="font-size:26px;line-height:1.2;margin-bottom:4px">Entra con il tuo account e sei dentro.</h1>
+      <p class="tenue" style="margin:0">Il nuovo gruppo si aggiunge a quelli che hai già.</p></div>` : `<div class="pad" style="padding-top:64px"><span class="logo" style="font-size:44px">Ancora</span><div class="tenue" style="font-weight:700;letter-spacing:.02em;margin:-4px 0 18px">Il cloud dei tuoi ricordi</div>
     ${app ? `<p style="font-family:Fraunces,serif;font-size:24px;line-height:1.25;color:var(--notte);margin-bottom:4px">Bentornato! Entra con l'email e la password che hai scelto quando ti sei iscritto.</p>`
       : `<p id="gancio" style="font-family:Fraunces,serif;font-size:25px;line-height:1.25;color:var(--notte);min-height:94px;margin-bottom:4px;transition:opacity .5s">${GANCI[0]}</p>`}
-    </div>
+    </div>`}
     <form id="f" class="card">
       <label for="tel">Il tuo numero di telefono</label>
       <input id="tel" type="tel" inputmode="tel" placeholder="+39 333 123 4567" required autocomplete="tel">
       <p class="tenue">Ti mandiamo il link di accesso su WhatsApp.</p>
       <button class="btn" type="submit">Ricevi il link</button>
       <p id="esito" role="status"></p>
-      <p style="text-align:center;margin:8px 0 0">Non hai un account? <a href="#/iscriviti${qs ? "?" + qs : ""}"><b>Crealo gratis</b></a></p>
+      <p style="text-align:center;margin:8px 0 0">Non hai un account? <a href="#/iscriviti?${qs ? qs + "&" : ""}nuovo=1"><b>Crealo gratis</b></a></p>
     </form>
     <details class="card" ${app ? "open" : ""} style="${app ? "order:-1" : ""}"><summary style="font-weight:800;cursor:pointer;min-height:32px">Entra con email e password</summary>
       <form id="fe">

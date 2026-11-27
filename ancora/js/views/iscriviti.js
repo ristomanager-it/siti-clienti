@@ -10,11 +10,16 @@ export default async function ({ params } = {}) {
   const qsAccesso = [invito && `invito=${encodeURIComponent(invito)}`, ricetta && `ricetta=${encodeURIComponent(ricetta)}`, torna && `torna=${encodeURIComponent(torna)}`].filter(Boolean).join("&");
   // già dentro (stesso telefono): niente modulo, si va dritti
   if ((await sb.auth.getSession()).data.session) { location.replace(dopo); if (invito) location.reload(); return; }
+  // invitato in un altro gruppo ma già su Ancora (su questo telefono è già entrato altre volte): dritto all'accesso, poi entra nel gruppo
+  let conosciuto = false; try { conosciuto = !!localStorage.getItem("ancora_utente"); } catch { /* niente */ }
+  if (invito && conosciuto && !params?.nuovo) { location.replace(`#/accesso?${qsAccesso}`); return; }
   const ant = invito ? await fetch(`${SUPABASE_URL}/functions/v1/invito?codice=${encodeURIComponent(invito)}`).then((r) => r.json()).catch(() => null) : null;
   $app().innerHTML = `${ant && !ant.errore ? anteprima(ant) : ""}
     <div class="pad" style="padding-top:${ant && !ant.errore ? 4 : 48}px">${ant && !ant.errore ? "" : `<span class="logo" style="font-size:40px">Ancora</span><div class="tenue" style="font-weight:700;margin:-4px 0 18px">La prima app social privata della famiglia e dei gruppi</div>`}
       <h1 style="font-size:28px;line-height:1.2">${params?.perche ? `${params?.da ? `👋 ${esc(params.da)} ti ha invitato. ` : ""}${esc(params.perche)}` : ant && !ant.errore ? "Crea il tuo account e sei dentro." : invito ? "Ti aspettano in famiglia." : ricetta ? "Un minuto e leggi la ricetta." : params?.da ? `👋 ${esc(params.da)} ti invita su Ancora.` : "Crea il tuo account gratis."}</h1>
       <p style="font-size:16px;margin:0">${ant && !ant.errore ? "Gratis, un minuto. Poi entri subito nel gruppo." : invito ? "Crea il tuo account e sei dentro." : "La tua famiglia, i tuoi gruppi, i tuoi ricordi. Gratis, senza carta di credito."}</p></div>
+    ${invito ? `<div class="pad" style="padding-top:0;padding-bottom:0"><a class="btn chiaro" href="#/accesso?${esc(qsAccesso)}" style="margin:0">🙋 Ho già Ancora: entro con il mio account</a>
+      <p class="tenue" style="text-align:center;margin:8px 0 0;font-size:14px">Sei nuovo? Crea l'account qui sotto 👇</p></div>` : ""}
     <form id="f" class="card">
       <div class="riga" style="gap:8px">
         <div style="flex:1"><label for="nome" style="margin-top:0">Nome</label><input id="nome" required maxlength="40" autocomplete="given-name"></div>
