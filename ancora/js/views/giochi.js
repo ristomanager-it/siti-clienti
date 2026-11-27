@@ -24,6 +24,7 @@ export default async function ({ params } = {}) {
   $app().innerHTML = `
     <header class="testa"><a class="icona" href="#/" aria-label="Indietro">${ICONE.indietro}</a><b>🎲 Giochi</b><button class="icona" id="notif-giochi" aria-label="Notifiche dei giochi" style="font-size:22px">${(state.io.notifiche_giochi ?? "poche") === "nessuna" ? "🔕" : (state.io.notifiche_giochi ?? "poche") === "tutte" ? "🔔" : "🔉"}</button></header>
     <div class="pad" style="padding-bottom:120px">
+      <div id="tavoli-miei"></div>
       <p class="tenue" style="margin-top:0">Si gioca tra voi, anche da case diverse. Con chi giochi?</p>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin:0 0 16px">${state.cerchie.map((c) => `<a href="#/giochi?c=${c.id}" class="chip ${c.id === fam?.id ? "on" : ""}" style="margin:0;text-decoration:none">${esc(c.nome)}</a>`).join("")}</div>
       ${gp.admin ? `<p style="margin:0 0 14px;padding:10px 12px;border-radius:12px;background:#FFF4DF;font-size:14px">🔒 Vedi tutti i giochi perché sei il superadmin. Quando uno è provato, toccalo su <b>Visibile a tutti</b>.</p>` : ""}
@@ -45,4 +46,13 @@ export default async function ({ params } = {}) {
     await giochiPermessi(true);
     location.reload();
   });
+  // i tavoli che ti aspettano: qui, non più in home
+  try {
+    const righe = await (await import("./home.js")).tavoliPerMe();
+    const box = document.getElementById("tavoli-miei");
+    if (box && righe.length) box.innerHTML = `<div style="margin:0 0 16px;border-radius:16px;background:#12302C;color:#FBF3E2;overflow:hidden">
+      ${righe.map(([h, ic, tit, sotto, az], i) => `<a href="${h}" style="display:flex;align-items:center;gap:10px;padding:10px 12px;color:inherit;text-decoration:none;${i ? "border-top:1px solid rgba(255,255,255,.12)" : ""}">
+        <span style="font-size:26px">${ic}</span><span style="flex:1;min-width:0"><b style="display:block;font-size:15px">${tit}</b><small style="opacity:.8">${sotto}</small></span>
+        <span style="background:#E8B56B;color:#12302C;border-radius:999px;padding:6px 12px;font-weight:800;font-size:14px;white-space:nowrap">${az}</span></a>`).join("")}</div>`;
+  } catch { /* niente */ }
 }

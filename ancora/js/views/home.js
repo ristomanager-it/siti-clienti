@@ -533,8 +533,15 @@ function visivo(r) { return (r.ricordi_media ?? []).find((m) => m.tipo === "foto
 
 // "Ti aspettano al tavolo": gli inviti ai giochi si vedono anche dentro l'app, non solo come notifica sul telefono
 async function tavoliAperti() {
-  const box = document.getElementById("tavoli-aperti"); if (!box || !state.io) return;
-  const ids = state.cerchie.map((c) => c.id); if (!ids.length) return;
+  if (!document.getElementById("chip-giochi") || !state.io || state.io.notifiche_giochi === "nessuna") return;
+  const righe = await tavoliPerMe();
+  const chip = document.getElementById("chip-giochi");
+  if (chip && righe.length) chip.innerHTML = `🎲 Giochi <span style="display:inline-grid;place-items:center;min-width:20px;height:20px;border-radius:10px;background:#C8102E;color:#fff;font-size:12px;font-weight:800;margin-left:4px;padding:0 5px">${righe.length}</span>`;
+}
+/** I tavoli che mi aspettano (inviti, partite mie, tombole, tornei): in home solo il numerino, l'elenco sta nei Giochi. */
+export async function tavoliPerMe() {
+  const gpHome = await giochiPermessi().catch(() => ({ admin: false, aperti: new Set() }));
+  const ids = state.cerchie.map((c) => c.id); if (!ids.length) return [];
   const da = new Date(Date.now() - 8 * 3600e3).toISOString();
   const [{ data: carteGruppi }, { data: tomb }, { data: tab }, { data: carteOspite }] = await Promise.all([
     sb.from("partite").select("id, gioco, n, posti, stato, creato_da, cerchia_id").in("cerchia_id", ids).in("stato", ["attesa", "in_corso"]).gte("aggiornata_il", da).order("creata_il", { ascending: false }).limit(10),
@@ -574,14 +581,7 @@ async function tavoliAperti() {
   }
   const giro = righe.filter(([h]) => giocoVisibile(gpHome, h.replace(/^#\//, "").split("?")[0]));
   righe.length = 0; righe.push(...giro);
-  if (!righe.length) return;
-  const chip = document.getElementById("chip-giochi");
-  if (chip) chip.innerHTML = `🎲 Giochi <span style="display:inline-grid;place-items:center;min-width:20px;height:20px;border-radius:10px;background:#C8102E;color:#fff;font-size:12px;font-weight:800;margin-left:4px;padding:0 5px">${righe.length}</span>`;
-  box.innerHTML = `<div style="margin:0 16px 14px;border-radius:16px;background:#12302C;color:#FBF3E2;overflow:hidden">
-    ${righe.slice(0, 3).map(([h, ic, tit, sotto, az], i) => `<a href="${h}" style="display:flex;align-items:center;gap:10px;padding:10px 12px;color:inherit;text-decoration:none;${i ? "border-top:1px solid rgba(255,255,255,.12)" : ""}">
-      <span style="font-size:26px">${ic}</span><span style="flex:1;min-width:0"><b style="display:block;font-size:15px">${tit}</b><small style="opacity:.8">${sotto}</small></span>
-      <span style="background:#E8B56B;color:#12302C;border-radius:999px;padding:6px 12px;font-weight:800;font-size:14px;white-space:nowrap">${az}</span></a>`).join("")}
-    ${righe.length > 3 ? `<a href="#/giochi" style="display:block;text-align:center;padding:8px;color:#E8B56B;font-weight:700;text-decoration:none;border-top:1px solid rgba(255,255,255,.12)">Altri ${righe.length - 3} tavoli</a>` : ""}</div>`;
+  return righe;
 }
 
 
