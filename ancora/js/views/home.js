@@ -109,11 +109,12 @@ export default async function ({ params }) {
           <small style="color:#085041">Cosa cucino col frigo · com'è la pianta · la spesa · gli impegni</small></span>
         <span aria-hidden="true" style="font-size:22px;color:#085041">›</span></a>`;
     })() : ""}
-    ${fam ? (() => {
+    ${fam || scelta ? (() => {
       // una riga di pulsanti piccoli (scorre di lato): la tombola solo nel periodo di Natale
       const d = new Date(), m = d.getMonth(), g = d.getDate();
       const natale = (m === 10 && g >= 20) || m === 11 || (m === 0 && g <= 6);
-      const tasti = [...(natale && giocoVisibile(gpHome, "tombola") ? [[`#/tombola?c=${fam.id}`, "🎄 Tombola"]] : []), ...(giochiSi ? [["#/giochi", "🎲 Giochi"]] : []), ["#/calendario", "📅 Calendario"], ["#/liste", "📝 Liste"], ["#/ricette", "🍝 Ricette"]];
+      const gid = scelta?.id ?? fam?.id;
+      const tasti = [[`#/uscite?c=${gid}`, "🎉 Uscite"], ...(natale && fam && giocoVisibile(gpHome, "tombola") ? [[`#/tombola?c=${fam.id}`, "🎄 Tombola"]] : []), ...(giochiSi ? [["#/giochi", "🎲 Giochi"]] : []), ["#/calendario", "📅 Calendario"], ["#/liste", "📝 Liste"], ["#/ricette", "🍝 Ricette"]];
       return `<nav aria-label="Scorciatoie" style="display:flex;gap:8px;overflow-x:auto;padding:0 16px 14px;scrollbar-width:none">${tasti.map(([h, t]) =>
         `<a href="${h}" class="chip" ${h === "#/giochi" ? 'id="chip-giochi"' : ""} style="margin:0;white-space:nowrap;text-decoration:none;flex-shrink:0">${t}</a>`).join("")}</nav><div id="tavoli-aperti"></div>`;
     })() : ""}
@@ -576,6 +577,7 @@ async function oggiNelGruppo(cerchia) {
   // la domanda del giorno è sospesa (da ripensare): per ora solo i primi passi
   const { data: passi } = await sb.rpc("primi_passi"); const dom = null;
   let html = "";
+  try { html += await (await import("./uscite.js")).prossimeUscite(cerchia); } catch { /* niente */ }
   const p = (passi ?? []).find((x) => x.cerchia === cerchia) ?? (passi ?? [])[0];
   if (p) {
     const voce = (fatto, testo, href) => `<a href="${href}" style="display:flex;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--bordo);text-decoration:none;color:inherit">

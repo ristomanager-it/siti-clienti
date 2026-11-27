@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "180";
+const VER = "181";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 // --- giochi aperti a tutti (gli altri li vede solo il superadmin, che li prova e li apre uno per uno) ---
@@ -27,6 +27,8 @@ const ROTTE = {
   "ricordo": () => import(`./views/ricordo.js?v=${VER}`),
   "profilo": () => import(`./views/profilo.js?v=${VER}`),
   "figli": () => import(`./views/figli.js?v=${VER}`),
+  "uscite": () => import(`./views/uscite.js?v=${VER}`),
+  "uscita": () => import(`./views/uscite.js?v=${VER}`),
   "diario": () => import(`./views/diario.js?v=${VER}`),
   "cerchie": () => import(`./views/cerchie.js?v=${VER}`),
   "regala": () => import(`./views/regala.js?v=${VER}`),
@@ -277,7 +279,7 @@ async function render() {
   const vista = await carica();
   $app().innerHTML = "";
   // arrivato da un invito a giocare: appena al tavolo, gli chiediamo di salvare Ancora sulla schermata Home (per gli inviti e le notifiche)
-  if (["briscola", "tressette", "stoppa", "biliardo", "calcio", "tombola", "stop", "auto"].includes(nome)) {
+  if (["uscita", "briscola", "tressette", "stoppa", "biliardo", "calcio", "tombola", "stop", "auto"].includes(nome)) {
     let dopoTavolo = false; try { dopoTavolo = sessionStorage.getItem("ancora_dopo_tavolo") === "1"; sessionStorage.removeItem("ancora_dopo_tavolo"); } catch { /* niente */ }
     if (dopoTavolo) setTimeout(() => invitoSchermataHome(true), 2500);
   }
