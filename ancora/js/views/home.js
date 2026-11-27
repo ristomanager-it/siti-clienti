@@ -117,6 +117,7 @@ export default async function ({ params }) {
       return `<nav aria-label="Scorciatoie" style="display:flex;gap:8px;overflow-x:auto;padding:0 16px 14px;scrollbar-width:none">${tasti.map(([h, t]) =>
         `<a href="${h}" class="chip" ${h === "#/giochi" ? 'id="chip-giochi"' : ""} style="margin:0;white-space:nowrap;text-decoration:none;flex-shrink:0">${t}</a>`).join("")}</nav><div id="tavoli-aperti"></div>`;
     })() : ""}
+    <div id="oggi-gruppo"></div>
     ${(() => {
       // prima i post; la domanda della settimana e gli inviti a raccontare arrivano dopo i primi due
       const extra = `<div id="mia-domanda" hidden></div><div id="per-chi-conta"></div>`;
@@ -126,6 +127,7 @@ export default async function ({ params }) {
     })()}`;
   perChiConta();
   tavoliAperti();
+  oggiNelGruppo(filtro && filtro !== "diretti" ? filtro : ordinaCerchie(state.cerchie)[0]?.id);
   collegaStorie(perPersona, url, filtro);
   document.querySelectorAll("[data-invita]").forEach((b) => b.onclick = () => invitaInCerchia(b.dataset.invita));
   document.querySelectorAll("input[data-img]").forEach((i) => i.onchange = async () => {
@@ -552,4 +554,89 @@ async function tavoliAperti() {
       <span style="font-size:26px">${ic}</span><span style="flex:1;min-width:0"><b style="display:block;font-size:15px">${tit}</b><small style="opacity:.8">${sotto}</small></span>
       <span style="background:#E8B56B;color:#12302C;border-radius:999px;padding:6px 12px;font-weight:800;font-size:14px;white-space:nowrap">${az}</span></a>`).join("")}
     ${righe.length > 3 ? `<a href="#/giochi" style="display:block;text-align:center;padding:8px;color:#E8B56B;font-weight:700;text-decoration:none;border-top:1px solid rgba(255,255,255,.12)">Altri ${righe.length - 3} tavoli</a>` : ""}</div>`;
+}
+
+
+// ✅ i primi passi di chi è appena entrato, e 📸 la domanda del giorno del gruppo (risposte visibili dopo aver risposto)
+async function oggiNelGruppo(cerchia) {
+  const box = document.getElementById("oggi-gruppo"); if (!box || !cerchia) return;
+  const [{ data: passi }, { data: dom }] = await Promise.all([sb.rpc("primi_passi"), sb.rpc("domanda_di_oggi", { p_cerchia: cerchia })]);
+  let html = "";
+  const p = (passi ?? []).find((x) => x.cerchia === cerchia) ?? (passi ?? [])[0];
+  if (p) {
+    const voce = (fatto, testo, href) => `<a href="${href}" style="display:flex;gap:10px;align-items:center;padding:9px 0;border-top:1px solid var(--bordo);text-decoration:none;color:inherit">
+      <span style="width:26px;height:26px;border-radius:13px;display:grid;place-items:center;flex-shrink:0;background:${fatto ? "#2F7A4F" : "#F3EDE2"};color:#fff;font-weight:800">${fatto ? "✓" : ""}</span>
+      <span style="flex:1;${fatto ? "text-decoration:line-through;opacity:.55" : "font-weight:700"}">${testo}</span>${fatto ? "" : `<span style="color:var(--ambra);font-size:20px">›</span>`}</a>`;
+    const fatti = [p.foto, p.saluto, p.prima_foto].filter(Boolean).length;
+    html += `<div class="card" style="margin:0 16px 12px">
+      <b style="font-size:18px">👋 Benvenuto in ${esc(p.nome)}!</b>
+      <p class="tenue" style="margin:4px 0 6px">Tre cose per farti conoscere · ${fatti} su 3</p>
+      ${voce(p.foto, "Metti la tua foto", "#/profilo")}
+      ${voce(p.saluto, "Saluta il gruppo (anche con un vocale)", `#/chat/c-${p.cerchia}`)}
+      ${voce(p.prima_foto, "Metti la tua prima foto", `#/racconta?c=${p.cerchia}`)}</div>`;
+  }
+  if (dom) {
+    if (!dom.ho_risposto) {
+      html += `<div class="card" style="margin:0 16px 12px;background:var(--notte);color:#FBF3E2">
+        <div style="font-size:12px;font-weight:800;letter-spacing:.08em;opacity:.8">📸 LA DOMANDA DI OGGI</div>
+        <b style="display:block;font-family:Fraunces,serif;font-size:22px;line-height:1.25;margin:6px 0">${esc(dom.testo)}</b>
+        <p style="margin:0 0 10px;color:#E2DACB;font-size:14px">${dom.risposte ? `${esc(dom.chi.slice(0, 3).join(", "))}${dom.risposte > 3 ? ` e altri ${dom.risposte - 3}` : ""} ${dom.risposte === 1 ? "ha" : "hanno"} risposto. Rispondi per vedere cosa hanno detto 👀` : "Rispondi per primo: gli altri vedranno la tua risposta solo dopo aver risposto."}</p>
+        <button class="btn ambra" id="dom-rispondi" style="margin:0">Rispondi</button></div>`;
+    } else {
+      const { data: risp } = await sb.from("risposte_gruppo").select("id, persona_id, testo, media_path, media_tipo, creata_il, persone(nome, soprannome, foto_path)").eq("domanda_id", dom.id).order("creata_il");
+      const url = await urlMediaMolti([...(risp ?? []).filter((r) => r.media_path).map((r) => r.media_path), ...(risp ?? []).filter((r) => r.persone?.foto_path).map((r) => r.persone.foto_path)]);
+      html += `<div class="card" style="margin:0 16px 12px">
+        <div class="tenue" style="font-size:12px;font-weight:800;letter-spacing:.08em">📸 LA DOMANDA DI OGGI · ${dom.risposte} su ${dom.membri}</div>
+        <b style="display:block;font-family:Fraunces,serif;font-size:20px;line-height:1.25;margin:6px 0 10px">${esc(dom.testo)}</b>
+        ${(risp ?? []).map((r) => `<div style="display:flex;gap:10px;padding:10px 0;border-top:1px solid var(--bordo)">
+          ${avatar(r.persone ?? {}, 34, r.persone?.foto_path ? url[r.persone.foto_path] : null)}
+          <div style="flex:1;min-width:0"><b>${esc(r.persona_id === state.io.id ? "Tu" : nomeDi(r.persone ?? {}))}</b>
+            ${r.testo ? `<div style="white-space:pre-wrap">${esc(r.testo)}</div>` : ""}
+            ${r.media_path && url[r.media_path] ? (r.media_tipo === "video" ? `<video src="${url[r.media_path]}" controls playsinline style="width:100%;border-radius:12px;margin-top:6px"></video>`
+              : `<img src="${url[r.media_path]}" alt="" style="width:100%;border-radius:12px;margin-top:6px">`) : ""}</div></div>`).join("")}
+        ${dom.risposte < dom.membri ? `<p class="tenue" style="margin:8px 0 0;font-size:13px">Mancano ${dom.membri - dom.risposte}: le loro risposte arrivano qui.</p>` : ""}</div>`;
+    }
+  }
+  box.innerHTML = html;
+  document.getElementById("dom-rispondi")?.addEventListener("click", () => rispondiDomanda(dom, cerchia));
+}
+
+function rispondiDomanda(dom, cerchia) {
+  const d = document.createElement("div");
+  d.innerHTML = `<div style="position:fixed;inset:0;background:rgba(18,48,44,.5);z-index:60;display:flex;align-items:flex-end" data-chiudi>
+    <div style="background:var(--carta,#FBF8F2);width:100%;border-radius:22px 22px 0 0;padding:18px 16px calc(20px + env(safe-area-inset-bottom));max-height:90vh;overflow:auto">
+      <b style="font-family:Fraunces,serif;font-size:21px;line-height:1.25">${esc(dom.testo)}</b>
+      <textarea id="dom-testo" rows="3" placeholder="Scrivi la tua risposta…" style="width:100%;margin-top:12px"></textarea>
+      <div id="dom-anteprima" style="margin-top:8px"></div>
+      <label class="btn chiaro" style="margin-top:8px">📷 Aggiungi una foto o un video<input id="dom-file" type="file" accept="image/*,video/*" hidden></label>
+      <button class="btn ambra" id="dom-invia" style="margin-top:10px">Invia e guarda le risposte</button>
+      <button class="btn chiaro" data-chiudi style="margin-top:8px">Annulla</button></div></div>`;
+  document.body.appendChild(d);
+  let file = null;
+  d.querySelectorAll("[data-chiudi]").forEach((x) => x.addEventListener("click", (e) => { if (e.target === x) d.remove(); }));
+  d.querySelector("#dom-file").onchange = (e) => {
+    file = e.target.files[0] ?? null;
+    const a = d.querySelector("#dom-anteprima");
+    a.innerHTML = !file ? "" : file.type.startsWith("video") ? `<video src="${URL.createObjectURL(file)}" muted playsinline style="width:100%;border-radius:12px"></video>` : `<img src="${URL.createObjectURL(file)}" style="width:100%;border-radius:12px">`;
+  };
+  d.querySelector("#dom-invia").onclick = async (e) => {
+    const testo = d.querySelector("#dom-testo").value.trim();
+    if (!testo && !file) return alert("Scrivi qualcosa o metti una foto.");
+    e.target.disabled = true; e.target.textContent = "Invio…";
+    let path = null, tipo = null;
+    try {
+      if (file) {
+        let f = file;
+        if (f.type.startsWith("video")) { const { videoPronto } = await import("../video.js"); f = await videoPronto(f); if (!f) throw new Error("Video troppo lungo"); }
+        tipo = f.type.startsWith("video") ? "video" : "foto";
+        const ext = (f.name.split(".").pop() || (tipo === "foto" ? "jpg" : "mp4")).toLowerCase().slice(0, 5);
+        path = `${state.io.id}/cerchia/${cerchia}/domanda-${dom.id}.${ext}`;
+        const up = await sb.storage.from("ricordi").upload(path, f, { contentType: f.type || undefined, upsert: true });
+        if (up.error) throw up.error;
+      }
+      const { error } = await sb.rpc("domanda_rispondi", { p_domanda: dom.id, p_testo: testo, p_media_path: path, p_media_tipo: tipo });
+      if (error) throw error;
+      d.remove(); oggiNelGruppo(cerchia);
+    } catch (err) { alert("Non inviata: " + (err.message ?? err)); e.target.disabled = false; e.target.textContent = "Invia e guarda le risposte"; }
+  };
 }
