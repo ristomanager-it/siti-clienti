@@ -45,7 +45,7 @@ export default async function () {
       <a class="btn chiaro" href="#/locandina" style="margin-top:10px">🖨️ Stampa la locandina col tuo codice</a>
       <p class="tenue" style="margin:16px 0 4px">Il tuo link</p>
       <p style="word-break:break-all;font-family:monospace;font-size:13px;background:#fff;border:1px solid var(--bordo);border-radius:12px;padding:10px;margin:0">${esc(link)}</p>
-      <p class="tenue" style="margin-top:12px;font-size:14px">Valgono anche gli inviti in famiglia e nei gruppi (<a href="#/cerchie">Famiglie e cerchie → Invita</a>) e chi entra dalle tue cartoline, ricette e tombole.
+      <p class="tenue" style="margin-top:12px;font-size:14px">Valgono anche gli inviti in famiglia e nei gruppi (<a href="#/cerchie">Famiglie e gruppi → Invita</a>) e chi entra dalle tue cartoline, ricette e tombole.
         In più, per ogni persona: +1 GB di spazio per te (fino a +10 GB${spazio?.amici ? `, ne hai ${spazio.amici}` : ""}).</p>
       ${storico ? `<h2 style="padding-left:0">I tuoi premi</h2>${storico}` : ""}
       <div style="height:100px"></div>

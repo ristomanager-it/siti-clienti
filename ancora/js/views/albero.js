@@ -89,7 +89,7 @@ function proponiCollegamenti(nodi, tuttiN, altrove, nomeAlbero, quanteFamiglie) 
           <li><b>Si collegano da soli</b> quando la stessa persona è in tutti e due: per esempio tu sei nell'albero della tua famiglia e in quello dei tuoi genitori. Se ha un account Ancora, il collegamento è automatico.</li>
           <li><b>Per chi non ha l'account</b> (i bisnonni, chi non c'è più): se in due alberi ha lo stesso nome, cognome e anno di nascita, si collega da solo. Altrimenti ti propongo io il collegamento qui sopra, o tocca la persona e scegli «È anche in un altro albero?».</li>
           <li><b>Per vederli tutti insieme</b> tocca «🔗 Tutti uniti» in alto${state.piu ? "" : " (con Ancora+)"}.</li></ol>
-        ${quanteFamiglie > 1 ? "" : `<p class="tenue">Per ora sei in una sola famiglia. Fatti invitare in quella dei tuoi genitori o dei suoceri, oppure creala tu da <a href="#/cerchie">Famiglie e cerchie</a>.</p>`}
+        ${quanteFamiglie > 1 ? "" : `<p class="tenue">Per ora sei in una sola famiglia. Fatti invitare in quella dei tuoi genitori o dei suoceri, oppure creala tu da <a href="#/cerchie">Famiglie e gruppi</a>.</p>`}
       </div>`;
     const chiudi = () => { f.innerHTML = ""; };
     document.getElementById("velo").onclick = chiudi; document.getElementById("chiudi").onclick = chiudi;

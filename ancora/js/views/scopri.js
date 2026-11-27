@@ -33,7 +33,7 @@ const COSA = [
   ["Gli alberi di famiglia", "la tua, dei tuoi genitori, dei suoceri: uniti"],
   ["Il ricettario di casa", "con la voce di chi cucina"],
   ["L'album di famiglia", "foto, vocali, cuori, risposte a voce"],
-  ["Famiglie e cerchie", "parenti, fratelli, amici: ognuno decide chi vede cosa"],
+  ["Famiglie e gruppi", "parenti, fratelli, amici: ognuno decide chi vede cosa"],
   ["L'agenda", "vacanze insieme, compiti, esami: solo se volete"],
   ["Il diario", "privato, con «accadeva oggi»"],
   ["Il libro della famiglia", "l'anno di tutti, mese per mese, con i QR per sentire le voci: in PDF e stampato"],

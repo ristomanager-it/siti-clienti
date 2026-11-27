@@ -122,11 +122,24 @@ export default async function ({ params }) {
       // prima i post; la domanda della settimana e gli inviti a raccontare arrivano dopo i primi due
       const extra = `<div id="mia-domanda" hidden></div><div id="per-chi-conta"></div>`;
       const posts = lista.map((r, i) => post(r, url, i));
-      if (!posts.length) return extra + `<div class="pad"><h1>Ancora vuoto</h1><p class="tenue">Invita la famiglia dalle cerchie, o racconta tu per primo.</p></div>`;
+      if (!posts.length) {
+        // gruppo appena nato: tre cose grandi e chiare da fare subito
+        const gid = scelta?.id ?? ordinaCerchie(state.cerchie)[0]?.id;
+        const grande = (icona, titolo, sotto, colore, attr) => `<${attr.startsWith("href") ? "a" : "button"} ${attr} style="display:flex;gap:14px;align-items:center;width:100%;text-align:left;border:0;border-radius:20px;padding:16px;margin:0 0 10px;background:${colore};color:#fff;text-decoration:none;font:inherit;cursor:pointer">
+          <span style="font-size:34px;line-height:1">${icona}</span><span style="flex:1"><b style="display:block;font-size:18px">${titolo}</b><span style="opacity:.85;font-size:14px">${sotto}</span></span><span style="font-size:22px">›</span></${attr.startsWith("href") ? "a" : "button"}>`;
+        return extra + `<div class="pad" style="padding-top:4px">
+          <h2 style="padding-left:0;margin:4px 0 4px;font-family:Fraunces,serif;font-size:24px">Iniziamo da qui 👇</h2>
+          <p class="tenue" style="margin:0 0 14px">${scelta ? `La pagina di ${esc(scelta.nome)} è pronta: riempitela insieme.` : "La tua pagina è pronta: riempitela insieme."}</p>
+          ${grande("📸", "Metti le prime foto", "Quelle di ieri o quelle di vent'anni fa", "#C9832E", `href="#/racconta${gid ? `?c=${gid}` : ""}"`)}
+          ${gid ? grande("👋", "Chiama gli altri", "Un messaggio su WhatsApp e sono dentro", "#12302C", `data-vuoto-invita="${gid}"`) : ""}
+          ${giochiSi ? grande("🎲", "Fate una partita", "Carte, biliardo, tombola: anche da case diverse", "#2F7A4F", `href="#/giochi"`) : ""}
+        </div>`;
+      }
       return posts.slice(0, 2).join("") + extra + posts.slice(2).join("");
     })()}`;
   perChiConta();
   tavoliAperti();
+  document.querySelector("[data-vuoto-invita]")?.addEventListener("click", (e) => invitaInCerchia(e.currentTarget.dataset.vuotoInvita));
   oggiNelGruppo(filtro && filtro !== "diretti" ? filtro : ordinaCerchie(state.cerchie)[0]?.id);
   collegaStorie(perPersona, url, filtro);
   document.querySelectorAll("[data-invita]").forEach((b) => b.onclick = () => invitaInCerchia(b.dataset.invita));

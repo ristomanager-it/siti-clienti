@@ -45,7 +45,7 @@ Ciò che ci tiene saldi resta con noi, ancora e ancora.</div>
       <li><b>Il tuo cloud dei ricordi:</b> foto, video e vocali scattati o caricati dal telefono, privati finché non li condividi.</li>
       <li><b>Una domanda a settimana</b> per chi racconta.</li>
       <li><b>Album di famiglia</b> con foto, vocali, cuori e risposte a voce.</li>
-      <li><b>Cerchie:</b> famiglia, fratelli, amici. Ognuno decide chi vede cosa.</li>
+      <li><b>Gruppi:</b> famiglia, fratelli, amici. Ognuno decide chi vede cosa.</li>
       <li><b>Diario</b> privato con promemoria e "accadeva oggi".</li>
       <li><b>Il libro</b> delle storie: digitale incluso, stampato su richiesta.</li>
     </ul></div>

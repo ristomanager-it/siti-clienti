@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "179";
+const VER = "180";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 // --- giochi aperti a tutti (gli altri li vede solo il superadmin, che li prova e li apre uno per uno) ---
@@ -657,7 +657,7 @@ function vociMenu() {
   return [
     ["Le mie famiglie e i gruppi", [...famiglie.map((c) => [`#/?c=${c.id}`, c.nome]),
       ...(famiglie.length > 1 ? [["#/?c=tutti", "Tutte insieme"]] : []), ["#/?c=diretti", "Messaggi per me"]]],
-    ["La famiglia", [["#/aiutante", `✨ ${famiglie.find((c) => c.tipo === "famiglia")?.aiutante_nome || "L'aiutante"}`], ...(permessiGiochi && !permessiGiochi.admin && !permessiGiochi.aperti.size ? [] : [["#/giochi", "🎲 Giochi"]]), ["#/calendario", "Calendario"], ["#/liste", "Liste e desideri"], ["#/spese", "Spese"], ["#/album", "Album degli eventi"], ["#/domande", "Domande per te"], ["#/albero", "L'albero"], ["#/cerchie", "Famiglie e cerchie"]]],
+    ["La famiglia", [["#/aiutante", `✨ ${famiglie.find((c) => c.tipo === "famiglia")?.aiutante_nome || "L'aiutante"}`], ...(permessiGiochi && !permessiGiochi.admin && !permessiGiochi.aperti.size ? [] : [["#/giochi", "🎲 Giochi"]]), ["#/calendario", "Calendario"], ["#/liste", "Liste e desideri"], ["#/spese", "Spese"], ["#/album", "Album degli eventi"], ["#/domande", "Domande per te"], ["#/albero", "L'albero"], ["#/cerchie", "Famiglie e gruppi"]]],
     ["I miei ricordi", [["#/archivio", "Il cloud dei ricordi"], ["#/racconta", "Racconta"], ["#/racconta?lettera=1", "Una lettera per più avanti"], ["#/diario", "Il diario"], ["#/ricette", "Il ricettario"], [`#/libro/${state.io.id}`, "Il mio libro"], ["#/libro?famiglia=", "Il libro della famiglia"], ["#/film", "Il film dell'anno"]]],
     ["Agenda", [["vacanze", "Vacanze"], ["compiti", "Compiti"], ["esami", "Esami"]].filter(([k]) => attivi(k)).map(([k, t]) => [`#/agenda?t=${k}`, t])],
     ["Il mio account", [["#/invita", "Invita e guadagna Ancora+ 🎁"], ["#/locandina", "Porta Ancora in parrocchia o a scuola"], ["#/profilo", "Profilo e impostazioni"], ["#/figli", "🧒 Account dei figli"], ["#/piano", "Il piano"], ["#/servizi", "Servizi"], ["#/regala", "Regala Ancora"], ["#/omaggio", "Codice omaggio"], ["#/assistenza", "Assistenza · scrivici"]]],

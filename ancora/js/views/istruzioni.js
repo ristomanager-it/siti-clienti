@@ -29,9 +29,9 @@ const SEZIONI = [
     <p>Apri il menu <b>☰</b> in alto a destra: lì trovi tutto. In alto vedi il nome della famiglia che stai guardando; per cambiarla, scegline un'altra dal menu.</p>
     <p>Il tasto arancione in basso serve a <b>raccontare</b>: tienilo premuto e parla.</p>
     <p>Metti la tua foto e una copertina dal <b>Profilo</b>, e scrivi come ti chiamano in famiglia.</p>`],
-  ["famiglie", "Famiglie e cerchie", `
+  ["famiglie", "Famiglie e gruppi", `
     <p>Puoi stare in più famiglie: la tua, quella dei tuoi genitori, quella di tua moglie o di tuo marito, e in gruppi di amici. Ognuna vede solo quello che condividi con lei.</p>
-    <p>Da <b>Famiglie e cerchie</b>: <b>Apri</b> per vedere la bacheca, <b>Invita</b> per mandare il link a qualcuno, <b>Rinomina</b> per cambiare nome. Chi ha creato la famiglia può mettere foto e copertina.</p>
+    <p>Da <b>Famiglie e gruppi</b>: <b>Apri</b> per vedere la bacheca, <b>Invita</b> per mandare il link a qualcuno, <b>Rinomina</b> per cambiare nome. Chi ha creato la famiglia può mettere foto e copertina.</p>
     <p>Quando racconti o carichi un ricordo, scegli con chi condividerlo: una famiglia, più famiglie, o solo te.</p>`],
   ["domande", "Le domande", `
     <p><b>La domanda di famiglia:</b> una a settimana, uguale per tutti. Rispondete come volete: a voce, con una foto, scrivendo. Le risposte restano nella pagina "La domanda della settimana".</p>
@@ -60,7 +60,7 @@ const SEZIONI = [
   ["diario", "Il diario", `
     <p>È solo tuo: nessun altro lo vede. Ogni giorno una riga, a voce o scritta. Se salti un giorno, niente sensi di colpa. Ogni tanto ti ricorda cosa scrivevi lo stesso giorno di un anno fa.</p>`],
   ["agenda", "L'agenda: vacanze, compiti, esami", `
-    <p>Si accende per famiglia: chi l'ha creata va in <b>Famiglie e cerchie → Agenda di questa cerchia</b> e spunta le voci. Le voci accese compaiono nel menu ☰ di tutti.</p>
+    <p>Si accende per famiglia: chi l'ha creata va in <b>Famiglie e gruppi → Agenda di questo gruppo</b> e spunta le voci. Le voci accese compaiono nel menu ☰ di tutti.</p>
     <p>Ognuno può spegnerle per sé dal <b>Profilo → Le mie impostazioni</b>: se spegni una voce, non la vedi tu e nessuno vede la tua.</p>
     <p><b>Vacanze:</b> date, posto, chi viene, chi porta cosa. <b>Compiti</b> ed <b>esami</b>: l'esito è facoltativo e puoi tenerlo privato.</p>`],
   ["libro", "Il libro delle storie", `
