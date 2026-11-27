@@ -3,8 +3,7 @@ import { sb, state, $app, esc, quando, nomeDi, avatar, pulsanteVoce, urlMediaMol
 
 let gpHome = { admin: false, aperti: new Set() };
 export default async function ({ params }) {
-  gpHome = await giochiPermessi().catch(() => gpHome);
-  const giochiSi = gpHome.admin || gpHome.aperti.size > 0;
+  const gpAttesa = giochiPermessi().catch(() => gpHome);   // in parallelo con il resto
   // arrivo dal link di invito: entra nella cerchia/famiglia e ricarica i dati
   if (params?.invito) {
     await sb.rpc("accetta_invito", { p_codice: params.invito });
@@ -29,12 +28,17 @@ export default async function ({ params }) {
     .or(`sblocco.eq.subito,sblocco.eq.dopo_scomparsa,and(sblocco.eq.da_data,sblocco_data.lte.${new Date().toISOString().slice(0, 10)})`);   // le lettere chiuse non stanno nel feed
   if (filtro === "diretti") q = q.in("visibilita", ["diretto", "segreto"]);
   else if (filtro) q = q.eq("cerchia_id", filtro);
-  const { data: ricordi } = await q.order("creato_il", { ascending: false }).limit(30);
-  const lista = ricordi ?? [];
+  const attesaRicordi = q.order("creato_il", { ascending: false }).limit(30);
   let qs = sb.from("ricordi").select("id, testo, creato_il, autore_id, cerchia_id, dettagli, persone:autore_id(id, nome, soprannome, foto_path), ricordi_media(path, tipo, ordine, descrizione)")
     .eq("tipo", "storia").gt("creato_il", new Date(Date.now() - 86400_000).toISOString());
   if (filtro && filtro !== "diretti") qs = qs.eq("cerchia_id", filtro);
-  const { data: storieDb } = await qs.order("creato_il", { ascending: true }).limit(100);
+  const famPrima = state.cerchie.find((c) => c.id === filtro && c.tipo === "famiglia") ?? state.cerchie.find((c) => c.tipo === "famiglia");
+  const [{ data: ricordi }, { data: storieDb }, gpPronti, { data: domandeFam }] = await Promise.all([
+    attesaRicordi, qs.order("creato_il", { ascending: true }).limit(100), gpAttesa,
+    famPrima ? sb.from("domande_famiglia").select("id, testo, tema").order("id") : { data: null }]);
+  const lista = ricordi ?? [];
+  gpHome = gpPronti ?? gpHome;
+  const giochiSi = gpHome.admin || gpHome.aperti.size > 0;
   const tutteStorie = (storieDb ?? []).filter((r) => r.ricordi_media?.length);
 
   const paths = [...lista, ...tutteStorie].flatMap((r) => (r.ricordi_media ?? []).map((m) => m.path))
@@ -58,7 +62,7 @@ export default async function ({ params }) {
   let cardSettimana = "";
   if (fam) {
     const sett = settimana();
-    const { data: domande } = await sb.from("domande_famiglia").select("id, testo, tema").order("id");
+    const domande = domandeFam;
     if (domande?.length) {
       const d = domande[sett.numero % domande.length];   // la stessa per tutti, come nella notifica
       const { data: risposte } = await sb.from("ricordi").select("id, autore_id, persone:autore_id(id, nome, soprannome)")

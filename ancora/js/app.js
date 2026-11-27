@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "189";
+const VER = "190";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 // --- giochi aperti a tutti (gli altri li vede solo il superadmin, che li prova e li apre uno per uno) ---
@@ -142,13 +142,16 @@ document.addEventListener("click", (e) => {
 });
 
 async function caricaIo() {
-  const { data: { user } } = await sb.auth.getUser();
+  // la sessione è sul telefono: niente giro al server per sapere chi sei
+  const { data: { session } } = await sb.auth.getSession();
+  const user = session?.user;
   if (!user) return null;
-  const { data: io } = await sb.from("persone").select("*").eq("auth_user_id", user.id).maybeSingle();
+  const [{ data: io }, { data: cerchie }, { data: piu }, { data: adulto }] = await Promise.all([
+    sb.from("persone").select("*").eq("auth_user_id", user.id).maybeSingle(),
+    sb.from("cerchie").select("id, nome, tipo, proprietario_id, moduli, foto_path, copertina_path, aiutante_nome").order("creata_il"),
+    sb.rpc("sono_piu"), sb.rpc("sono_adulto")]);
   if (!io) return null;
   const { data: fm } = await sb.from("famiglia_membri").select("famiglia_id, ruolo, narratore, famiglie(nome)").eq("persona_id", io.id).maybeSingle();
-  const { data: cerchie } = await sb.from("cerchie").select("id, nome, tipo, proprietario_id, moduli, foto_path, copertina_path, aiutante_nome").order("creata_il");
-  const [{ data: piu }, { data: adulto }] = await Promise.all([sb.rpc("sono_piu"), sb.rpc("sono_adulto")]);
   state.io = io; state.famiglia = fm; state.cerchie = cerchie ?? []; state.piu = !!piu; state.adulto = adulto !== false;
   try { localStorage.setItem("ancora_utente", "1"); } catch { /* niente */ }
   state.accessoPrima = io.ultimo_accesso_app;   // per il "bentornato" (prima di aggiornarlo)
@@ -250,6 +253,32 @@ async function bentornato() {
   }
 }
 
+// --- Apertura istantanea: la home dell'ultima volta si vede subito, poi si aggiorna da sola ---
+const CHIAVE_ISTANTANEA = "ancora_home_istantanea";
+let istantanea = false;
+export function salvaIstantanea(c) {
+  try {
+    const html = $app().innerHTML;
+    if (html.length > 50 && html.length < 600_000) localStorage.setItem(CHIAVE_ISTANTANEA, JSON.stringify({ c: c ?? "", t: Date.now(), u: state.io?.id, html }));
+  } catch { /* spazio pieno: pazienza */ }
+}
+function mostraIstantanea() {
+  try {
+    const [rotta, query] = location.hash.replace(/^#\/?/, "").split("?");
+    if (rotta !== "" || !localStorage.getItem("ancora_utente")) return;
+    const s = JSON.parse(localStorage.getItem(CHIAVE_ISTANTANEA) ?? "null");
+    if (!s?.html) return;
+    const c = new URLSearchParams(query ?? "").get("c");
+    if (c && c !== s.c) return;
+    let html = s.html;
+    // i link firmati delle foto durano un'ora: se è passata, al loro posto un fondo neutro (le foto vere arrivano subito dopo)
+    if (Date.now() - s.t > 50 * 60_000) html = html.replace(/(src|data-audio)="https:\/\/[^"]*token=[^"]*"/g, "").replace(/url\((&quot;|'|")?https:\/\/[^)]*token=[^)]*\)/g, "none");
+    $app().innerHTML = html;
+    document.getElementById("barra").hidden = false;
+    istantanea = true;
+  } catch { /* niente */ }
+}
+
 async function render() {
   const [rotta, query] = location.hash.replace(/^#\/?/, "").split("?");
   const nome = rotta.split("/")[0];
@@ -278,7 +307,8 @@ async function render() {
   }
   const carica = ROTTE[nome] ?? ROTTE[""];
   const vista = await carica();
-  $app().innerHTML = "";
+  if (!(nome === "" && istantanea)) $app().innerHTML = "";
+  istantanea = false;
   // arrivato da un invito a giocare: appena al tavolo, gli chiediamo di salvare Ancora sulla schermata Home (per gli inviti e le notifiche)
   if (["uscita", "briscola", "tressette", "stoppa", "biliardo", "calcio", "tombola", "stop", "auto"].includes(nome)) {
     let dopoTavolo = false; try { dopoTavolo = sessionStorage.getItem("ancora_dopo_tavolo") === "1"; sessionStorage.removeItem("ancora_dopo_tavolo"); } catch { /* niente */ }
@@ -296,6 +326,12 @@ async function render() {
       }, 4500);
     }
     if (!PUBBLICHE.has(nome) && nome === "") setTimeout(() => invitoSchermataHome() || ricordaPiu(), 2500);
+    // la home com'è adesso, per aprirla all'istante la prossima volta
+    if (nome === "" && state.io && state.io.modalita !== "semplice") setTimeout(() => {
+      if (location.hash.replace(/^#\/?/, "").split("?")[0] !== "") return;
+      let c = null; try { c = localStorage.getItem("ancora_cerchia"); } catch { /* niente */ }
+      salvaIstantanea(c);
+    }, 3500);
     if (!PUBBLICHE.has(nome) && state.io) setTimeout(controllaAssistenza, 1500);
   }
   catch (e) { console.error(e); $app().innerHTML = `<p class="errore">Qualcosa non ha funzionato. Riprova tra poco.</p>`; }
@@ -508,11 +544,14 @@ async function controllaVersione() {
     const v = (await (await fetch(`versione.txt?t=${Date.now()}`, { cache: "no-store" })).text()).trim();
     if (v && v !== VER && sessionStorage.getItem("ancora_ricaricata") !== v) {
       sessionStorage.setItem("ancora_ricaricata", v);
+      try { for (const k of await caches.keys()) if (k.startsWith("ancora-v")) await caches.delete(k); } catch { /* niente */ }
+      try { localStorage.removeItem(CHIAVE_ISTANTANEA); } catch { /* niente */ }
       (await navigator.serviceWorker?.getRegistration())?.update();
       location.reload();
     }
   } catch { /* offline */ }
 }
+mostraIstantanea();
 controllaVersione();
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") controllaVersione(); });
 render();
@@ -710,7 +749,7 @@ function apriMenu() {
   document.body.appendChild(m);
   const chiudi = () => m.remove();
   m.querySelectorAll("[data-chiudi], nav a").forEach((x) => x.addEventListener("click", chiudi));
-  m.querySelector("#esci-app").onclick = async () => { await sb.auth.signOut(); state.io = null; chiudi(); location.hash = "#/accesso"; };
+  m.querySelector("#esci-app").onclick = async () => { try { localStorage.removeItem(CHIAVE_ISTANTANEA); } catch { /* niente */ } await sb.auth.signOut(); state.io = null; chiudi(); location.hash = "#/accesso"; };
   addEventListener("hashchange", chiudi, { once: true });
 }
 

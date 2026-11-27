@@ -1,5 +1,5 @@
 // Service worker: cache dell'app e notifiche push (gratuite, a differenza di WhatsApp)
-const CACHE = "ancora-v189";
+const CACHE = "ancora-v190";
 const FILE = ["./", "index.html", "css/app.css", "js/app.js", "manifest.webmanifest"];
 
 self.addEventListener("install", (e) => { self.skipWaiting(); e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILE))); });
@@ -26,8 +26,16 @@ self.addEventListener("fetch", (e) => {
     return;
   }
   if (e.request.method !== "GET" || new URL(e.request.url).origin !== location.origin) return;
-  // sempre la versione più nuova (il telefono non tiene file vecchi); offline, quella salvata
-  e.respondWith(fetch(e.request, { cache: "no-cache" }).catch(() => caches.match(e.request)));
+  // si apre all'istante: i file dell'app arrivano dal telefono, e intanto si aggiornano in sottofondo.
+  // Una versione nuova la prende l'app stessa (versione.txt), che svuota questa cache e ricarica.
+  if (u.pathname.endsWith("versione.txt")) return;
+  e.respondWith((async () => {
+    const c = await caches.open(CACHE);
+    const salvata = await c.match(e.request, { ignoreSearch: false });
+    const rete = fetch(e.request, { cache: "no-cache" }).then((r) => { if (r.ok && r.type === "basic") c.put(e.request, r.clone()); return r; });
+    if (salvata) { e.waitUntil(rete.catch(() => {})); return salvata; }
+    return rete.catch(() => caches.match(e.request));
+  })());
 });
 
 self.addEventListener("push", (e) => {
