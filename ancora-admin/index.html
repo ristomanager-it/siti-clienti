@@ -103,12 +103,12 @@ function disegna() {
   $("#radice").innerHTML = `
     <header><span class="logo">Ancora<small>gestione</small></span><span class="sp"></span>
       <button class="esci" id="esci">Esci</button></header>
-    <main><nav>${[["panoramica", "Panoramica"], ["gruppi", "Gruppi e famiglie"], ["segnalazioni", "🚩 Segnalazioni"], ["famiglie", "Piani"], ["regali", "Regali"], ["ordini", "Ordini libri"], ["omaggi", "Omaggi"], ["assistenza", "Assistenza"], ["messaggi", "Messaggi"], ["marketing", "Marketing"], ["creativita", "Creatività"], ["link", "Link e messaggi"], ["privacy", "Privacy"], ["manifesto", "Manifesto"], ["impostazioni", "⚙️ Impostazioni"]]
+    <main><nav>${[["panoramica", "Panoramica"], ["persone", "📱 Persone"], ["gruppi", "Gruppi e famiglie"], ["segnalazioni", "🚩 Segnalazioni"], ["famiglie", "Piani"], ["regali", "Regali"], ["ordini", "Ordini libri"], ["omaggi", "Omaggi"], ["assistenza", "Assistenza"], ["messaggi", "Messaggi"], ["marketing", "Marketing"], ["creativita", "Creatività"], ["link", "Link e messaggi"], ["privacy", "Privacy"], ["manifesto", "Manifesto"], ["impostazioni", "⚙️ Impostazioni"]]
       .map(([k, t]) => `<button data-v="${k}" class="${k === vista ? "on" : ""}">${t}</button>`).join("")}</nav>
       <div id="corpo"><p class="tenue">Caricamento…</p></div></main>`;
   $("#esci").onclick = async () => { await sb.auth.signOut(); accesso(); };
   document.querySelectorAll("nav button").forEach((b) => b.onclick = () => { vista = b.dataset.v; disegna(); });
-  ({ panoramica, gruppi, segnalazioni, famiglie, regali, ordini, omaggi, assistenza, messaggi, marketing, creativita, link, privacy, manifesto, impostazioni })[vista]().catch((e) => {
+  ({ panoramica, persone, gruppi, segnalazioni, famiglie, regali, ordini, omaggi, assistenza, messaggi, marketing, creativita, link, privacy, manifesto, impostazioni })[vista]().catch((e) => {
     $("#corpo").innerHTML = `<p class="errore">Errore: ${esc(e.message)}</p>`;
   });
 }
@@ -214,6 +214,35 @@ async function impostazioni() {
     try { await rpc("admin_config_salva", { p_chiave: "mapbox_token", p_valore: $("#mapbox").value.trim() }); $("#esito-mapbox").textContent = "Salvato ✓"; $("#mapbox").value = ""; }
     catch (e) { $("#esito-mapbox").textContent = e.message; }
   };
+}
+
+// chi c'è e come usa Ancora: ultimo accesso, app sulla Home, notifiche (mai i contenuti)
+async function persone() {
+  const lista = await rpc("admin_persone");
+  const oggi = (d) => d && new Date(d).toDateString() === new Date().toDateString();
+  const home = (x) => x.app_home_il || (x.notifiche > 0 && !["Android", "computer"].includes(x.dispositivo)) ? "✅ sì" : x.dispositivo === "computer" ? "— computer" : "❌ no";
+  const notif = (x) => x.notifiche > 0 ? "✅ attive" : x.notifiche_permesso === "denied" ? "⛔ bloccate" : "❌ no";
+  const daAiutare = lista.filter((x) => x.notifiche === 0 && x.dispositivo !== "computer");
+  const disegnaLista = (q = "", solo = false) => {
+    const f = lista.filter((x) => (!solo || daAiutare.includes(x)) && (!q || `${x.nome} ${x.gruppi ?? ""}`.toLowerCase().includes(q.toLowerCase())));
+    $("#elenco").innerHTML = f.map((x) => `
+      <div class="card">
+        <div class="riga"><span class="nome">${esc(x.nome)}</span>${oggi(x.ultimo) ? `<span class="badge attivo">oggi</span>` : ""}<span class="sp"></span><small class="tenue">${esc(x.dispositivo ?? "—")}</small></div>
+        <div class="dati">
+          <div><span>Ultimo accesso</span>${x.ultimo ? `${fa(x.ultimo)} ${new Date(x.ultimo).toLocaleTimeString("it-IT", { hour: "2-digit", minute: "2-digit" })}` : "mai"}</div>
+          <div><span>📲 Sulla Home</span>${home(x)}</div>
+          <div><span>🔔 Notifiche</span>${notif(x)}</div>
+          <div><span>Iscritto</span>${data(x.iscritto)}</div>
+        </div>
+        ${x.gruppi ? `<div class="tenue" style="margin-top:6px">${esc(x.gruppi)}</div>` : ""}</div>`).join("") || `<p class="tenue">Nessuno.</p>`;
+  };
+  $("#corpo").innerHTML = `<div class="griglia">${kpi(lista.filter((x) => oggi(x.ultimo)).length, "entrati oggi")}${kpi(lista.filter((x) => home(x).startsWith("✅")).length, "con l'app sulla Home")}${kpi(lista.filter((x) => x.notifiche > 0).length, "con le notifiche")}${kpi(lista.length, "iscritti")}</div>
+    <p class="tenue" style="margin:10px 0 0">"Sulla Home" si vede da quando l'app lo registra (27/11): chi non l'ha ancora riaperta risulta "no". Su iPhone chi ha le notifiche attive ce l'ha di sicuro sulla Home.</p>
+    <div class="riga" style="gap:8px;margin:12px 0"><input id="cerca" placeholder="Cerca un nome o un gruppo" style="flex:1"><label class="riga" style="gap:6px;white-space:nowrap"><input type="checkbox" id="solo"> Senza notifiche (${daAiutare.length})</label></div>
+    <div id="elenco"></div>`;
+  disegnaLista();
+  const ri = () => disegnaLista($("#cerca").value, $("#solo").checked);
+  $("#cerca").oninput = ri; $("#solo").onchange = ri;
 }
 
 async function gruppi() {

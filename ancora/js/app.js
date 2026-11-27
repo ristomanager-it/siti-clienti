@@ -4,7 +4,7 @@ import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./config.js";
 
 export const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // versione delle pagine: cambia a ogni pubblicazione, così il telefono non tiene quelle vecchie
-const VER = "193";
+const VER = "194";
 export const state = { io: null, famiglia: null, cerchie: [] };
 
 // --- giochi aperti a tutti (gli altri li vede solo il superadmin, che li prova e li apre uno per uno) ---
@@ -155,7 +155,12 @@ async function caricaIo() {
   state.io = io; state.famiglia = fm; state.cerchie = cerchie ?? []; state.piu = !!piu; state.adulto = adulto !== false;
   try { localStorage.setItem("ancora_utente", "1"); } catch { /* niente */ }
   state.accessoPrima = io.ultimo_accesso_app;   // per il "bentornato" (prima di aggiornarlo)
-  sb.from("persone").update({ ultimo_accesso_app: new Date().toISOString() }).eq("id", io.id).then(() => {});
+  // come usa Ancora (per Gestione): dall'icona sulla Home o dal browser, che telefono, e se le notifiche sono permesse
+  const ua = navigator.userAgent, adesso = new Date().toISOString();
+  const disp = /iPhone|iPod/.test(ua) ? "iPhone" : /iPad/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1) ? "iPad" : /Android/.test(ua) ? "Android" : "computer";
+  const daHome = matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+  sb.from("persone").update({ ultimo_accesso_app: adesso, dispositivo: disp, ...(daHome ? { app_home_il: adesso } : {}),
+    notifiche_permesso: "Notification" in window ? Notification.permission : "non_supportate" }).eq("id", io.id).then(() => {});
   return io;
 }
 
@@ -242,15 +247,18 @@ async function bentornato() {
   }
   // uno spunto per scrivere, se non racconta da 5 giorni (al massimo ogni 3 giorni)
   if (await spuntoPerScrivere()) return;
-  // una volta sola: proponi le notifiche, con il perché
-  if (!localStorage.getItem("ancora_chiesto_notifiche") && !(await notificheAttive())) {
-    localStorage.setItem("ancora_chiesto_notifiche", "1");
-    popup({
-      titolo: "Vuoi sapere quando qualcuno racconta?",
-      testo: "Ti avvisiamo quando la famiglia condivide un ricordo e quando arriva la domanda della settimana. Poche notifiche, mai di notte.",
-      azioni: [{ t: "Sì, avvisami", fn: attivaNotifiche }, { t: "Non ora" }],
-    });
-  }
+  // le notifiche: senza, uno non sa mai quando gli scrivono. Si propongono ogni 3 giorni, al massimo 5 volte.
+  // Su iPhone dal browser non si possono attivare: lì pensa l'invito a mettere Ancora sulla Home.
+  if (iPhoneNonInstallata() || !("Notification" in window) || Notification.permission === "denied" || (await notificheAttive())) return;
+  let n = { volte: 0, ultima: 0 };
+  try { const v = localStorage.getItem("ancora_chiesto_notifiche"); n = v === "1" ? { volte: 1, ultima: 0 } : JSON.parse(v ?? "null") ?? n; } catch { /* niente */ }
+  if (n.volte >= 5 || Date.now() - n.ultima < 3 * 864e5) return;
+  try { localStorage.setItem("ancora_chiesto_notifiche", JSON.stringify({ volte: n.volte + 1, ultima: Date.now() })); } catch { /* niente */ }
+  popup({
+    titolo: "🔔 Attiva le notifiche",
+    testo: "Così sai quando qualcuno ti scrive, mette una foto nel gruppo o organizza un'uscita. Poche, mai di notte, e le regoli quando vuoi dal Profilo.",
+    azioni: [{ t: "Sì, attivale", fn: async () => { if (await attivaNotifiche()) sb.from("persone").update({ notifiche_permesso: "granted" }).eq("id", state.io.id).then(() => {}); } }, { t: "Non ora" }],
+  });
 }
 
 // --- Apertura istantanea: la home dell'ultima volta si vede subito, poi si aggiorna da sola ---
